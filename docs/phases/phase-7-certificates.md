@@ -2,6 +2,8 @@
 
 > **Goal:** On successful payment capture, the system generates a tamper-evident, signed Certificate of Ownership as a PDF, stores it durably, exposes it to the Buyer via "My Purchases" and a public verification URL, and revokes it on refund.
 
+> **MVP simplification:** PDF generation runs in the in-process job runner (≤ 30s job per certificate). KMS holds the signing key.
+
 ---
 
 ## 1. Demoable outcome
@@ -92,19 +94,21 @@ CertificateStateTransition {
 
 ### 4.2 Certificate generation flow
 
-Triggered by BullMQ job `certificate.generate` enqueued by Phase 6 on `payment.captured`.
+Triggered by the in-process `certificate.generate` job enqueued by Phase 6 on `payment.captured`. The job runs in the Next.js server process; concurrency is bounded (default 4) by the job runner from Phase 0.
 
 1. Load `Order` + `OrderItem` + `Project` + `Buyer` + `Seller`.
 2. For each `OrderItem`, generate one Certificate row with snapshots.
 3. For each certificate, build the PDF (see §4.3).
 4. Compute SHA-256 of the canonical body (a deterministic JSON with all snapshot fields, sorted keys).
-5. Sign the PDF with PAdES (PDF Advanced Electronic Signatures) using a private key in AWS KMS (or HashiCorp Vault). The signature is stored in `Certificate.signature`; the signing certificate chain in `Certificate.signing_cert_id`.
+5. Sign the PDF with PAdES (PDF Advanced Electronic Signatures) using a private key in AWS KMS. The signature is stored in `Certificate.signature`; the signing certificate chain in `Certificate.signing_cert_id`.
 6. Upload the signed PDF to `s3://ccverse-certificates/{year}/{serial_no}.pdf` with S3 Object Lock (`Compliance` mode, 10-year retention).
 7. Update `Certificate.pdf_s3_key`, `sha256`, `signature`, `status='valid'`, `issued_at`.
 8. Insert `CertificateStateTransition` (null → valid).
 9. Write `AuditLog` (`certificate.issued`).
 10. Send SES to Buyer with download link + verification URL.
 11. Send SES to Seller with the issuance summary.
+
+Job retries: 3 with exponential backoff. After 3 failures, the order is flagged for Admin intervention and the Buyer is notified of a delay. Permanent failures appear in `failed_job`.
 
 ### 4.3 PDF generation
 
@@ -175,12 +179,10 @@ Triggered by BullMQ job `certificate.generate` enqueued by Phase 6 on `payment.c
 - `/buyer/purchases/[id]` — detail with embedded certificate preview (iframe to signed PDF).
 - `/verify/[token]` — public read-only page (no app shell; minimal layout per `DESIGN.md`).
 
-### 4.10 Performance and queue
+### 4.10 Performance
 
-- Generation is a BullMQ job; concurrency = 4 workers default (configurable).
 - 5s p95 target: PDF build + KMS sign + S3 upload + DB write — achievable with `pdf-lib` and KMS p256.
-- Job retries: 3 with exponential backoff. After 3 failures, the order is flagged for Admin intervention and the Buyer is notified of a delay.
-- DLQ captures permanent failures with a `failure_reason` and an Admin alert (Phase 9).
+- Job concurrency default 4; tunable via `PlatformConfig.certificate_job_concurrency`.
 
 ---
 
@@ -245,13 +247,13 @@ GET  /verify/[token]                        -- public; no auth
 - [ ] S3 Object Lock is applied (10-year Compliance mode) to every certificate object.
 - [ ] Private signing key never leaves KMS.
 - [ ] WCAG 2.1 AA on the verification page and certificate download UI.
-- [ ] Certificate generation is retryable with exponential backoff and surfaces permanent failures to Admin.
+- [ ] Certificate generation is retryable with exponential backoff and surfaces permanent failures to Admin via `failed_job`.
 
 ---
 
 ## 10. Dependencies on other phases
 
-- Phase 0 (S3 with Object Lock, KMS, SES, audit, RBAC, BullMQ).
+- Phase 0 (S3 with Object Lock, KMS, SES, audit, RBAC, in-process job runner).
 - Phase 1 (auth, KYC).
 - Phase 2 (Project, RegistryEntry, registry service).
 - Phase 3 (Listing).

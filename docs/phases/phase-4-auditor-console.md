@@ -9,7 +9,7 @@
 - An Auditor logs in with MFA and lands on a review queue of pending items (oldest first by default), with both projects and listings interleaved.
 - Selecting a project shows the full registration: project metadata, PDD, methodology (code, standard, version, source URL), the live status of that methodology on the recognised list, the Seller's KYC, and a checklist aligned to the Methodology Recognition Policy.
 - The Auditor can Approve (CCV-###### is assigned; project becomes `active`) or Reject (with mandatory comments and at least one policy reference).
-- Selecting a listing shows the listing, the referenced project's methodology, the CVC batch range, batch integrity against the registry, Seller KYC, and a checklist. Approve atomically transitions the CVC batch range from `Available` to `Available-for-listing` and the listing becomes visible on the marketplace within 60 seconds. Reject requires a cited policy reference or a specific clause + version.
+- Selecting a listing shows the listing, the referenced project's methodology, the CVC batch range, batch integrity against the registry, Seller KYC, and a checklist. Approve atomically transitions the CVC batch range from `Available` to `Held` and the listing becomes visible on the marketplace within 60 seconds. Reject requires a cited policy reference or a specific clause + version.
 - Decisions are immutable. Corrections require a new decision record referencing the prior.
 - An Auditor cannot approve/reject an item tied to their own user account (system-enforced).
 
@@ -25,7 +25,7 @@
 - FR-AU-006 Auditor cannot approve/reject their own activity.
 - FR-AU-007 All decisions and comments are immutable; corrections are new records.
 - FR-AU-008 Validate methodology is on the current published list at the cited version; validate CVC batch range against the registry and reject any listing that references a batch not allocated to the Seller or not `Available`.
-- FR-AU-009 On approval, atomically transition CVC batch range from `Available` to `Available-for-listing` in the registry within 60 seconds; audit-logged; this is the moment the listing becomes visible.
+- FR-AU-009 On approval, atomically transition CVC batch range from `Available` to `Held` in the registry within 60 seconds; audit-logged; this is the moment the listing becomes visible.
 - FR-AD-003 Assign / revoke Auditor role (Admin only).
 - (Cross-ref) FR-S-009 approval flow; FR-S-001/002 listing approval flow.
 
@@ -130,10 +130,10 @@ CREATE UNIQUE INDEX uq_listing_approved ON Listing(id) WHERE status IN ('approve
 ### 4.8 Public visibility (FR-AU-004)
 
 - Approved listings become visible on the marketplace within 60 seconds. Mechanism:
-  - On `commit` of the approval transaction, enqueue a BullMQ job `catalog.refresh_listing` with `listingId`.
-  - Worker revalidates the Next.js page (`/listing/[id]`) and updates the search index (Postgres FTS in v1.0; the index is a `tsvector` column refreshed in the same transaction).
+  - On `commit` of the approval transaction, enqueue an in-process job `catalog.refresh_listing` with `listingId`.
+  - Job revalidates the Next.js page (`/listing/[id]`) and updates the search index (Postgres FTS in v1.0; the index is a `tsvector` column refreshed in the same transaction).
   - Public listing browse (Phase 5) filters on `status='approved' AND approved_at <= now()` and reads from a materialized view `mv_active_listings` refreshed concurrently on commit.
-- 60-second SLA monitored; breaches raise an alert (Phase 9 wires observability).
+- 60-second SLA monitored; breaches surface in logs and the Admin console.
 
 ### 4.9 UI surfaces
 

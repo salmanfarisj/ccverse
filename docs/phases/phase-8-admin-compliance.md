@@ -64,7 +64,8 @@ Keys (initial set; extensible):
 - `min_listing_quantity` (int)
 - `max_listing_quantity` (int)
 - `review_sla_hours` (int)
-- `sanctions_review_queue_threshold` (int)
+- `sanctions_blocklist` (jsonb)
+- `certificate_job_concurrency` (int, default 4)
 
 `Dispute` is finalized (already in schema from Phase 0/2):
 
@@ -116,7 +117,7 @@ This complements `AuditLog`; the audit_log writer is the single chokepoint, but 
 - `GET /api/admin/users/:id` — detail (profile, KYC, listings, purchases, payouts, audit).
 - `POST /api/admin/users/:id/suspend` — body `{ reason, until? }`. Effect:
   - `User.status='suspended'`.
-  - All active sessions invalidated (Redis session delete).
+  - All active sessions invalidated (session table delete).
   - Active listings set to `removed_by_admin` (or `suspended`?). **Decision needed** (see `[USER DEPENDENCY]`).
   - Audit log row.
   - Email user (template: `account-suspended.tsx`).
@@ -190,6 +191,7 @@ This complements `AuditLog`; the audit_log writer is the single chokepoint, but 
 - `/admin/exports` — list of past exports; "New export" form.
 - `/admin/audit` — read-only audit log viewer with filters.
 - `/admin/anomalies` — flagged items.
+- `/admin/failed-jobs` — list of permanently failed background jobs.
 - All Admin actions require MFA step-up (re-auth ≤ 5 min) for sensitive operations (config changes, user bans, dispute refunds).
 
 ### 4.9 MFA step-up
@@ -244,6 +246,9 @@ GET    /api/admin/exports/:id/download
 
 GET    /api/admin/anomalies
 POST   /api/admin/anomalies/:id/dismiss
+
+GET    /api/admin/failed-jobs
+POST   /api/admin/failed-jobs/:id/retry
 ```
 
 ---
@@ -272,6 +277,7 @@ POST   /api/admin/anomalies/:id/dismiss
   - Dispute open → Payout moves to `on_hold`; resolve → Payout unfrozen (or refund issued).
   - Audit log export CSV contains all rows in the range with correct columns.
   - Anomaly rule fires on a synthetic 5x-priced listing.
+  - Failed job retry re-enqueues a job and the second attempt succeeds.
 - **E2E:** Buyer raises dispute → Admin resolves with full refund → certificate revoked → verification page shows `Revoked` within 5 min.
 
 ---
@@ -287,13 +293,14 @@ POST   /api/admin/anomalies/:id/dismiss
 - [ ] All Admin actions appear in `AuditLog` with `actor`, `target`, `ip`, `timestamp`, `reason`.
 - [ ] MFA step-up blocks any privileged action taken more than 5 minutes after the last MFA verification.
 - [ ] Anomaly queue surfaces flagged listings, users, and disputes.
+- [ ] Failed-jobs console lists permanently failed background jobs and supports retry.
 - [ ] WCAG 2.1 AA on every Admin screen.
 
 ---
 
 ## 10. Dependencies on other phases
 
-- Phase 0 (proxy, RBAC, S3, SES, audit).
+- Phase 0 (proxy, RBAC, S3, SES, audit, in-process job runner).
 - Phase 1 (auth, MFA, KYC, sessions).
 - Phase 2 (registry, project).
 - Phase 3 (listing).

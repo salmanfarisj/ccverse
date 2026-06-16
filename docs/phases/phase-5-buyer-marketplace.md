@@ -158,7 +158,7 @@ CartItem {
 ### 4.9 SEO & share
 
 - Listing detail page emits Open Graph and Twitter card meta with project name, vintage, country, and a generic CC Verse banner image.
-- `sitemap.xml` lists all approved listings; regenerated on commit via background job.
+- `sitemap.xml` lists all approved listings; regenerated on commit.
 - `robots.txt` disallows `/buyer/*`, `/seller/*`, `/auditor/*`, `/admin/*`.
 
 ---
@@ -189,7 +189,7 @@ DELETE /api/cart/items/:id
 ## 7. Cross-cutting concerns
 
 - **Performance:** server components + ISR; no client-side data fetching for the catalog. The cart uses client-side polling for the "live: N left" indicator; debounced to 1 req/10s per listing.
-- **Security:** rate limit on `POST /api/cart/items` (30/min/user) to prevent scrapers. The marketplace is a public endpoint and is not rate-limited per-user; only per-IP at the proxy (60 req/s).
+- **Security:** rate limit on `POST /api/cart/items` at the proxy (30/min/user). The marketplace is a public endpoint and is rate-limited per-IP at the proxy (60 req/s).
 - **Auditability:** listing document downloads and views of approved listings by ID are audit-logged; bulk list views are not.
 - **RBAC:** public. Cart requires no auth; guest carts are cookie-bound; login merges.
 
@@ -241,7 +241,7 @@ DELETE /api/cart/items/:id
 
 - **[USER DEPENDENCY] Public Seller name disclosure rules** — FRD §2.3.2 says "Seller name (publicly disclosed for verified Sellers)"; confirm the rule (verified = KYC approved; confirm whether Sellers may opt out via a public-profile setting).
 - **[USER DEPENDENCY] Currency switcher on the marketplace** — does the public catalog show both INR and USD listings side-by-side, or filter by currency? Proposal: side-by-side, with a currency toggle on the price tag (live FX rate per `[USER DEPENDENCY]`).
-- **[USER DEPENDENCY] Live FX rate source** — for any cross-currency display in v1.0. (FRD says the price is locked in the selected currency for 15 minutes at order creation — so FX display is purely for browsing.)
+- **[USER DEPENDENCY] Live FX rate source** — for any cross-currency display in v1.0. (FRD says the price is locked in the selected currency for 15 minutes at order creation — so FX display is purely for browsing.) For MVP without an FX vendor, proposal: each listing is shown only in its own currency; no cross-currency display.
 - **[USER DEPENDENCY] Vintage display format** — year only, or year-quarter?
 - **[USER DEPENDENCY] Whether to show "X people viewing" / "X sold this month"** — Phase 5 default: no; deferred to v1.1.
 - **[USER DEPENDENCY] Map view** — FRD is silent; proposal: defer to v1.1.

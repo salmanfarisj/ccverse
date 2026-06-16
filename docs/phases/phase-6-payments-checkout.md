@@ -2,6 +2,8 @@
 
 > **Goal:** A logged-in Buyer can convert a cart into one or more orders, pay in INR or USD through the integrated payment gateway, and have their CVC entries atomically transition to `Held` against the order. Refunds, dispute-aware payout freezes, and reconciliation are wired end-to-end. Certificates (Phase 7) are issued only on successful capture.
 
+> **MVP simplification:** Long-running work (refund processing, reconciliation, certificate generation kickoff) runs in the request handler or as a short-lived in-process job (≤ 30s) via the in-process job runner.
+
 ---
 
 ## 1. Demoable outcome
@@ -148,7 +150,7 @@ DailyReconciliation {
   - Server reads each `CartItem`'s listing, captures `unit_price` and `quantity_available` at this moment.
   - Sets `Order.price_locked_until = now() + 15 minutes`.
   - Returns the order preview: subtotal, platform fee, taxes, total in the selected currency, expiry timestamp.
-- If the buyer doesn't complete payment within 15 minutes, a BullMQ delayed job voids the order (status=`cancelled`, CVC reservation released) and frees the price lock.
+- If the buyer doesn't complete payment within 15 minutes, a scheduled in-process job voids the order (status=`cancelled`, CVC reservation released) and frees the price lock. On server restart, a startup sweep reaps any locks older than 30 minutes.
 - FX is *not* used: the listing's `currency` is the order's currency. The Buyer's selected currency must match the listing's currency (or all listings in the cart must be in the same currency). Cart that mixes currencies is rejected at checkout with a clear message.
 
 ### 4.3 Gateway integration
@@ -166,9 +168,9 @@ DailyReconciliation {
 - Webhook endpoints:
   - `POST /api/webhooks/razorpay`
   - `POST /api/webhooks/stripe`
-- All webhooks verify HMAC signature; replay protection via `event_id` dedup.
+- All webhooks verify HMAC signature; replay protection relies on each gateway's built-in idempotency (event id) and a short-lived in-process dedup.
 - Webhook handler:
-  - `payment.captured` → set `Order.status='paid'`, `Payment.status='captured'`, queue Phase 7 certificate job.
+  - `payment.captured` → set `Order.status='paid'`, `Payment.status='captured'`, enqueue in-process `certificate.generate` job (consumed by Phase 7).
   - `payment.failed` → set `Order.status='failed'`, release CVC reservation, void within 60s.
   - `refund.processed` → set `Refund.status='succeeded'`, `Order.status='refunded'` (or `partially_refunded`).
 
@@ -191,7 +193,7 @@ DailyReconciliation {
 4. Return `clientSecret` / gateway redirect URL to the client.
 5. Buyer completes payment at the gateway.
 6. Webhook fires; order transitions to `paid` or `failed`.
-7. On `paid`: enqueue `certificate.generate` job (Phase 7). On `failed`: release CVC reservation, decrement rollback, set order to `failed`.
+7. On `paid`: enqueue in-process `certificate.generate` job (Phase 7). On `failed`: release CVC reservation, decrement rollback, set order to `failed`.
 
 ### 4.5 Atomicity and concurrency
 
@@ -215,8 +217,8 @@ DailyReconciliation {
 
 ### 4.7 Sanctions screening
 
-- `POST /api/orders` calls `sanctionsScreen({ buyer, total, country })` before order creation.
-- Default provider: pluggable interface; v1.0 ships with one provider (see `[USER DEPENDENCY]`).
+- For MVP: a simple internal list check (a static blocklist of sanctioned countries / individuals in `PlatformConfig.sanctions_list`). No external vendor call.
+- `sanctionsScreen({ buyer, total, country })` returns `clear`, `review`, or `block` based on the list.
 - Result:
   - `clear` → order proceeds.
   - `review` → order proceeds but flagged for manual review (Admin queue).
@@ -232,7 +234,7 @@ DailyReconciliation {
 
 ### 4.9 Daily reconciliation
 
-- BullMQ cron job at 02:00 UTC daily.
+- A per-instance `setInterval` triggers the job at 02:00 UTC daily (and a startup sweep covers any missed runs after a restart).
 - Aggregates `Payment`, `Refund`, `Payout` for the prior day.
 - Writes:
   - `ccverse-audit-exports/reconciliation/{date}.csv`
@@ -296,7 +298,7 @@ POST /api/webhooks/stripe
   - Idempotency-Key on order creation; replays return the same order.
 - **Auditability:** every payment, capture, refund, and payout row in `AuditLog`.
 - **RBAC:** Buyer can only see own orders; Admin can see all.
-- **Observability:** payment failure rate, gateway latency, refund rate, sanctions block rate — all Phase 9 metrics.
+- **Observability:** payment failure rate, gateway latency, refund rate, sanctions block rate are tracked via the in-process job runner's `failed_job` table; logs go to stdout.
 
 ---
 
@@ -305,7 +307,7 @@ POST /api/webhooks/stripe
 - **Unit:**
   - Price-lock expiry releases the CVC reservation.
   - Tax computation correct for known amounts and rates.
-  - Sanctions provider response mapping (clear/review/block).
+  - Sanctions list check mapping (clear/review/block).
   - Idempotent order creation returns same `order_id` for same `Idempotency-Key`.
 - **Integration:**
   - Full INR happy path via Razorpay sandbox.
@@ -340,7 +342,7 @@ POST /api/webhooks/stripe
 
 ## 10. Dependencies on other phases
 
-- Phase 0 (proxy, S3, SES, audit, RBAC, BullMQ).
+- Phase 0 (proxy, S3, SES, audit, RBAC, in-process job runner).
 - Phase 1 (auth, KYC, MFA).
 - Phase 2 (registry, batch integrity).
 - Phase 3 (listing, quantity_available).
@@ -355,7 +357,7 @@ POST /api/webhooks/stripe
 - **[USER DEPENDENCY] Platform fee %** — basis points; seed `PlatformConfig.platform_fee_bps` and confirm whether it varies by Seller / volume tier.
 - **[USER DEPENDENCY] Tax rates** — `tax_rate_in` (GST) and `tax_rate_us`. Confirm whether tax is inclusive or exclusive of the displayed price. Confirm any reverse-charge / B2B tax handling.
 - **[USER DEPENDENCY] GSTIN & business entity details** — for invoice PDFs; legal name, address, GSTIN, PAN, registered state.
-- **[USER DEPENDENCY] Sanctions screening provider** — provider name, API key, screening scope (OFAC, UN, EU, India MHA, etc.), threshold for `review` vs `block`.
+- **[USER DEPENDENCY] Sanctions blocklist content for MVP** — confirm the static list of countries / sanctioned parties to seed in `PlatformConfig.sanctions_list`. (External vendor deferred to post-MVP.)
 - **[USER DEPENDENCY] Minimum KYC threshold for Buyers** — drives `PlatformConfig.min_kyc_threshold` and `BuyerProfile.kyc_tier` enforcement at checkout.
 - **[USER DEPENDENCY] Currency display rule for Buyers in mixed markets** — India-resident Buyers default to INR; US-resident default to USD; confirm any auto-switch or always-show-both.
 - **[USER DEPENDENCY] Invoice branding** — sign-off on invoice PDF template (legal copy, branding, footer text).

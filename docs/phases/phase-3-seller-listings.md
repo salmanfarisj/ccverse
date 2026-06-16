@@ -170,8 +170,7 @@ This guarantees no listing can claim more than the batch has uncommitted. The ac
 
 ### 4.9 Document upload
 
-- Multipart upload to S3 with server-side encryption.
-- Optional: presigned POST for large files (P1; default multipart is acceptable for v1.0).
+- Multipart upload to S3 with server-side encryption (SSE-KMS).
 - Server computes SHA-256 and stores in `ListingDocument.sha256`.
 - On replace/delete: old S3 key archived to `s3://ccverse-projects/archived/{listingId}/{docId}/...` for 10 years (NFR record-keeping).
 
@@ -238,7 +237,7 @@ GET    /api/seller/dashboard
 - [ ] All state transitions are recorded in `ListingStateTransition` and `AuditLog`.
 - [ ] Concurrent listing creation on the same batch never oversubscribes.
 - [ ] Wizard completes in ≤ 5 steps and is WCAG 2.1 AA compliant.
-- [ ] Documents are stored encrypted in S3 with SHA-256 integrity.
+- [ ] Documents are stored encrypted in S3 (SSE-KMS) with SHA-256 integrity.
 
 ---
 

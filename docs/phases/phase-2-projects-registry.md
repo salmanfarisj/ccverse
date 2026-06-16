@@ -128,7 +128,6 @@ Constraints:
 - `UNIQUE (cvc_serial)` on `RegistryEntry` — prevents duplicates.
 - `CHECK (vintage_year <= extract(year from now()))` on `Project`.
 - `CHECK (serial_end >= serial_start)` and `CHECK (total_quantity = serial_end - serial_start + 1)` on `CvcBatch`.
-- `EXCLUDE` constraint or unique index `(serial_start, serial_end, cvc_prefix)` to prevent batch overlap within a project (deferred; implemented in app-level lock first, then a DB trigger if necessary).
 
 ### 4.2 CC Verse project ID assignment
 
@@ -146,14 +145,14 @@ Constraints:
     returns { batchId, serialStart, serialEnd }
   ```
 - Implementation:
-  - Lock the `next_serial` counter for the year.
-  - Insert N `RegistryEntry` rows in a single transaction (`insert ... select generate_series`).
+  - Lock the `next_serial` counter for the year (single in-process transaction; safe for MVP single-region).
+  - Insert N `RegistryEntry` rows in a single transaction.
   - Insert one `RegistryTransition` row per entry (`null → Available`) via the same transaction.
   - On any failure, the entire transaction rolls back — no partial batches.
 
 ### 4.4 Methodology validation
 
-- `packages/methodology` keeps an in-memory + DB-cached list of recognised methodologies from each public standard.
+- `packages/methodology` keeps a list of recognised methodologies, sourced from a static config file committed to the repo. The list is loaded at process start.
 - Source: configured list per `CC Verse Methodology Recognition Policy v1.0` (internal document).
 - v1.0 ships with the static, curated list for Verra, Gold Standard, and CAR (see `[USER DEPENDENCY]` to confirm the list source-of-truth and refresh cadence).
 - API: `methodology.isRecognised({ standard, code, version }) → { recognised, currentVersion, sourceUrl }`.
@@ -167,7 +166,7 @@ Constraints:
   - `vintage_year <= current_year`.
   - `methodology` must be `isRecognised(...)` true.
   - PDF: MIME check, size cap (e.g., 50 MB), SHA-256 computed and stored.
-  - File uploaded to S3 (`s3://ccverse-projects/{projectId}/pdd-{uuid}.pdf`) via presigned PUT or server-streamed PUT.
+  - File uploaded to S3 (`s3://ccverse-projects/{projectId}/pdd-{uuid}.pdf`).
 - Status starts at `pending_auditor_review`.
 - On Auditor approval (Phase 4 wires the UI, but the underlying service lives here):
   - Allocate `CCV-######`.
@@ -245,7 +244,7 @@ GET    /api/auditor/projects                 -- review queue (full UI in Phase 4
 POST   /api/admin/projects/:id/batches       -- issue CVC batch
 GET    /api/admin/projects/:id/registry      -- inspect registry entries
 
-GET    /api/methodologies                    -- list recognised (cached)
+GET    /api/methodologies                    -- list recognised (loaded from static config)
 ```
 
 ---
@@ -300,7 +299,7 @@ GET    /api/methodologies                    -- list recognised (cached)
 ## 11. USER DEPENDENCY
 
 - **[USER DEPENDENCY] Methodology Recognition Policy v1.0 content** — the authoritative list of methodologies, codes, versions, and source URLs for Verra, Gold Standard, and CAR. This is the source of truth for the `methodology.isRecognised` check.
-- **[USER DEPENDENCY] Source-of-truth for the methodology list** — is the canonical list stored in the codebase (curated) or fetched periodically from the public-standard websites? If fetched, what is the cadence and fallback? Per FRD §2.4, CC Verse reads the *published list*; clarify whether the engineering team must implement periodic sync or whether the policy team maintains the curated list.
+- **[USER DEPENDENCY] Source-of-truth for the methodology list** — is the canonical list a static file committed to the repo (curated), or fetched periodically from the public-standard websites? For MVP, the curated static file is the default. Periodic sync is out of scope for MVP.
 - **[USER DEPENDENCY] Reserved CCV ID range** — confirm reserved range for internal/test (default suggestion: `CCV-000000`–`CCV-000099`).
 - **[USER DEPENDENCY] CVC serial prefix policy** — confirm `CVC-YYYY-#######` format; confirm whether YYYY is issuance year or vintage year (proposal: issuance year, since vintage year is on the project).
 - **[USER DEPENDENCY] Vintage year on CVC** — vintage is per project (not per CVC); confirm.
