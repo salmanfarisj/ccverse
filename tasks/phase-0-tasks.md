@@ -245,7 +245,7 @@
 
 ### T0-3-1 Add Prisma to the root project (`prisma/schema.prisma` + `lib/db/`)
 
-- **Description**: Install `prisma` and `@prisma/client`. Add `prisma/schema.prisma` with `provider = "postgresql"`. Wire `@ccverse/db` package exports the singleton client.
+- **Description**: Install `prisma` and `@prisma/client`. Add `prisma/schema.prisma` with `provider = "postgresql"`. Wire `lib/db/index.ts` to export a singleton `PrismaClient` (globalThis-cached so Next.js HMR doesn't leak connections).
 - **Acceptance**: `npx prisma generate` succeeds; client is importable from `lib/db/`.
 - **Depends on**: T0-1-3
 
