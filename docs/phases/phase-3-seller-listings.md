@@ -108,6 +108,7 @@ draft
 ### 4.3 Listing creation flow
 
 UI wizard (≤ 5 steps):
+
 1. **Select project** — dropdown of `active` projects owned by the Seller.
 2. **Select CVC batch & quantity** — Seller picks a batch with `state='active'` and `quantity_total - sum(open listings) >= requested`. UI shows available per batch.
 3. **Pricing** — unit price, currency (INR or USD). Server validates price > 0 and within platform min/max.
@@ -115,6 +116,7 @@ UI wizard (≤ 5 steps):
 5. **Review & submit** — full preview, then submit.
 
 Server:
+
 - `POST /api/seller/listings` with multipart payload.
 - Validates:
   - Seller is KYC-approved.

@@ -8,12 +8,12 @@
 
 ## 1. Demoable outcome
 
-- `pnpm dev` starts a local app at `http://localhost:3000` rendering the design-system landing page (full-bleed hero, lime CTA, footer) per `DESIGN.md`.
+- `npm run dev` starts a local app at `http://localhost:3000` rendering the design-system landing page (full-bleed hero, lime CTA, footer) per `DESIGN.md`.
 - Local **proxy** (Caddy in Docker Compose) sits in front of the dev server, terminates TLS, forwards to the app, and serves `/health`.
 - `/health` returns `{ ok: true, db: "up", storage: "up", ses: "up" }` with status 200, and 503 if any dependency is down.
 - CI pipeline runs on every push: lint, typecheck, unit tests, build, and a smoke health check against a deployed preview environment.
 - Local Postgres (and an S3 mock) is runnable with one command (Docker Compose).
-- AWS SES is wired in `packages/email`; sending a test transactional email from a local script against a verified address succeeds.
+- AWS SES is wired in `lib/email`; sending a test transactional email from a local script against a verified address succeeds.
 - An append-only `audit_log` table exists and is used by the `/health` and `/version` endpoints.
 - Secrets management pattern is in place (`.env.example` + typed env loader).
 - One skeleton route per role exists: `/`, `/seller`, `/buyer`, `/auditor`, `/admin`, each gated to its role (RBAC middleware works; routes are empty).
@@ -25,6 +25,7 @@
 None directly. This phase lays the technical foundation for all FRs.
 
 Cross-cutting constraints honored (NFR 4.2, 4.5, 4.6):
+
 - TLS 1.2+ enforced at the proxy.
 - `audit_log` table created (NFR 4.6).
 - WCAG 2.1 AA scaffolding: semantic HTML, focus rings, color contrast verified against design tokens.
@@ -43,50 +44,99 @@ Cross-cutting constraints honored (NFR 4.2, 4.5, 4.6):
 
 ## 4. Technical implementation
 
-### 4.1 Repo layout (monorepo, single deployable)
+### 4.1 Repo layout (single Next.js monolith)
+
+> **Architectural change (16 Jun 2026):** dropped the `pnpm` workspace /
+> `apps/` + `packages/` monorepo. The entire app is a **single Next.js 14
+> project at the repo root**. All "package" code lives under `lib/*` inside
+> the same app. There is **one** `package.json`, **one** `tsconfig.json`,
+> **one** build, **one** deployable. GitHub Actions workflows live under
+> `.github/workflows/`. The previous "monorepo" plan was over-engineered for
+> a single-deployable MVP; this layout reduces ceremony and keeps every
+> surface one IDE jump away.
 
 ```
-ccverse/
-├── apps/
-│   └── web/                       # Next.js 14 app
-│       ├── app/
-│       │   ├── (public)/          # Marketing, listing browse (Phase 5)
-│       │   ├── (auth)/            # Login, register, MFA, reset
-│       │   ├── (seller)/          # Seller dashboard
-│       │   ├── (buyer)/           # Buyer area
-│       │   ├── (auditor)/         # Auditor console
-│       │   ├── (admin)/           # Admin console
-│       │   ├── api/               # Route handlers (REST)
-│       │   └── health/route.ts
-│       ├── components/            # UI primitives (per DESIGN.md)
-│       ├── lib/                   # Domain services (registry, payments, jobs…)
-│       ├── jobs/                  # In-process job runner
-│       ├── styles/                # Tailwind v4 + design tokens
-│       └── public/
-├── packages/
-│   ├── db/                        # Prisma schema, migrations, client
-│   ├── audit/                     # Append-only audit logger
-│   ├── rbac/                      # Role checks
-│   ├── storage/                   # AWS S3 client wrapper
-│   ├── email/                     # AWS SES client wrapper
-│   ├── session/                   # iron-session helpers
-│   └── ui/                        # Shared React components
-├── infra/
-│   ├── docker-compose.yml         # Postgres, local S3 mock, Caddy
-│   ├── proxy/
-│   │   ├── Caddyfile              # local proxy config
-│   │   └── nginx.conf             # production proxy config (template)
-│   └── github-actions/            # Workflows
-├── docs/                          # this folder
+ccverse/                              # repo root = Next.js app root
+├── app/                              # Next.js 14 App Router
+│   ├── (public)/                     # Marketing, listing browse (Phase 5)
+│   ├── (auth)/                       # Login, register, MFA, reset
+│   ├── (seller)/                     # Seller dashboard
+│   ├── (buyer)/                      # Buyer area
+│   ├── (auditor)/                    # Auditor console
+│   ├── (admin)/                      # Admin console
+│   ├── api/                          # Route handlers (REST)
+│   │   ├── health/route.ts           # T0-13-1
+│   │   └── version/route.ts          # T0-13-2
+│   ├── layout.tsx
+│   ├── page.tsx                      # Landing (T0-2-7)
+│   └── globals.css
+├── components/                       # UI primitives (T0-2-*)
+├── lib/                              # Domain services (replaces `packages/*`)
+│   ├── env.ts                        # zod env loader (T0-1-5)
+│   ├── db/                           # Prisma client + schema (T0-3)
+│   ├── audit/                        # Append-only audit writer (T0-9-2)
+│   ├── rbac/                         # requireRole helper (T0-8-1)
+│   ├── storage/                      # StorageDriver + S3Driver (T0-5)
+│   ├── email/                        # EmailDriver + SesDriver (T0-6)
+│   ├── session/                      # iron-session helpers (T0-7)
+│   └── logger/                       # pino logger (T0-9-1)
+├── jobs/                             # In-process job runner (T0-4)
+├── styles/                           # Design tokens + Tailwind v4 (T0-2-1/2)
+├── prisma/                           # Prisma schema + migrations (T0-3)
+│   ├── schema.prisma
+│   ├── migrations/
+│   └── seed.ts
+├── public/                           # Static assets
+├── tests/
+│   ├── unit/                         # Vitest
+│   └── e2e/                          # Playwright
+├── infra/                            # Local-only infra (NOT a monorepo package)
+│   ├── docker-compose.yml            # Postgres + MinIO + Caddy (T0-3-8, T0-5-3, T0-11-1)
+│   └── proxy/
+│       ├── Caddyfile                 # local dev proxy (T0-11-1)
+│       └── nginx.conf                # production proxy template (T0-11-2)
+├── docs/                             # Phase docs, plan, retros
+├── tasks/                            # Per-phase task breakdowns
+├── .github/
+│   └── workflows/                    # GitHub Actions (T0-10-*)
 ├── DESIGN.md
 ├── .env.example
-└── package.json                   # pnpm workspaces
+├── package.json                      # single root package
+├── tsconfig.json
+├── next.config.mjs
+├── vitest.config.ts
+├── playwright.config.ts
+├── .eslintrc.json
+├── .prettierrc
+└── .editorconfig
 ```
+
+**Path-aliased imports** (root `tsconfig.json`):
+
+```jsonc
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@/*": ["./*"] },
+  },
+}
+```
+
+Use `@/lib/env`, `@/app/api/health/route`, etc. There are **no** separate
+package entrypoints to wire up; everything resolves from the root.
+
+**Why no `packages/*`:** at MVP scale, the monorepo cost (workspace config,
+separate `tsconfig` per package, build orchestration, type-only exports
+between apps) outweighs any benefit. The original `packages/{db,audit,rbac,
+storage,email,session,ui}` plan is collapsed into `lib/{db,audit,rbac,
+storage,email,session,ui}` and a flat `components/` directory. If and when a
+second consumer appears (e.g., a CLI or a worker process) the boundary can
+be re-introduced by extracting one `lib/*` directory into a workspace.
 
 ### 4.2 Design system integration
 
-- Copy the `:root` tokens from `DESIGN.md` (lines 200–268) into `apps/web/styles/tokens.css`.
-- Configure Tailwind v4 with `@theme` tokens from `DESIGN.md` (lines 273–315) in `apps/web/styles/globals.css`.
+- Copy the `:root` tokens from `DESIGN.md` (lines 200–268) into `styles/tokens.css`.
+- Configure Tailwind v4 with `@theme` tokens from `DESIGN.md` (lines 273–315) in `app/globals.css` (or a `styles/globals.css` imported by it).
 - Build the components listed in `DESIGN.md`:
   - `Hero`, `LimeButton`, `GhostButton`, `DataTag`, `TopNav`, `FullBleedImage`, `Footer`, `Input`, `Section`.
 - Provide a `ThemeProvider` if SSR hydration requires it (Tailwind v4 with CSS variables should not need one).
@@ -94,11 +144,13 @@ ccverse/
 
 ### 4.3 Database (PostgreSQL + Prisma)
 
-- `apps/web` uses a Postgres connection.
-- `packages/db` contains:
+- The Next.js app uses a Postgres connection.
+- `prisma/` (root) contains:
   - `schema.prisma` (initial — all tables from FRD §6 created in this phase, even if unused yet; this avoids migration churn later)
   - `migrations/0000_init/`
   - `seed.ts` (admin account, default platform config)
+- `lib/db/` exposes a singleton Prisma client (re-export of `@prisma/client`
+  pointed at the schema in `prisma/schema.prisma`).
 
 Initial Prisma models (deferred-detail, full set later in Phase 2 / 3):
 
@@ -113,7 +165,7 @@ RegistryEntry, CvcBatch, AuditLog, Payout, PlatformConfig
 ### 4.4 Background jobs (in-process)
 
 - Postgres handles all reads.
-- A small `apps/web/jobs/runner.ts` module handles async work:
+- A small `jobs/runner.ts` module handles async work:
   - In-process worker pool with bounded concurrency (default 4 workers).
   - Job types: `email.send`, `certificate.generate`, `payout.run`, `audit.export.daily`, `listing.publication` (catalog refresh).
   - Each job is short-running (≤ 30s) or split into steps.
@@ -123,7 +175,7 @@ RegistryEntry, CvcBatch, AuditLog, Payout, PlatformConfig
 
 ### 4.5 Object storage (AWS S3)
 
-- `packages/storage` exposes a `StorageDriver` interface; concrete `S3Driver` targets AWS S3.
+- `lib/storage` exposes a `StorageDriver` interface; concrete `S3Driver` targets AWS S3.
 - Local dev uses **a local S3 mock** (`@aws-sdk/client-s3` pointed at a MinIO or `s3rver` instance via Docker Compose) with the same driver code path.
 - Buckets:
   - `ccverse-kyc` (KYC documents, bank statements) — Phase 1+
@@ -136,19 +188,19 @@ RegistryEntry, CvcBatch, AuditLog, Payout, PlatformConfig
 
 ### 4.5b Transactional email (AWS SES)
 
-- `packages/email` exposes `EmailDriver` interface with `SesDriver` as the sole production implementation.
+- `lib/email` exposes `EmailDriver` interface with `SesDriver` as the sole production implementation.
 - SES is the **only** outbound email channel; no third-party SMTP relays.
 - Verified sender domain (`ccverse.<tld>`) with DKIM, SPF, and DMARC records. Dedicated `noreply@`, `accounts@`, `audit@` identities.
 - Configuration set captures bounce/complaint/delivery events; webhook handler updates suppression list and audit log.
-- Templates in `packages/email/templates/` (React Email, rendered to HTML + plain text). Brand voice per `DESIGN.md`.
+- Templates in `lib/email/templates/` (React Email, rendered to HTML + plain text). Brand voice per `DESIGN.md`.
 - Local dev: SES sandbox with verified recipient addresses; in CI, SES is mocked at the `EmailDriver` boundary.
 - Rate limit and bounce thresholds monitored; SES account suspension alarms surface in the structured logs and in the Admin console.
 
 ### 4.6 Auth scaffolding (no flows yet)
 
-- `packages/session` exposes:
+- `lib/session` exposes:
   - `getSession()` — reads httpOnly cookie via `iron-session`, returns session payload.
-  - `requireRole(role[])` — used in route handlers / server actions.
+  - `requireRole(role[])` — lives in `lib/rbac/`, used in route handlers / server actions.
   - TOTP MFA helper via `otplib` — **scaffolded but disabled**; full flow in Phase 1.
 - Password hashing helper: `argon2id` (parameters from OWASP cheat sheet).
 - Account lockout helper: `trackFailedLogin(userId)` — implemented but not enforced yet.
@@ -176,19 +228,23 @@ admin    → /admin, /api/admin/*
 ### 4.9 CI/CD (GitHub Actions)
 
 - `ci.yml`:
-  - Install (pnpm), lint (eslint), typecheck (tsc), test (vitest), build (next build).
+  - Install (npm ci), lint (eslint), typecheck (tsc), test (vitest), format check (prettier), build (next build).
   - Run Prisma generate.
-  - Cache pnpm store.
+  - Cache npm store.
 - `preview.yml`:
   - On PR: deploy preview environment with a per-PR Postgres.
   - Smoke test `/health` and root page.
 - `deploy.yml` (deferred to staging in Phase 9): production deploy gated on `main`.
+
+All workflows live under `.github/workflows/` at the repo root (not under
+`infra/`).
 
 ### 4.10 Proxy layer
 
 The proxy sits in front of the server (per architecture diagram). Two configurations:
 
 **Local dev (Caddy in Docker Compose):**
+
 - Auto-TLS via Caddy's internal CA.
 - Forwards `localhost:8443` → `web:3000`.
 - Adds `X-Forwarded-Proto`, `X-Forwarded-For`, `X-Real-IP`.
@@ -196,6 +252,7 @@ The proxy sits in front of the server (per architecture diagram). Two configurat
 - Logs to stdout (collected by docker-compose).
 
 **Production (Nginx on a single VM or container):**
+
 - TLS 1.2+ only; HSTS with `max-age=63072000; includeSubDomains; preload`.
 - Basic per-IP rate limit on `/api/*`.
 - Static asset cache for `/_next/static/*` (1 year, immutable).
@@ -223,12 +280,12 @@ The proxy **must not** be reachable from the server side; all outbound calls (SE
 
 Minimum columns for tables required by RBAC and audit log:
 
-| Table | Columns added in Phase 0 |
-|---|---|
-| `User` | `id (uuid)`, `email (citext unique)`, `password_hash`, `role (enum)`, `status (enum)`, `mfa_enabled`, `created_at`, `last_login_at` |
-| `AuditLog` | `id`, `actor_id`, `actor_role`, `action`, `target_type`, `target_id`, `ip`, `timestamp`, `payload (jsonb)` |
-| `PlatformConfig` | `key`, `value`, `updated_at` (singleton row seeded with defaults) |
-| `FailedJob` | `id`, `job_type`, `payload jsonb`, `error`, `attempts`, `created_at`, `failed_at` |
+| Table            | Columns added in Phase 0                                                                                                            |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `User`           | `id (uuid)`, `email (citext unique)`, `password_hash`, `role (enum)`, `status (enum)`, `mfa_enabled`, `created_at`, `last_login_at` |
+| `AuditLog`       | `id`, `actor_id`, `actor_role`, `action`, `target_type`, `target_id`, `ip`, `timestamp`, `payload (jsonb)`                          |
+| `PlatformConfig` | `key`, `value`, `updated_at` (singleton row seeded with defaults)                                                                   |
+| `FailedJob`      | `id`, `job_type`, `payload jsonb`, `error`, `attempts`, `created_at`, `failed_at`                                                   |
 
 Other tables created with placeholder columns; finalized in their owning phase.
 
@@ -288,7 +345,7 @@ No business APIs yet.
 
 ## 10. Acceptance criteria
 
-- [ ] `pnpm dev` boots the app and `/` renders per `DESIGN.md`.
+- [ ] `npm run dev` boots the app and `/` renders per `DESIGN.md`.
 - [ ] `/health` returns 200 with `db: up, storage: up, ses: up` in local.
 - [ ] Lint, typecheck, tests, build all green in CI.
 - [ ] Preview deploy from a PR is reachable and shows `/` correctly.
@@ -322,7 +379,7 @@ These must be resolved before Phase 0 can be considered complete:
 - **[USER DEPENDENCY] TLS certificates** — provisioning approach (managed by host vs Let's Encrypt).
 - **[USER DEPENDENCY] GitHub org & repo** — for CI/CD. Permission for secrets in Actions.
 - **[USER DEPENDENCY] Brand assets** — confirmation that `DESIGN.md` is the final design system; if NB International Pro is licensed, font files must be supplied.
-- **[USER DEPENDENCY] Repository creation** — confirm monorepo (pnpm workspaces) vs polyrepo decision.
+- **[USER DEPENDENCY] Repository creation** — **resolved (16 Jun 2026)**: single Next.js monolith at the repo root. No `pnpm` workspaces, no `apps/*` or `packages/*` sub-trees. `lib/*` replaces the previous `packages/*` layout.
 - **[USER DEPENDENCY] Compliance/security review** — initial sign-off on header policy, CSP, password hashing parameters, audit log retention duration (default 7 years per NFR 4.6).
 - **[USER DEPENDENCY] IAM roles & policies** — for the server, define the least-privilege IAM role granting S3 + SES access; AWS access keys must not be embedded.
 

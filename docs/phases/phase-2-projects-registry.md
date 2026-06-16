@@ -125,6 +125,7 @@ RegistryTransition {  -- append-only history; do not delete rows
 ```
 
 Constraints:
+
 - `UNIQUE (cvc_serial)` on `RegistryEntry` — prevents duplicates.
 - `CHECK (vintage_year <= extract(year from now()))` on `Project`.
 - `CHECK (serial_end >= serial_start)` and `CHECK (total_quantity = serial_end - serial_start + 1)` on `CvcBatch`.
@@ -152,7 +153,7 @@ Constraints:
 
 ### 4.4 Methodology validation
 
-- `packages/methodology` keeps a list of recognised methodologies, sourced from a static config file committed to the repo. The list is loaded at process start.
+- `lib/methodology/` keeps a list of recognised methodologies, sourced from a static config file committed to the repo. The list is loaded at process start.
 - Source: configured list per `CC Verse Methodology Recognition Policy v1.0` (internal document).
 - v1.0 ships with the static, curated list for Verra, Gold Standard, and CAR (see `[USER DEPENDENCY]` to confirm the list source-of-truth and refresh cadence).
 - API: `methodology.isRecognised({ standard, code, version }) → { recognised, currentVersion, sourceUrl }`.
@@ -181,7 +182,7 @@ Constraints:
 - Allocates the batch to a Seller; if no Seller specified, allocated to the project owner.
 - Idempotency: client supplies an `Idempotency-Key` header; replays return the same response.
 
-### 4.7 Registry service API (in `packages/registry`)
+### 4.7 Registry service API (in `lib/registry/`)
 
 ```
 allocateToListing({ batchId, listingId, quantity, actorId })

@@ -151,11 +151,11 @@ DailyReconciliation {
   - Sets `Order.price_locked_until = now() + 15 minutes`.
   - Returns the order preview: subtotal, platform fee, taxes, total in the selected currency, expiry timestamp.
 - If the buyer doesn't complete payment within 15 minutes, a scheduled in-process job voids the order (status=`cancelled`, CVC reservation released) and frees the price lock. On server restart, a startup sweep reaps any locks older than 30 minutes.
-- FX is *not* used: the listing's `currency` is the order's currency. The Buyer's selected currency must match the listing's currency (or all listings in the cart must be in the same currency). Cart that mixes currencies is rejected at checkout with a clear message.
+- FX is _not_ used: the listing's `currency` is the order's currency. The Buyer's selected currency must match the listing's currency (or all listings in the cart must be in the same currency). Cart that mixes currencies is rejected at checkout with a clear message.
 
 ### 4.3 Gateway integration
 
-- `packages/payments` defines:
+- `lib/payments/` defines:
   ```
   interface PaymentGateway {
     createPaymentIntent({ amount, currency, orderId, buyer }): Promise<{ gatewayRef, clientSecret }>
@@ -185,7 +185,7 @@ DailyReconciliation {
    - Sanctions screening passed (see §4.7).
 3. Atomically:
    - Decrement `Listing.quantity_available` by the line item quantity (DB CHECK prevents negative).
-   - Call `registry.allocateToListing` for any *additional* CVC entries (in v1.0, the listing already holds entries from Phase 4 approval; this step links those entries to the order).
+   - Call `registry.allocateToListing` for any _additional_ CVC entries (in v1.0, the listing already holds entries from Phase 4 approval; this step links those entries to the order).
    - Create `Order` + `OrderItem` rows in `created` status.
    - Create `PriceLock` row with TTL.
    - Create `Payment` row with `status='authorized'`.
@@ -364,6 +364,6 @@ POST /api/webhooks/stripe
 - **[USER DEPENDENCY] Refund SLA** — confirm "refund initiated immediately" vs "refund initiated within 1 business day" copy.
 - **[USER DEPENDENCY] Dispute window and refund-on-dispute policy** — confirm 7-day window; confirm whether a dispute auto-refunds or always goes to Admin review.
 - **[USER DEPENDENCY] Payout currency** — is a Seller paid in the currency of the orders, in their bank's currency, or in INR/USD based on bank location? FRD says INR or USD; confirm per-Seller currency.
-- **[USER DEPENDENCY] T+2 calendar definition** — T+2 *business* days, or T+2 calendar days? FRD says "T+2 schedule post-purchase"; confirm.
+- **[USER DEPENDENCY] T+2 calendar definition** — T+2 _business_ days, or T+2 calendar days? FRD says "T+2 schedule post-purchase"; confirm.
 - **[USER DEPENDENCY] Webhook replay protection window** — for both Razorpay and Stripe.
 - **[USER DEPENDENCY] PCI scope confirmation** — sign-off that gateway-hosted fields and no-PAN storage meet PCI-DSS SAQ A or SAQ A-EP requirements.

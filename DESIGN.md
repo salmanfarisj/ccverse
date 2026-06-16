@@ -1,5 +1,5 @@
-
 # INVERSA — Style Reference
+
 > topographic field terminal at midnight. A dark command surface where massive editorial type and a single neon-lime marker layer over satellite earth photography, every label set in mono as if reading mission coordinates.
 
 **Theme:** dark
@@ -8,18 +8,19 @@ Inversa operates as a dark conservation-tech command console: a near-black canva
 
 ## Tokens — Colors
 
-| Name | Value | Token | Role |
-|------|-------|-------|------|
+| Name          | Value     | Token                   | Role                                                                                                                                 |
+| ------------- | --------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Obsidian Loam | `#13140e` | `--color-obsidian-loam` | Page canvas, hero background, card surfaces — the near-black base with a faint olive cast that keeps the dark from feeling synthetic |
-| Bone Vellum | `#f4f3e8` | `--color-bone-vellum` | Primary text, body copy, headings, icon strokes, border color on dark — warm off-white that reads as paper, not LCD white |
-| Iron Filings | `#404040` | `--color-iron-filings` | Hairline borders, footer dividers, low-emphasis rules |
-| Drift Ash | `#84837b` | `--color-drift-ash` | Muted secondary text, placeholder input state, low-contrast labels on light surfaces |
-| Lime Surveyor | `#ebfc72` | `--color-lime-surveyor` | Green supporting accent for decorative details and low-frequency emphasis. Do not promote it to the primary CTA color |
-| Marsh Olive | `#bacd31` | `--color-marsh-olive` | Gradient transition shade for the lime accent — deeper stop used in horizontal lime fades |
+| Bone Vellum   | `#f4f3e8` | `--color-bone-vellum`   | Primary text, body copy, headings, icon strokes, border color on dark — warm off-white that reads as paper, not LCD white            |
+| Iron Filings  | `#404040` | `--color-iron-filings`  | Hairline borders, footer dividers, low-emphasis rules                                                                                |
+| Drift Ash     | `#84837b` | `--color-drift-ash`     | Muted secondary text, placeholder input state, low-contrast labels on light surfaces                                                 |
+| Lime Surveyor | `#ebfc72` | `--color-lime-surveyor` | Green supporting accent for decorative details and low-frequency emphasis. Do not promote it to the primary CTA color                |
+| Marsh Olive   | `#bacd31` | `--color-marsh-olive`   | Gradient transition shade for the lime accent — deeper stop used in horizontal lime fades                                            |
 
 ## Tokens — Typography
 
 ### NB International Pro — Display and body — the brand's primary voice. Set at 72px for hero statements and 58px for section headers with -0.03em tracking, producing a compressed, editorial presence. Also carries body text at 18px (lh 1.62) and UI labels at 13–14px. Its humanist warmth prevents the dark canvas from feeling cold or corporate. · `--font-nb-international-pro`
+
 - **Substitute:** Söhne, Inter, or system-ui
 - **Weights:** 400
 - **Sizes:** 13px, 14px, 18px, 58px, 72px
@@ -28,6 +29,7 @@ Inversa operates as a dark conservation-tech command console: a near-black canva
 - **Role:** Display and body — the brand's primary voice. Set at 72px for hero statements and 58px for section headers with -0.03em tracking, producing a compressed, editorial presence. Also carries body text at 18px (lh 1.62) and UI labels at 13–14px. Its humanist warmth prevents the dark canvas from feeling cold or corporate.
 
 ### JetBrains Mono — Interface annotations, data labels, button text, tag values, and secondary display moments. The monospaced geometry reads as coordinates, timestamps, and telemetry — reinforcing the field-instrument metaphor. Set in weight 300 for hero-scale data callouts (65px) to keep mono from feeling mechanical at large sizes. · `--font-jetbrains-mono`
+
 - **Substitute:** JetBrains Mono, IBM Plex Mono, or Space Mono
 - **Weights:** 300, 400, 700
 - **Sizes:** 13px, 14px, 18px, 29px, 65px
@@ -37,13 +39,13 @@ Inversa operates as a dark conservation-tech command console: a near-black canva
 
 ### Type Scale
 
-| Role | Size | Line Height | Letter Spacing | Token |
-|------|------|-------------|----------------|-------|
-| caption | 13px | 1.2 | — | `--text-caption` |
-| body | 18px | 1.62 | -0.54px | `--text-body` |
-| subheading | 29px | 1.28 | — | `--text-subheading` |
-| heading | 58px | 1.06 | -1.74px | `--text-heading` |
-| display | 72px | 0.9 | -2.16px | `--text-display` |
+| Role       | Size | Line Height | Letter Spacing | Token               |
+| ---------- | ---- | ----------- | -------------- | ------------------- |
+| caption    | 13px | 1.2         | —              | `--text-caption`    |
+| body       | 18px | 1.62        | -0.54px        | `--text-body`       |
+| subheading | 29px | 1.28        | —              | `--text-subheading` |
+| heading    | 58px | 1.06        | -1.74px        | `--text-heading`    |
+| display    | 72px | 0.9         | -2.16px        | `--text-display`    |
 
 ## Tokens — Spacing & Shapes
 
@@ -51,26 +53,26 @@ Inversa operates as a dark conservation-tech command console: a near-black canva
 
 ### Spacing Scale
 
-| Name | Value | Token |
-|------|-------|-------|
-| 5 | 5px | `--spacing-5` |
-| 7 | 7px | `--spacing-7` |
-| 14 | 14px | `--spacing-14` |
-| 18 | 18px | `--spacing-18` |
-| 21 | 21px | `--spacing-21` |
-| 29 | 29px | `--spacing-29` |
-| 59 | 59px | `--spacing-59` |
-| 86 | 86px | `--spacing-86` |
-| 104 | 104px | `--spacing-104` |
-| 119 | 119px | `--spacing-119` |
+| Name | Value | Token           |
+| ---- | ----- | --------------- |
+| 5    | 5px   | `--spacing-5`   |
+| 7    | 7px   | `--spacing-7`   |
+| 14   | 14px  | `--spacing-14`  |
+| 18   | 18px  | `--spacing-18`  |
+| 21   | 21px  | `--spacing-21`  |
+| 29   | 29px  | `--spacing-29`  |
+| 59   | 59px  | `--spacing-59`  |
+| 86   | 86px  | `--spacing-86`  |
+| 104  | 104px | `--spacing-104` |
+| 119  | 119px | `--spacing-119` |
 
 ### Border Radius
 
 | Element | Value |
-|---------|-------|
-| tags | 3.6px |
-| cards | 0px |
-| inputs | 3.6px |
+| ------- | ----- |
+| tags    | 3.6px |
+| cards   | 0px   |
+| inputs  | 3.6px |
 | buttons | 3.6px |
 
 ### Layout
@@ -83,46 +85,55 @@ Inversa operates as a dark conservation-tech command console: a near-black canva
 ## Components
 
 ### Hero Headline
+
 **Role:** Primary page-level statement, 58–72px
 
 NB International Pro weight 400, 72px, line-height 0.90, letter-spacing -2.16px, color #f4f3e8. Sits bottom-left over full-bleed image with no background treatment. The extreme line-height (0.90) stacks lines tightly into a single block, creating weight without weight-of-stroke.
 
 ### Lime Action Button
+
 **Role:** Primary call-to-action, high-emphasis interactive
 
 Background #ebfc72, text #13140, font JetBrains Mono weight 400 at 14px, padding 14px 18px, border-radius 3.6px, uppercase letter spacing. The button is the only high-saturation element on the page — its presence makes it impossible to miss without needing size or shadow emphasis.
 
 ### Ghost Text Button
+
 **Role:** Secondary action, low-emphasis interactive
 
 Transparent background, text #f4f3e8, border optional 1px #404040, JetBrains Mono 14px, 3.6px radius. Used for navigation items and secondary links in dark contexts.
 
 ### Data Tag
+
 **Role:** Coordinate, label, or classification marker
 
 Background #ebfc72 or transparent with #ebfc72 border, text #13140 or #f4f3e8, JetBrains Mono 13px weight 400, padding 5px 7px, 3.6px radius. Functions as the 'survey marker' of the system — small, bright, unmistakable.
 
 ### Top Navigation Bar
+
 **Role:** Site-wide header
 
 Transparent over hero, fixed/sticky. Left: brand wordmark 'INVERSA' in NB International Pro 14px #f4f3e8. Right: 'Menu' trigger in JetBrains Mono 13px #f4f3e8 with small indicator dot. No background fill, no border — the nav floats on the image.
 
 ### Full-Bleed Image Band
+
 **Role:** Atmospheric section separator or context image
 
 Edge-to-edge photographic imagery (aerial/satellite) with no radius, no border, no overlay. Sits at 100vw. Provides the only color in the system outside the lime accent.
 
 ### Text Block (Dark Surface)
+
 **Role:** Contained editorial content on canvas
 
 No card chrome — content sits directly on #13140e. Headings in NB International Pro 58px #f4f3e8, body in 18px #f4f3e8 lh 1.62. No background fill, no border, no shadow. Spacing between blocks: 18px element gap, 86–104px section gap.
 
 ### Footer
+
 **Role:** Site footer
 
 Full-width dark #13140 band. Top border 1px #404040. Content in JetBrains Mono 13px #f4f3e8. Sparse — typically 2–3 columns of links and metadata.
 
 ### Input Field
+
 **Role:** Text input
 
 Transparent background on dark canvas, bottom border only 1px #404040, text in NB International Pro 14px #f4f3e8, placeholder #84837b. No fill, no radius on the field — the underline IS the field.
@@ -130,6 +141,7 @@ Transparent background on dark canvas, bottom border only 1px #404040, text in N
 ## Do's and Don'ts
 
 ### Do
+
 - Set hero headlines at 58–72px NB International Pro weight 400 with line-height 0.90 and letter-spacing -0.03em — the tight leading stacks lines into a single mass.
 - Use #ebfc72 as the sole chromatic accent for any element that needs to be noticed: buttons, active states, data tags, and icon highlights.
 - Apply -0.03em letter-spacing to all NB International Pro text regardless of size — the tracking is part of the brand voice, not a display-only treatment.
@@ -139,6 +151,7 @@ Transparent background on dark canvas, bottom border only 1px #404040, text in N
 - Space sections at 86–104px and separate them with whitespace, not dividers or background color shifts.
 
 ### Don't
+
 - Do not add box-shadows to any element — the system is deliberately flat; depth comes from color contrast, not elevation.
 - Do not introduce a second accent color — the lime is alone by design. Any other chromatic addition dilutes the survey-marker effect.
 - Do not set body text below 18px in NB International Pro — the font's humanist proportions require generous size to read correctly.
@@ -149,10 +162,10 @@ Transparent background on dark canvas, bottom border only 1px #404040, text in N
 
 ## Surfaces
 
-| Level | Name | Value | Purpose |
-|-------|------|-------|---------|
-| 1 | Obsidian Loam | `#13140` | Page canvas, hero background, full-bleed image overlay base |
-| 2 | Iron Filings | `#404040` | Hairline borders, footer rule lines, low-emphasis dividers |
+| Level | Name          | Value     | Purpose                                                     |
+| ----- | ------------- | --------- | ----------------------------------------------------------- |
+| 1     | Obsidian Loam | `#13140`  | Page canvas, hero background, full-bleed image overlay base |
+| 2     | Iron Filings  | `#404040` | Hairline borders, footer rule lines, low-emphasis dividers  |
 
 ## Elevation
 
@@ -169,6 +182,7 @@ Full-bleed dark canvas with content anchored to a max-width 1200px column. The h
 ## Agent Prompt Guide
 
 **Quick Color Reference**
+
 - background: #13140e
 - text: #f4f3e8
 - border: #404040
@@ -211,8 +225,11 @@ Full-bleed dark canvas with content anchored to a max-width 1200px column. The h
   --color-marsh-olive: #bacd31;
 
   /* Typography — Font Families */
-  --font-nb-international-pro: 'NB International Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-jetbrains-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-nb-international-pro:
+    'NB International Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+  --font-jetbrains-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Typography — Scale */
   --text-caption: 13px;
@@ -280,8 +297,11 @@ Full-bleed dark canvas with content anchored to a max-width 1200px column. The h
   --color-marsh-olive: #bacd31;
 
   /* Typography */
-  --font-nb-international-pro: 'NB International Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-jetbrains-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-nb-international-pro:
+    'NB International Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+  --font-jetbrains-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Typography — Scale */
   --text-caption: 13px;

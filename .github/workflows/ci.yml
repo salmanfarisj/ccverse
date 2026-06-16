@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+# Cancel an in-flight run for the same ref when a new commit lands.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-test:
+    name: Lint · Typecheck · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Build
+        run: npm run build
+        env:
+          # CI builds need the same env shape as dev; missing/empty values are
+          # acceptable for a typecheck+lint+build smoke pass. The full schema
+          # is exercised by `tests/unit/env.test.ts`.
+          APP_ORIGIN: 'http://localhost:3000'
+          DATABASE_URL: 'postgresql://ccverse:ccverse@localhost:5432/ccverse?schema=public'
+          S3_REGION: 'us-east-1'
+          S3_BUCKET_KYC: 'ccverse-kyc'
+          S3_BUCKET_PROJECTS: 'ccverse-projects'
+          S3_BUCKET_CERTIFICATES: 'ccverse-certificates'
+          S3_BUCKET_AUDIT_EXPORTS: 'ccverse-audit-exports'
+          SES_REGION: 'us-east-1'
+          SES_SENDER_DOMAIN: 'ccverse.local'
+          SES_CONFIGURATION_SET: 'ccverse-default'
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-placeholder-session-secret-32-chars' }}

@@ -27,6 +27,7 @@
 - FR-C-006 Retain certificates for at least 10 years.
 
 Cross-ref:
+
 - FR-B-007 "My Purchases" with certificate download links.
 - FR-B-008 Dispute window (7 days) — used to gate the revocation.
 
@@ -151,7 +152,7 @@ Job retries: 3 with exponential backoff. After 3 failures, the order is flagged 
      - Update `Certificate.status='revoked'`, `revoked_at=now()`, `revocation_reason`.
      - Insert `CertificateStateTransition`.
      - Update `Order.status='refunded'` (idempotent).
-     - **Move CVC entries from `Held` to `Retired` if the order is captured and the certificate is being revoked, OR release them back to `Available` if the order is being canceled before capture.** Coordination with the registry service: the canonical rule is *retire on capture+revoke*; *release on pre-capture cancel*. This is enforced by the registry service's `transferOnOrderCapture` and `retire` / `releaseFromOrder` calls.
+     - **Move CVC entries from `Held` to `Retired` if the order is captured and the certificate is being revoked, OR release them back to `Available` if the order is being canceled before capture.** Coordination with the registry service: the canonical rule is _retire on capture+revoke_; _release on pre-capture cancel_. This is enforced by the registry service's `transferOnOrderCapture` and `retire` / `releaseFromOrder` calls.
   2. After commit:
      - On-demand revalidate `/verify/[verification_token]`.
      - Generate a new "revocation" PDF (with a watermark "REVOKED") and overwrite the S3 object (or write a separate object and update `pdf_s3_key`).
@@ -168,7 +169,7 @@ Job retries: 3 with exponential backoff. After 3 failures, the order is flagged 
 
 ### 4.8 KMS / signing infrastructure
 
-- `packages/signing` exposes a `PdfSigner` interface; `KmsPdfSigner` is the production impl.
+- `lib/signing/` exposes a `PdfSigner` interface; `KmsPdfSigner` is the production impl.
 - Private key never leaves KMS; signing is done by `KMS.Sign` with a P-256 (or RSA-2048) customer master key.
 - Public certificate (X.509) is published at `/.well-known/ccverse-signing.crt` for verifiers.
 - Verification libraries used by the PDF: standard PAdES validators (e.g., Adobe Reader, `pdf-sign`).

@@ -9,6 +9,7 @@
 ## 1. Goal
 
 Build CC Verse incrementally, phase by phase, so that:
+
 - Each phase ships a usable, testable increment of the product.
 - A team of developers can work in parallel across non-overlapping modules.
 - Every phase has clear prerequisites, deliverables, and acceptance criteria.
@@ -43,29 +44,30 @@ Architecture (per stakeholder diagram):
 └──────┘       └────────┘       └──────┘
 ```
 
-| Layer | Choice | Notes |
-|---|---|---|
-| Frontend + Backend | Next.js 14 (App Router) + TypeScript + React 18 | Single deployable; route handlers for the API |
-| Styling | Tailwind CSS v4 + design tokens from `DESIGN.md` | Tokens already defined; v4 `@theme` directive maps cleanly |
-| Proxy | Caddy (local) / Nginx (prod) | TLS termination, basic rate limit |
-| ORM | Prisma | Type-safe, migrations, fits PostgreSQL |
-| Primary DB | PostgreSQL 15 | ACID, JSONB, full-text search via `tsvector` |
-| Background jobs | Small `lib/jobs` module inside the Next.js process | Concurrency-limited; failed jobs land in a `failed_job` table |
-| Object storage | AWS S3 | KYC docs, project docs, certificates, audit exports |
-| Auth | Next.js + `iron-session` (cookie session) + `otplib` (TOTP) | Email + password; TOTP MFA for privileged roles |
-| Payments — INR | Razorpay | UPI, NEFT, cards. Webhook via Next.js route. |
-| Payments — USD | Stripe | Cards, ACH. Webhook via Next.js route. |
-| PDF generation | `pdf-lib` + `node-signpdf` (libraries) | Pure JS, no headless browser |
-| Email | AWS SES | Verified sender domain; transactional only |
-| KYC | **Manual for MVP** — Admin reviews uploaded documents and approves | Migration path to a vendor noted in Phase 1. |
-| Search | PostgreSQL `tsvector` + GIN | Built-in |
-| Observability | Structured logs to stdout (`pino`) | A log scraper can be added later; not required for MVP |
-| CI/CD | GitHub Actions | Lint, typecheck, test, build, deploy preview |
-| Hosting | Single-region (Vercel / Render / Railway / AWS) | Multi-region DR is **out of scope** for MVP |
+| Layer              | Choice                                                             | Notes                                                         |
+| ------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Frontend + Backend | Next.js 14 (App Router) + TypeScript + React 18                    | Single deployable; route handlers for the API                 |
+| Styling            | Tailwind CSS v4 + design tokens from `DESIGN.md`                   | Tokens already defined; v4 `@theme` directive maps cleanly    |
+| Proxy              | Caddy (local) / Nginx (prod)                                       | TLS termination, basic rate limit                             |
+| ORM                | Prisma                                                             | Type-safe, migrations, fits PostgreSQL                        |
+| Primary DB         | PostgreSQL 15                                                      | ACID, JSONB, full-text search via `tsvector`                  |
+| Background jobs    | Small `lib/jobs` module inside the Next.js process                 | Concurrency-limited; failed jobs land in a `failed_job` table |
+| Object storage     | AWS S3                                                             | KYC docs, project docs, certificates, audit exports           |
+| Auth               | Next.js + `iron-session` (cookie session) + `otplib` (TOTP)        | Email + password; TOTP MFA for privileged roles               |
+| Payments — INR     | Razorpay                                                           | UPI, NEFT, cards. Webhook via Next.js route.                  |
+| Payments — USD     | Stripe                                                             | Cards, ACH. Webhook via Next.js route.                        |
+| PDF generation     | `pdf-lib` + `node-signpdf` (libraries)                             | Pure JS, no headless browser                                  |
+| Email              | AWS SES                                                            | Verified sender domain; transactional only                    |
+| KYC                | **Manual for MVP** — Admin reviews uploaded documents and approves | Migration path to a vendor noted in Phase 1.                  |
+| Search             | PostgreSQL `tsvector` + GIN                                        | Built-in                                                      |
+| Observability      | Structured logs to stdout (`pino`)                                 | A log scraper can be added later; not required for MVP        |
+| CI/CD              | GitHub Actions                                                     | Lint, typecheck, test, build, deploy preview                  |
+| Hosting            | Single-region (Vercel / Render / Railway / AWS)                    | Multi-region DR is **out of scope** for MVP                   |
 
 > All choices above carry **[USER DEPENDENCY]** tags in Phase 0 for vendor and account provisioning. AWS SES and AWS S3 are confirmed in the architecture; the rest of the infra picks are user decisions.
 
 **Out of scope for MVP** (deferred to a post-MVP release):
+
 - Multi-region / DR
 - WAF / advanced edge security
 - External observability stack
@@ -98,20 +100,21 @@ Confirmed by stakeholder diagram. See §2 for the layered view.
 
 The build is split into **10 phases**. Each phase is sized to roughly one sprint (1–2 weeks) and is independently demoable.
 
-| # | Phase | Demoable artifact | Primary FR coverage | Depends on |
-|---|---|---|---|---|
-| 0 | Foundation & Infrastructure | Empty app shell with design system, CI, DB, deploy, SES wired | NFR 4.2 (scaffolding), DESIGN.md | — |
-| 1 | User Management, Auth & KYC (manual) | Register, login, MFA, password reset, manual KYC gating | FR-U-001…008 | P0 |
-| 2 | Project Registration & CVC Registry | Seller registers project → CCV-######; CVC batches issued & tracked | FR-S-009, BR-13/14/15, Section 5.1 | P1 |
-| 3 | Seller Listings | Seller creates/edits listing, status flow, supporting docs | FR-S-001…008 | P1, P2 |
-| 4 | Auditor Console | Review queue, approve/reject with policy references | FR-AU-001…009, FR-AD-003 | P1, P2, P3 |
-| 5 | Buyer Marketplace (browse) | Public catalog, filters, search, listing detail, cart (no checkout) | FR-B-001…005 | P3, P4 |
-| 6 | Payments & Checkout | Order creation, gateway auth/capture, refunds, currency lock | FR-B-006, FR-P-001…006 | P5 |
-| 7 | Certificate Generation & Verification | Signed PDF, SHA-256, public verification URL, revocation | FR-C-001…006, FR-B-007 | P6 |
-| 8 | Admin & Compliance | User mgmt, listing moderation, dispute flow, reports | FR-AD-001…007, FR-B-008 | P1, P6, P7 |
-| 9 | Notifications, Payouts, NFR Hardening | SES for all events, T+2 payouts, perf, security, observability | FR-N-001…003, FR-S-008, NFR §4, FR-AD-006 | P0–P8 |
+| #   | Phase                                 | Demoable artifact                                                   | Primary FR coverage                       | Depends on |
+| --- | ------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------- | ---------- |
+| 0   | Foundation & Infrastructure           | Empty app shell with design system, CI, DB, deploy, SES wired       | NFR 4.2 (scaffolding), DESIGN.md          | —          |
+| 1   | User Management, Auth & KYC (manual)  | Register, login, MFA, password reset, manual KYC gating             | FR-U-001…008                              | P0         |
+| 2   | Project Registration & CVC Registry   | Seller registers project → CCV-######; CVC batches issued & tracked | FR-S-009, BR-13/14/15, Section 5.1        | P1         |
+| 3   | Seller Listings                       | Seller creates/edits listing, status flow, supporting docs          | FR-S-001…008                              | P1, P2     |
+| 4   | Auditor Console                       | Review queue, approve/reject with policy references                 | FR-AU-001…009, FR-AD-003                  | P1, P2, P3 |
+| 5   | Buyer Marketplace (browse)            | Public catalog, filters, search, listing detail, cart (no checkout) | FR-B-001…005                              | P3, P4     |
+| 6   | Payments & Checkout                   | Order creation, gateway auth/capture, refunds, currency lock        | FR-B-006, FR-P-001…006                    | P5         |
+| 7   | Certificate Generation & Verification | Signed PDF, SHA-256, public verification URL, revocation            | FR-C-001…006, FR-B-007                    | P6         |
+| 8   | Admin & Compliance                    | User mgmt, listing moderation, dispute flow, reports                | FR-AD-001…007, FR-B-008                   | P1, P6, P7 |
+| 9   | Notifications, Payouts, NFR Hardening | SES for all events, T+2 payouts, perf, security, observability      | FR-N-001…003, FR-S-008, NFR §4, FR-AD-006 | P0–P8      |
 
 Each phase document is in `docs/phases/`:
+
 - `phase-0-foundation.md`
 - `phase-1-user-management-kyc.md`
 - `phase-2-projects-registry.md`
@@ -124,6 +127,7 @@ Each phase document is in `docs/phases/`:
 - `phase-9-notifications-payouts-nfr.md`
 
 Each phase doc follows the same template:
+
 1. Goal & demoable outcome
 2. Functional requirements in scope (FR-IDs)
 3. Non-functional requirements touched
@@ -171,6 +175,7 @@ These are not optional and must be observable from Phase 0 onward:
 ## 7. CC Verse Registry — design principle
 
 The CC Verse registry is the **single source of truth** for credit existence, ownership, and retirement in v1.0. This is enforced by:
+
 - A `registry_entry` row per CVC serial with state ∈ {`Available`, `Held`, `Retired`}.
 - A `state_transition` append-only log per entry.
 - DB-enforced unique constraint on `(cvc_serial)` to prevent duplicates.
@@ -184,6 +189,7 @@ The registry is bootstrapped in **Phase 2** and is the only place where CVCs are
 ## 8. Open items (carried from FRD §Appendix E)
 
 These block specific phases and are tracked in every relevant phase doc as `[USER DEPENDENCY]`:
+
 - Platform fee % and tax treatment per market (India/US) — **Phase 6**.
 - Dispute resolution SLA & escalation path — **Phase 8**.
 - Minimum KYC tier for low-value Buyers — **Phase 1** (manual review handles this for MVP).
@@ -194,6 +200,7 @@ These block specific phases and are tracked in every relevant phase doc as `[USE
 ## 9. Delivery cadence (target)
 
 Assuming 1–2 weeks per phase with 2–4 engineers:
+
 - Phase 0 → 1 week
 - Phase 1 → 2 weeks
 - Phase 2 → 2 weeks

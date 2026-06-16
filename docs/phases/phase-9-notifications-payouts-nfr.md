@@ -41,45 +41,46 @@
 
 ### 4.1 Notification system (email only)
 
-- `packages/notifications` exposes a `NotificationService` with one channel:
+- `lib/notifications/` exposes a `NotificationService` with one channel:
   - `email` (AWS SES — the architecture's email vendor).
 - Each channel has a `Driver` interface; `SesEmailDriver` is the production implementation.
 - All notifications are enqueued through the in-process job runner (Phase 0) so retries are uniform.
 - Idempotency: every notification carries a `dedupe_key` (e.g., `order.paid.{orderId}`). Re-sends on retry do not duplicate; SES suppression list is honored.
-- Template registry: per-event React Email templates with subject, body, deep link. Templates live in `packages/notifications/templates/`.
+- Template registry: per-event React Email templates with subject, body, deep link. Templates live in `lib/notifications/templates/`.
 
 Event coverage:
 
-| Event | Email | Deep link |
-|---|---|---|
-| `user.registered` | ✓ | `/verify-email` |
-| `user.email_verified` | ✓ | `/login` |
-| `user.password_reset_requested` | ✓ | `/reset-password/{token}` |
-| `user.password_reset_completed` | ✓ | `/account/security` |
-| `user.mfa_enrolled` | ✓ | `/account/security` |
-| `user.banned` | ✓ | — |
-| `kyc.started` | ✓ | `/seller` (KYC widget) |
-| `kyc.approved` | ✓ | `/seller` |
-| `kyc.rejected` | ✓ | `/seller` |
-| `project.submitted` | ✓ (Seller) | `/seller/projects/{id}` |
-| `project.approved` | ✓ (Seller) | `/seller/projects/{id}` |
-| `project.rejected` | ✓ (Seller) | `/seller/projects/{id}` |
-| `listing.submitted` | ✓ (Seller) | `/seller/listings/{id}` |
-| `listing.approved` | ✓ (Seller) | `/seller/listings/{id}` |
-| `listing.rejected` | ✓ (Seller) | `/seller/listings/{id}` |
-| `order.paid` | ✓ (Buyer) | `/buyer/purchases/{id}` |
-| `order.failed` | ✓ (Buyer) | `/cart` |
-| `certificate.issued` | ✓ (Buyer) | `/buyer/purchases/{id}` |
-| `payout.scheduled` | ✓ (Seller) | `/seller/payouts` |
-| `payout.sent` | ✓ (Seller) | `/seller/payouts` |
-| `payout.failed` | ✓ (Seller) | `/seller/payouts` |
-| `dispute.opened` | ✓ (Buyer + Seller + Admin) | dispute detail |
-| `dispute.resolved` | ✓ (Buyer + Seller) | dispute detail |
-| `certificate.revoked` | ✓ (Buyer) | `/verify/{token}` |
+| Event                           | Email                      | Deep link                 |
+| ------------------------------- | -------------------------- | ------------------------- |
+| `user.registered`               | ✓                          | `/verify-email`           |
+| `user.email_verified`           | ✓                          | `/login`                  |
+| `user.password_reset_requested` | ✓                          | `/reset-password/{token}` |
+| `user.password_reset_completed` | ✓                          | `/account/security`       |
+| `user.mfa_enrolled`             | ✓                          | `/account/security`       |
+| `user.banned`                   | ✓                          | —                         |
+| `kyc.started`                   | ✓                          | `/seller` (KYC widget)    |
+| `kyc.approved`                  | ✓                          | `/seller`                 |
+| `kyc.rejected`                  | ✓                          | `/seller`                 |
+| `project.submitted`             | ✓ (Seller)                 | `/seller/projects/{id}`   |
+| `project.approved`              | ✓ (Seller)                 | `/seller/projects/{id}`   |
+| `project.rejected`              | ✓ (Seller)                 | `/seller/projects/{id}`   |
+| `listing.submitted`             | ✓ (Seller)                 | `/seller/listings/{id}`   |
+| `listing.approved`              | ✓ (Seller)                 | `/seller/listings/{id}`   |
+| `listing.rejected`              | ✓ (Seller)                 | `/seller/listings/{id}`   |
+| `order.paid`                    | ✓ (Buyer)                  | `/buyer/purchases/{id}`   |
+| `order.failed`                  | ✓ (Buyer)                  | `/cart`                   |
+| `certificate.issued`            | ✓ (Buyer)                  | `/buyer/purchases/{id}`   |
+| `payout.scheduled`              | ✓ (Seller)                 | `/seller/payouts`         |
+| `payout.sent`                   | ✓ (Seller)                 | `/seller/payouts`         |
+| `payout.failed`                 | ✓ (Seller)                 | `/seller/payouts`         |
+| `dispute.opened`                | ✓ (Buyer + Seller + Admin) | dispute detail            |
+| `dispute.resolved`              | ✓ (Buyer + Seller)         | dispute detail            |
+| `certificate.revoked`           | ✓ (Buyer)                  | `/verify/{token}`         |
 
 ### 4.2 Payout execution
 
 Two channels:
+
 - **INR:** Razorpay Payouts.
 - **USD:** Stripe Connect (Custom accounts) or direct ACH via a partner (e.g., Modern Treasury, or a sponsor bank).
 
@@ -95,23 +96,28 @@ For MVP, the payout system:
 8. Writes `AuditLog` and an entry to the daily reconciliation.
 
 Disputes hold payouts:
+
 - A `Payout` with `status='on_hold'` is skipped by the nightly job.
 - When the dispute resolves, the payout is recomputed and re-scheduled.
 
 **Manual / exception payouts:**
+
 - Admin can trigger an ad-hoc payout via `POST /api/admin/sellers/:id/payouts` with `{ amount, reason }`. MFA step-up required.
 
 **Payout history UI:**
+
 - `/seller/payouts` — table of payouts by period, status, gross, fees, net; download a CSV statement.
 
 ### 4.3 Performance
 
 Targets (NFR 4.1):
+
 - Marketplace browse ≤ 2s p95.
 - Search ≤ 1s p95 for ≤ 100k active listings.
 - Checkout ≤ 5s p95.
 
 Implementation:
+
 - **Reads:** Postgres handles all reads. `mv_active_listings` (materialized view) backs the marketplace browse; only the listing detail page reads the live `Listing` table on a hot path. GIN index on `search_tsv` keeps search under 1s.
 - **Static assets:** `/_next/static/*` cached for 1 year, immutable, served by the proxy.
 - **Writes:** `Order` creation and `RegistryEntry` transitions use `SERIALIZABLE` isolation. `SELECT ... FOR UPDATE` on listing / batch / registry rows prevents oversell.
@@ -119,6 +125,7 @@ Implementation:
 - **Compression:** the proxy serves Brotli / gzip.
 
 **Load test (autocannon or k6):**
+
 - 1,000 concurrent users browsing the marketplace (read-heavy).
 - 100 concurrent checkouts (write-heavy).
 - 1,000 concurrent purchase attempts on a 100-unit listing (concurrency test).
@@ -253,7 +260,7 @@ GET  /api/version
 ## 11. USER DEPENDENCY
 
 - **[USER DEPENDENCY] Payout bank rail** — confirm Razorpay Payouts (INR) and Stripe Connect or partner (USD); provide production credentials and KYC of the platform entity (required by the rail providers).
-- **[USER DEPENDENCY] T+2 business-day vs calendar-day definition** — confirm. Proposal: T+2 *business* days, excluding Indian and US banking holidays.
+- **[USER DEPENDENCY] T+2 business-day vs calendar-day definition** — confirm. Proposal: T+2 _business_ days, excluding Indian and US banking holidays.
 - **[USER DEPENDENCY] Payout currency per Seller** — confirm Seller picks INR or USD at profile setup and cannot change without Admin re-verification.
 - **[USER DEPENDENCY] Payout minimum amount** — confirm whether tiny payouts are batched, held, or sent. Proposal: hold until cumulative net ≥ ₹500 / $10; release monthly.
 - **[USER DEPENDENCY] Payout statement CSV/PDF** — sign-off on Seller-facing statement template.

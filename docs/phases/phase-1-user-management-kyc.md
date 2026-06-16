@@ -30,6 +30,7 @@
 - FR-U-008 Profile view/update; verified-field changes require re-verification.
 
 Implicit but in scope:
+
 - A minimum KYC tier for low-value Buyers (per FRD Appendix E) — see `[USER DEPENDENCY]`. Manual review handles the threshold check for MVP.
 
 ---
@@ -138,6 +139,7 @@ MfaEnrollment { user_id, secret_encrypted, enrolled_at, last_used_at, backup_cod
 ### 4.2 Routes & screens
 
 Public/auth:
+
 - `/register` — Buyer self-registration.
 - `/register/seller` — Seller entity application + KYC document upload.
 - `/login`
@@ -146,19 +148,23 @@ Public/auth:
 - `/mfa/enroll`, `/mfa/verify`
 
 Authenticated (any role):
+
 - `/account` — profile view/edit; verified fields re-prompt verification on change.
 - `/account/security` — change password, MFA manage (where applicable).
 
 Admin (gated by `admin` role):
+
 - `/admin/users` — list, search, view, suspend, ban, remove.
 - `/admin/users/new-staff` — create Auditor/Admin (forces MFA enrollment on first login).
 - `/admin/users/[id]` — view, edit role, force MFA reset, ban.
 - `/admin/kyc` — pending KYC applications; review queue with document viewer.
 
 Seller area (gated; banner if KYC not approved):
+
 - `/seller` dashboard with KYC status widget and "Upload KYC documents" CTA.
 
 Buyer area (gated):
+
 - `/buyer` dashboard.
 
 ### 4.3 API surface (new)
@@ -217,10 +223,10 @@ POST   /api/admin/users/:id/reset-mfa
 
 ### 4.6 Email service (AWS SES)
 
-- `packages/email` exposes an `EmailDriver` interface; `SesDriver` is the production implementation. SES is the only outbound email channel.
+- `lib/email/` exposes an `EmailDriver` interface; `SesDriver` is the production implementation. SES is the only outbound email channel.
 - Verified sender domain (`ccverse.<tld>`) with DKIM, SPF, DMARC. Dedicated identities: `noreply@`, `accounts@`, `audit@`, `kyc@`.
 - Configuration set captures bounce / complaint / delivery events; webhook handler updates the SES suppression list and writes to `audit_log`.
-- Templates in `packages/email/templates/` (React Email → HTML + plain text):
+- Templates in `lib/email/templates/` (React Email → HTML + plain text):
   - `verify-email.tsx`
   - `password-reset.tsx`
   - `mfa-enrolled.tsx`
@@ -233,7 +239,7 @@ POST   /api/admin/users/:id/reset-mfa
 
 ### 4.7 Audit log
 
-- Centralized `audit.write({ actor, action, target, payload })` in `packages/audit`.
+- Centralized `audit.write({ actor, action, target, payload })` in `lib/audit/`.
 - Auth events emitted:
   - `auth.register`, `auth.email_verified`, `auth.login`, `auth.logout`, `auth.login_failed`, `auth.locked`, `auth.unlocked`, `auth.mfa_enrolled`, `auth.mfa_verified`, `auth.password_changed`, `auth.password_reset_requested`, `auth.password_reset_completed`, `user.updated`, `user.banned`, `user.suspended`, `user.role_changed`, `kyc.submitted`, `kyc.approved`, `kyc.rejected`.
 - Each row includes `ip` and `user_agent`.
@@ -269,6 +275,7 @@ See §4.3.
 ## 7. UI surfaces (new)
 
 See §4.2. All forms follow `DESIGN.md`:
+
 - Inputs: transparent background, bottom border only, JetBrains Mono placeholder.
 - Buttons: `LimeButton` for primary, `GhostButton` for secondary.
 - Errors: red `#cc4444` inline (token added to `tokens.css` — `[USER DEPENDENCY]` to confirm exact shade with design).
@@ -331,7 +338,7 @@ See §4.2. All forms follow `DESIGN.md`:
 
 ## 12. USER DEPENDENCY
 
-- **[USER DEPENDENCY] Minimum KYC tier for low-value Buyers** — threshold amount, currency, and whether KYC is required for ALL buyers or only above-threshold. For MVP, manual review is the only path; the threshold defines when a Buyer is *required* to submit KYC (otherwise the field can be "not required" forever). Drives `BuyerProfile.kyc_status` policy and `FR-B` checkout gating in Phase 6.
+- **[USER DEPENDENCY] Minimum KYC tier for low-value Buyers** — threshold amount, currency, and whether KYC is required for ALL buyers or only above-threshold. For MVP, manual review is the only path; the threshold defines when a Buyer is _required_ to submit KYC (otherwise the field can be "not required" forever). Drives `BuyerProfile.kyc_status` policy and `FR-B` checkout gating in Phase 6.
 - **[USER DEPENDENCY] AWS SES production access** — SES must be moved out of sandbox before any buyer can receive a real verification email.
 - **[USER DEPENDENCY] Sender domain & DNS** — confirm `ccverse.<tld>` and provide DNS access for DKIM/SPF/DMARC records.
 - **[USER DEPENDENCY] Brand voice & email copy** — sign-off on transactional email templates.

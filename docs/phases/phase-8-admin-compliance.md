@@ -55,6 +55,7 @@ PlatformConfig {
 ```
 
 Keys (initial set; extensible):
+
 - `supported_currencies` (array of 'INR','USD')
 - `platform_fee_bps` (int)
 - `tax_rate_in` (numeric)

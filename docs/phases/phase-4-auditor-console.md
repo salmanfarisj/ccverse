@@ -62,6 +62,7 @@ AuditDecision {
 ```
 
 `Listing` gains a partial unique index to enforce one open approval per listing (DB-level, in addition to the application state machine):
+
 ```
 CREATE UNIQUE INDEX uq_listing_approved ON Listing(id) WHERE status IN ('approved','sold_out');
 ```
@@ -69,7 +70,7 @@ CREATE UNIQUE INDEX uq_listing_approved ON Listing(id) WHERE status IN ('approve
 ### 4.2 Decision immutability
 
 - `AuditDecision` has no `UPDATE` or `DELETE` path in the application.
-- A correction is a *new* `AuditDecision` row with `decision='approve' or 'reject'`, `prior_decision_id` set, and an internal flag (computed view) that surfaces only the latest.
+- A correction is a _new_ `AuditDecision` row with `decision='approve' or 'reject'`, `prior_decision_id` set, and an internal flag (computed view) that surfaces only the latest.
 - DB-level safeguard: revoke `UPDATE`, `DELETE` on `AuditDecision` for the application role; only `INSERT` is granted. (Postgres `GRANT` model.)
 
 ### 4.3 Approval: project registration
@@ -237,7 +238,7 @@ POST   /api/admin/users/:id/revoke-auditor
 - **[USER DEPENDENCY] CC Verse Methodology Recognition Policy v1.0 content** — the policy IDs / clauses to seed `PlatformConfig.policies` and the Auditor checklist templates. Without this, the rejection combobox is empty and the audit log entries will have no policy references to validate against.
 - **[USER DEPENDENCY] Public-standard methodology clause lists** — for each cited methodology (Verra / Gold Standard / CAR), the list of clauses that the Auditor may cite. v1.0 may use a curated subset.
 - **[USER DEPENDENCY] Checklist templates** — confirm scope: ship framework only, or include at least one full template (e.g., VM0007)?
-- **[USER DEPENDENCY] Auditor self-exclusion default** — should the queue *hide* an Auditor's own items by default, or *block* them only on attempt? FRD is silent; FR-AU-006 is "cannot approve/reject their own account activity," so blocking is mandatory; hiding is a UX preference.
+- **[USER DEPENDENCY] Auditor self-exclusion default** — should the queue _hide_ an Auditor's own items by default, or _block_ them only on attempt? FRD is silent; FR-AU-006 is "cannot approve/reject their own account activity," so blocking is mandatory; hiding is a UX preference.
 - **[USER DEPENDENCY] Email templates for Auditor decisions** — sign-off on the approval / rejection / correction copy.
 - **[USER DEPENDENCY] Whether decisions are visible to the Seller in real time** — confirm Seller dashboard polls vs receives email only.
 - **[USER DEPENDENCY] Listing visibility policy on rejection** — after rejection, can a Seller re-list the same batch + quantity, or must they change something? Proposal: re-listing is allowed after edit.
