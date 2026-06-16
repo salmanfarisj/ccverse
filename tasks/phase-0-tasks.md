@@ -1,0 +1,588 @@
+# Phase 0 — Task Breakdown
+
+> Granular, individually-trackable tasks derived from `docs/phases/phase-0-foundation.md`.
+> Each task is scoped to a single PR-sized unit of work. Tasks are grouped by section and ordered for sequential execution; parallel tracks are noted where possible.
+
+## Conventions
+
+- **Status**: `pending` → `in_progress` → `done` (or `blocked` / `skipped`). Update the **Task Tracker** section below.
+- **ID format**: `T0-<section>-<n>` (e.g. `T0-1-3` = section 4.1, task 3)
+- **PR scope**: one task = one PR unless noted
+- **DoD (Definition of Done)**: acceptance criteria checked, CI green, reviewer approved, phase doc ACs updated if a checkbox can now be ticked
+
+---
+
+## Task Tracker
+
+> **How to update**: change the `Status` cell, add `Owner` (handle) when claimed, `PR` (#number) when opened, and `Notes` for blockers / deferrals.
+>
+> **Legend** — ⬜ pending · 🟡 in-progress · 🔴 blocked · ✅ done · ⏭ skipped
+
+### Progress
+
+| Metric | Count |
+|---|---|
+| ✅ Done | 0 |
+| 🟡 In progress | 0 |
+| 🔴 Blocked | 0 |
+| ⏭ Skipped | 0 |
+| ⬜ Pending | 70 |
+| **Total** | **70** |
+| **Completion** | **0 %** |
+
+### By section
+
+| Group | Section | Total | ✅ | 🟡 | 🔴 | ⏭ | ⬜ |
+|---|---|---:|---:|---:|---:|---:|---:|
+| T0-1 | §4.1 Repo & Monorepo | 5 | 0 | 0 | 0 | 0 | 5 |
+| T0-2 | §4.2 Design System | 7 | 0 | 0 | 0 | 0 | 7 |
+| T0-3 | §4.3 Database & Prisma | 8 | 0 | 0 | 0 | 0 | 8 |
+| T0-4 | §4.4 Background Jobs | 5 | 0 | 0 | 0 | 0 | 5 |
+| T0-5 | §4.5 Object Storage | 5 | 0 | 0 | 0 | 0 | 5 |
+| T0-6 | §4.5b Email (SES) | 5 | 0 | 0 | 0 | 0 | 5 |
+| T0-7 | §4.6 Auth Scaffold | 4 | 0 | 0 | 0 | 0 | 4 |
+| T0-8 | §4.7 RBAC | 3 | 0 | 0 | 0 | 0 | 3 |
+| T0-9 | §4.8 Observability | 2 | 0 | 0 | 0 | 0 | 2 |
+| T0-10 | §4.9 CI/CD | 3 | 0 | 0 | 0 | 0 | 3 |
+| T0-11 | §4.10 Proxy | 3 | 0 | 0 | 0 | 0 | 3 |
+| T0-12 | §4.11 Env & Secrets | 3 | 0 | 0 | 0 | 0 | 3 |
+| T0-13 | Health/Version/Audit | 3 | 0 | 0 | 0 | 0 | 3 |
+| T0-14 | Security Baseline | 3 | 0 | 0 | 0 | 0 | 3 |
+| T0-15 | Accessibility | 3 | 0 | 0 | 0 | 0 | 3 |
+| T0-16 | Tests | 5 | 0 | 0 | 0 | 0 | 5 |
+| T0-17 | Final Acceptance | 3 | 0 | 0 | 0 | 0 | 3 |
+
+### Master task list
+
+| ID | Title | Status | Owner | PR | Notes |
+|---|---|:---:|---|---|---|
+| T0-1-1 | Initialize pnpm workspace | ⬜ | | | |
+| T0-1-2 | Create directory skeleton | ⬜ | | | |
+| T0-1-3 | Bootstrap Next.js 14 app | ⬜ | | | |
+| T0-1-4 | Root scripts + .gitignore + .editorconfig | ⬜ | | | |
+| T0-1-5 | `.env.example` + zod env loader | ⬜ | | | |
+| T0-2-1 | Copy design tokens to `tokens.css` | ⬜ | | | |
+| T0-2-2 | Configure Tailwind v4 with `@theme` | ⬜ | | | |
+| T0-2-3 | `LimeButton` + `GhostButton` | ⬜ | | | |
+| T0-2-4 | `Input`, `DataTag`, `Section` | ⬜ | | | |
+| T0-2-5 | `TopNav` + `Footer` | ⬜ | | | |
+| T0-2-6 | `Hero` + `FullBleedImage` | ⬜ | | | |
+| T0-2-7 | Landing page at `/` | ⬜ | | | |
+| T0-3-1 | Prisma in `packages/db` | ⬜ | | | |
+| T0-3-2 | Initial schema for all FRD §6 tables | ⬜ | | | |
+| T0-3-3 | Migration `0000_init` | ⬜ | | | |
+| T0-3-4 | `citext` for emails | ⬜ | | | |
+| T0-3-5 | `seed.ts` (admin + config) | ⬜ | | | |
+| T0-3-6 | `FailedJob` model | ⬜ | | | |
+| T0-3-7 | `AuditLog` model | ⬜ | | | |
+| T0-3-8 | Docker Compose for Postgres | ⬜ | | | |
+| T0-4-1 | Job runner scaffold | ⬜ | | | |
+| T0-4-2 | Job type registry + dispatcher | ⬜ | | | |
+| T0-4-3 | Retry with exponential backoff | ⬜ | | | |
+| T0-4-4 | `enqueue()` API + idempotency | ⬜ | | | |
+| T0-4-5 | Scheduled job registration | ⬜ | | | |
+| T0-5-1 | `StorageDriver` interface | ⬜ | | | |
+| T0-5-2 | `S3Driver` for AWS S3 | ⬜ | | | |
+| T0-5-3 | Local S3 mock in Docker Compose | ⬜ | | | |
+| T0-5-4 | Presigned URL helpers | ⬜ | | | |
+| T0-5-5 | CORS config on buckets | ⬜ | | | |
+| T0-6-1 | `EmailDriver` interface | ⬜ | | | |
+| T0-6-2 | `SesDriver` | ⬜ | | | |
+| T0-6-3 | React Email templates scaffold | ⬜ | | | |
+| T0-6-4 | SES sender-identity DNS checklist | ⬜ | | | |
+| T0-6-5 | SES webhook handler | ⬜ | | | |
+| T0-7-1 | `iron-session` integration | ⬜ | | | |
+| T0-7-2 | Password hashing helper (argon2id) | ⬜ | | | |
+| T0-7-3 | TOTP MFA helper (scaffold only) | ⬜ | | | |
+| T0-7-4 | `trackFailedLogin` helper | ⬜ | | | |
+| T0-8-1 | `requireRole` helper | ⬜ | | | |
+| T0-8-2 | `middleware.ts` path gating | ⬜ | | | |
+| T0-8-3 | Role-route shells | ⬜ | | | |
+| T0-9-1 | `pino` logger with request id | ⬜ | | | |
+| T0-9-2 | Audit log writer helper | ⬜ | | | |
+| T0-10-1 | `ci.yml` workflow | ⬜ | | | |
+| T0-10-2 | `preview.yml` workflow | ⬜ | | | |
+| T0-10-3 | `deploy.yml` skeleton | ⬜ | | | |
+| T0-11-1 | Caddyfile for local dev | ⬜ | | | |
+| T0-11-2 | Nginx config template | ⬜ | | | |
+| T0-11-3 | Proxy deny-path + allowlist verify | ⬜ | | | |
+| T0-12-1 | Complete `.env.example` | ⬜ | | | |
+| T0-12-2 | zod env schema tests | ⬜ | | | |
+| T0-12-3 | IAM role / credentials plan | ⬜ | | | |
+| T0-13-1 | `GET /health` endpoint | ⬜ | | | |
+| T0-13-2 | `GET /version` endpoint | ⬜ | | | |
+| T0-13-3 | Audit log startup ping | ⬜ | | | |
+| T0-14-1 | Security headers via `next.config.js` | ⬜ | | | |
+| T0-14-2 | Cookie baseline (`httpOnly`/`secure`/`sameSite`) | ⬜ | | | |
+| T0-14-3 | CSP allowlist docs | ⬜ | | | |
+| T0-15-1 | Focus ring styles | ⬜ | | | |
+| T0-15-2 | Type scale enforcement (≥18px) | ⬜ | | | |
+| T0-15-3 | Axe-core CI check | ⬜ | | | |
+| T0-16-1 | Unit test setup (Vitest) | ⬜ | | | |
+| T0-16-2 | Integration: `/health` happy path | ⬜ | | | |
+| T0-16-3 | E2E: landing page | ⬜ | | | |
+| T0-16-4 | E2E: RBAC redirects | ⬜ | | | |
+| T0-16-5 | E2E: Docker Compose boot | ⬜ | | | |
+| T0-17-1 | Acceptance-criteria sweep (§10) | ⬜ | | | |
+| T0-17-2 | USER DEPENDENCY walkthrough (§12) | ⬜ | | | |
+| T0-17-3 | Phase closeout / retrospective | ⬜ | | | |
+
+### Recently changed
+
+<!-- Append a one-line entry per status change: `- YYYY-MM-DD — T0-x-y: <old> → <new> (owner)` -->
+- _No changes yet._
+
+---
+
+## §4.1 — Repo & Monorepo Setup (T0-1)
+
+### T0-1-1 Initialize pnpm workspace
+- **Description**: Create `package.json` with `"packageManager": "pnpm@<version>"`, `pnpm-workspace.yaml` listing `apps/*` and `packages/*`, and `.npmrc` (engine-strict=true, shamefully-hoist=false).
+- **Acceptance**: `pnpm install` at root succeeds; workspace is recognized.
+- **Refs**: §4.1
+
+### T0-1-2 Create directory skeleton
+- **Description**: Create empty directories per §4.1: `apps/web/{app,components,lib,jobs,styles,public}`, `packages/{db,audit,rbac,storage,email,session,ui}`, `infra/{proxy,github-actions}`, plus placeholder `README.md` in each.
+- **Acceptance**: All directories exist; tree matches §4.1.
+- **Depends on**: T0-1-1
+
+### T0-1-3 Bootstrap Next.js 14 app
+- **Description**: Inside `apps/web`, install Next.js 14 (App Router), TypeScript strict, ESLint, Prettier, Vitest, Playwright. Configure `tsconfig.json` with path aliases `@/*` mapped to `apps/web/*` and `@ccverse/*` to `packages/*`.
+- **Acceptance**: `pnpm --filter web dev` boots a blank Next page; `pnpm --filter web build` succeeds.
+- **Depends on**: T0-1-2
+
+### T0-1-4 Set up `.gitignore`, `.editorconfig`, root `package.json` scripts
+- **Description**: Top-level scripts: `dev`, `build`, `lint`, `typecheck`, `test`, `format`. Ignore `node_modules`, `.next`, `.env`, `dist`, `coverage`, `playwright-report`.
+- **Acceptance**: `pnpm lint` and `pnpm typecheck` at root work via workspace delegation.
+- **Depends on**: T0-1-3
+
+### T0-1-5 Create `.env.example` and typed env loader
+- **Description**: Author `.env.example` with all variables listed in §4.11. Add `packages/env` (or `apps/web/lib/env.ts`) that uses `zod` to validate at boot; process crashes on missing/malformed values.
+- **Acceptance**: Starting the app without env produces a clear zod error; starting with a complete `.env` works.
+- **Depends on**: T0-1-3
+- **Refs**: §4.11
+
+---
+
+## §4.2 — Design System & Landing Page (T0-2)
+
+### T0-2-1 Copy design tokens to `tokens.css`
+- **Description**: Extract `:root` tokens from `DESIGN.md` lines 200–268 verbatim into `apps/web/styles/tokens.css`. Include colors, spacing, type scale, radii, shadows.
+- **Acceptance**: File exists; tokens are byte-identical to DESIGN.md source.
+- **Refs**: §4.2
+
+### T0-2-2 Configure Tailwind v4 with `@theme`
+- **Description**: Install Tailwind v4 in `apps/web`. In `apps/web/styles/globals.css`, declare `@theme` block using the tokens from `DESIGN.md` lines 273–315. Wire `postcss` and the v4 import in `globals.css`.
+- **Acceptance**: `bg-lime` (or whatever the lime token name is) and other utility classes resolve correctly in a test component.
+- **Depends on**: T0-2-1, T0-1-3
+- **Refs**: §4.2
+
+### T0-2-3 Build `LimeButton` and `GhostButton`
+- **Description**: Implement in `packages/ui` or `apps/web/components/ui`. Lime CTA: solid lime bg, black text, focus ring (lime). Ghost: transparent bg, lime border, lime text. Both must support `as` polymorphism if needed.
+- **Acceptance**: Storybook-less visual test on the landing page (next task); focus visible on Tab.
+- **Depends on**: T0-2-2
+
+### T0-2-4 Build `Input`, `DataTag`, `Section`
+- **Description**: Form input with label + error states. DataTag: small pill (mono font, lime-on-black or inverse). Section: full-bleed layout primitive with optional background variant.
+- **Acceptance**: Components render with the right typography per DESIGN.md; labels are never below 18px.
+- **Depends on**: T0-2-2
+
+### T0-2-5 Build `TopNav` and `Footer`
+- **Description**: TopNav with logo, primary nav slots, and a lime CTA. Footer with legal, contact, and version/build hash.
+- **Acceptance**: Skip-links present; semantic `<header>`/`<footer>`; axe-core finds no serious issues.
+- **Depends on**: T0-2-3
+
+### T0-2-6 Build `Hero` and `FullBleedImage`
+- **Description**: Hero with H1, subhead, lime primary CTA, optional secondary ghost. FullBleedImage: edge-to-edge with `next/image` and a known aspect ratio.
+- **Acceptance**: Used on `/`; image is responsive with no CLS.
+- **Depends on**: T0-2-3
+
+### T0-2-7 Implement landing page at `/`
+- **Description**: `apps/web/app/page.tsx` composes Hero → Section → Footer per DESIGN.md. Sets metadata (`title`, `description`, OG image).
+- **Acceptance**: `pnpm dev` shows the page; no console errors, no 404s in network panel.
+- **Depends on**: T0-2-3, T0-2-4, T0-2-5, T0-2-6
+- **Refs**: §7
+
+---
+
+## §4.3 — Database & Prisma (T0-3)
+
+### T0-3-1 Add Prisma to `packages/db`
+- **Description**: Install `prisma` and `@prisma/client`. Add `prisma/schema.prisma` with `provider = "postgresql"`. Wire `@ccverse/db` package exports the singleton client.
+- **Acceptance**: `pnpm --filter db prisma generate` succeeds; client is importable.
+- **Depends on**: T0-1-3
+
+### T0-3-2 Author initial schema for all FRD §6 tables
+- **Description**: Create minimal column sets (per §5) for: `User`, `SellerProfile`, `BuyerProfile`, `Project`, `ProjectRegistration`, `Listing`, `Order`, `Payment`, `Certificate`, `AuditDecision`, `Dispute`, `RegistryEntry`, `CvcBatch`, `AuditLog`, `Payout`, `PlatformConfig`, `FailedJob`. Use `cuid()` or `uuid()` ids; enums for roles/statuses.
+- **Acceptance**: `prisma migrate dev` produces a migration; `prisma db push` to a throwaway DB works.
+- **Depends on**: T0-3-1
+- **Refs**: §5
+
+### T0-3-3 Generate first migration `0000_init`
+- **Description**: Commit the initial migration. Document in `packages/db/README.md` how to run migrations locally and in CI.
+- **Acceptance**: Migration committed; documented.
+- **Depends on**: T0-3-2
+
+### T0-3-4 Add `citext` extension usage for emails
+- **Description**: Add `CREATE EXTENSION IF NOT EXISTS citext;` to the migration's SQL. Declare `email` as `Citext` in Prisma (use `Unsupported` + raw SQL column if Prisma lacks native citext, or add a custom `@db.Citext`).
+- **Acceptance**: Inserting `"Foo@x.com"` and `"foo@x.com"` raises a unique-constraint violation.
+- **Depends on**: T0-3-3
+
+### T0-3-5 Write `seed.ts` for admin + default config
+- **Description**: Seeds one admin user (configurable email/password via env) and a `PlatformConfig` singleton row with default keys (`commission_bps`, `retire_min_age_days`, etc. — empty values are fine for now).
+- **Acceptance**: `pnpm --filter db seed` creates the admin; admin can log in (once auth exists in Phase 1).
+- **Depends on**: T0-3-3
+
+### T0-3-6 Add `FailedJob` model and table
+- **Description**: `id`, `jobType`, `payload Json`, `error String`, `attempts Int`, `createdAt`, `failedAt`. Index on `failedAt`.
+- **Acceptance**: Schema committed; a manual insert via `psql` works.
+- **Depends on**: T0-3-2
+- **Refs**: §4.4
+
+### T0-3-7 Add `AuditLog` model
+- **Description**: Columns per §5. `payload Json`, indexes on `(actor_id)`, `(action)`, `(timestamp)`.
+- **Acceptance**: Schema committed; a manual write succeeds.
+- **Depends on**: T0-3-2
+- **Refs**: §4.8, §5
+
+### T0-3-8 Docker Compose for Postgres
+- **Description**: `infra/docker-compose.yml` with `postgres:16-alpine`, healthcheck, named volume, exposed port `5432`. `.env` example for DB.
+- **Acceptance**: `docker compose up -d db` brings up Postgres; `psql` connects; `prisma migrate dev` works against it.
+- **Depends on**: T0-3-1
+- **Refs**: §4.1
+
+---
+
+## §4.4 — Background Jobs (T0-4)
+
+### T0-4-1 Implement job runner scaffold
+- **Description**: `apps/web/jobs/runner.ts` with bounded worker pool (default 4), pull-from-DB pattern (or in-memory queue for MVP), graceful shutdown, structured logging.
+- **Acceptance**: Worker pool starts; can register a no-op job; SIGTERM drains gracefully.
+- **Depends on**: T0-3-1
+
+### T0-4-2 Job type registry and dispatcher
+- **Description**: Map of `jobType` → handler. Each handler returns a typed result. Enforce idempotency key from payload.
+- **Acceptance**: Dispatching a registered job type runs the handler; unknown types log and persist to `failed_job`.
+- **Depends on**: T0-4-1, T0-3-6
+
+### T0-4-3 Retry with exponential backoff
+- **Description**: On throw, increment `attempts`, schedule retry with `min(2^attempts, 300)` seconds. After max attempts (configurable, default 5), write to `failed_job`.
+- **Acceptance**: Unit test: handler that throws 3 times then succeeds runs to completion; handler that always throws lands in `failed_job` after max attempts.
+- **Depends on**: T0-4-2
+
+### T0-4-4 `enqueue()` API + idempotency
+- **Description**: `enqueue({ type, payload, key })` — if a job with the same `key` is in queue or running, do nothing. Returns enqueue id.
+- **Acceptance**: Calling `enqueue` twice with the same key results in a single execution.
+- **Depends on**: T0-4-2
+
+### T0-4-5 Scheduled job registration (cron-like)
+- **Description**: `setInterval` per process for periodic jobs (e.g., `audit.export.daily`). Use a small offset per process to avoid thundering herd on horizontal scale (acceptable in MVP — note as caveat).
+- **Acceptance**: A registered interval job runs at the configured cadence; a unit test with fake timers asserts behavior.
+- **Depends on**: T0-4-2
+
+---
+
+## §4.5 — Object Storage (T0-5)
+
+### T0-5-1 Define `StorageDriver` interface
+- **Description**: In `packages/storage`, declare `interface StorageDriver { put, get, presignPut, presignGet, delete, head }`. Use AWS SDK v3 `PutObjectCommand` etc. behind it.
+- **Acceptance**: Interface compiles; `S3Driver implements StorageDriver` skeleton compiles.
+- **Depends on**: T0-1-3
+
+### T0-5-2 Implement `S3Driver` for AWS S3
+- **Description**: Constructor takes region, credentials, endpoint (for S3-compatible mocks). `put` enforces server-side encryption header (`x-amz-server-side-encryption: AES256` or `aws:kms`).
+- **Acceptance**: Pointing at MinIO, `put` → `get` round-trip works in a test.
+- **Depends on**: T0-5-1
+
+### T0-5-3 Add local S3 mock to Docker Compose
+- **Description**: Add a `minio` (or `s3rver`) service with default creds and a bootstrap script to create the four buckets: `ccverse-kyc`, `ccverse-projects`, `ccverse-certificates`, `ccverse-audit-exports`. Set bucket policies to deny unencrypted uploads.
+- **Acceptance**: Buckets exist; uploading without the SSE header is rejected.
+- **Depends on**: T0-5-2, T0-3-8
+- **Refs**: §4.5
+
+### T0-5-4 Presigned URL helpers
+- **Description**: `presignPut(bucket, key, ttl)` and `presignGet(bucket, key, ttl)`. Default TTLs: PUT 5 min, GET 5 min. Audit-log every presign issuance.
+- **Acceptance**: A presigned PUT works in a test; the matching GET works; the audit log row is created.
+- **Depends on**: T0-5-2, T0-3-7
+
+### T0-5-5 CORS config on buckets
+- **Description**: Allow only the configured `APP_ORIGIN`. Methods: GET, PUT. Headers: `*`. Expose `ETag`.
+- **Acceptance**: Browser PUT from `APP_ORIGIN` succeeds; PUT from another origin fails.
+- **Depends on**: T0-5-3
+- **Refs**: §4.5
+
+---
+
+## §4.5b — Transactional Email (T0-6)
+
+### T0-6-1 Define `EmailDriver` interface
+- **Description**: `send({ to, from, subject, html, text, tags })` returning a `MessageId`. Template support deferred.
+- **Acceptance**: Interface compiles.
+- **Depends on**: T0-1-3
+
+### T0-6-2 Implement `SesDriver`
+- **Description**: Uses `@aws-sdk/client-sesv2`. Reads region, sender domain, configuration set from env. All sends tagged with the configuration set for event capture.
+- **Acceptance**: A unit test against `aws-sdk-client-mock` verifies `SendEmailCommand` is called with the right body.
+- **Depends on**: T0-6-1
+
+### T0-6-3 React Email templates scaffold
+- **Description**: `packages/email/templates/` with one sample template (e.g., `welcome.tsx`) using React Email. Renders to HTML + plain text.
+- **Acceptance**: `pnpm --filter email build` outputs HTML and text; matches DESIGN.md brand voice (verified by snapshot).
+- **Depends on**: T0-6-1
+
+### T0-6-4 Sender identity setup checklist
+- **Description**: Markdown doc in `docs/infra/ses.md` listing required DNS records (DKIM, SPF, DMARC) and the AWS steps to verify a domain and request production access.
+- **Acceptance**: Doc committed; checklist tickable by ops.
+- **Refs**: §4.5b, §12
+
+### T0-6-5 SES webhook handler
+- **Description**: `POST /api/webhooks/ses` to receive SNS notifications for bounce/complaint/delivery. Update internal suppression list, write to audit log. HMAC-signed SNS message validation.
+- **Acceptance**: An SNS test event triggers the right code paths; unsigned requests are rejected.
+- **Depends on**: T0-6-2, T0-3-7
+
+---
+
+## §4.6 — Auth Scaffolding (T0-7)
+
+### T0-7-1 `iron-session` integration
+- **Description**: `packages/session` exposes `getSession()` and `saveSession()` with typed payload (`userId`, `role`, `mfaPassed`). Configure `SESSION_SECRET` from env.
+- **Acceptance**: Unit test: set/read round-trips a payload.
+- **Depends on**: T0-1-5
+
+### T0-7-2 Password hashing helper
+- **Description**: `hashPassword(plain)`, `verifyPassword(plain, hash)` using `argon2id` with parameters from OWASP cheat sheet (e.g., m=64MB, t=3, p=4).
+- **Acceptance**: A hashed password verifies; a wrong password does not.
+- **Depends on**: T0-1-3
+
+### T0-7-3 TOTP MFA helper (scaffold only)
+- **Description**: `generateSecret()`, `verifyToken(secret, token)`. **Not wired to any flow** in Phase 0.
+- **Acceptance**: Unit tests pass; no UI surfaces use it yet.
+- **Depends on**: T0-1-3
+- **Refs**: §4.6
+
+### T0-7-4 `trackFailedLogin` helper
+- **Description**: Stub that records failure attempts on a `User` (column added in Phase 1 if needed; for now, in-memory or a `login_attempts` log table). Not enforced.
+- **Acceptance**: Function exists and is unit-testable.
+- **Depends on**: T0-1-3
+- **Refs**: §4.6
+
+---
+
+## §4.7 — RBAC Middleware (T0-8)
+
+### T0-8-1 `requireRole` helper
+- **Description**: `apps/web/lib/rbac.ts` (or in `packages/rbac`) exporting `requireRole(roles: Role[]): User | never`. Returns 401 if no session, 403 if wrong role.
+- **Acceptance**: Unit tests cover: no session → 401, wrong role → 403, correct role → returns user.
+- **Depends on**: T0-7-1
+
+### T0-8-2 Next.js `middleware.ts` for path gating
+- **Description**: `apps/web/middleware.ts` matching the allowlist in §4.7. Public paths pass through; others redirect to `/login` (placeholder) or 401 for API routes.
+- **Acceptance**: Hitting `/admin` while unauthenticated redirects; hitting `/api/admin/*` returns 401 JSON.
+- **Depends on**: T0-8-1
+
+### T0-8-3 Role-route shells
+- **Description**: Empty pages: `apps/web/app/(seller)/seller/page.tsx`, `(buyer)/buyer/page.tsx`, `(auditor)/auditor/page.tsx`, `(admin)/admin/page.tsx`. Each calls `requireRole`.
+- **Acceptance**: All four paths exist; they 403 for the wrong role, 200 for the right one (with a stub "coming soon" body).
+- **Depends on**: T0-8-1
+- **Refs**: §1, §7
+
+---
+
+## §4.8 — Observability (T0-9)
+
+### T0-9-1 `pino` logger with request id
+- **Description**: `apps/web/lib/logger.ts` exporting a `pino` instance writing JSON to stdout. `withRequestId` helper; `requestId` middleware attaches an id (use `crypto.randomUUID()` or `nanoid`).
+- **Acceptance**: Every log line includes a `requestId`; structured JSON parses cleanly.
+- **Depends on**: T0-1-3
+
+### T0-9-2 Audit log writer helper
+- **Description**: `packages/audit/index.ts` exporting `audit.write({ actor, action, target, payload, ip? })`. Inserts a row into `AuditLog` and never throws (fail-soft with error log).
+- **Acceptance**: Unit test: writing an entry inserts a row with the correct shape.
+- **Depends on**: T0-3-7, T0-9-1
+- **Refs**: §4.8, §5
+
+---
+
+## §4.9 — CI/CD (T0-10)
+
+### T0-10-1 `ci.yml` workflow
+- **Description**: On push and PR: setup Node, enable pnpm via corepack, install with frozen lockfile, run `lint`, `typecheck`, `test`, `prisma generate`, `next build`. Cache pnpm store.
+- **Acceptance**: PR opened against a sample branch triggers the workflow and passes.
+- **Depends on**: T0-1-4, T0-1-3
+
+### T0-10-2 `preview.yml` workflow
+- **Description**: On PR: spin up a per-PR Postgres service, run migrations, start the app, smoke test `/` and `/health`. (The "deploy" step is environment-specific — for now, assert a local runner works.)
+- **Acceptance**: PR workflow runs migrations against a service container; smoke test passes.
+- **Depends on**: T0-10-1, T0-3-3
+
+### T0-10-3 `deploy.yml` workflow (skeleton)
+- **Description**: On `main`: build + push artifact, gated by an environment. Concrete deploy step deferred to Phase 9.
+- **Acceptance**: Workflow file is valid; manual trigger works.
+- **Depends on**: T0-10-1
+
+---
+
+## §4.10 — Proxy (T0-11)
+
+### T0-11-1 Caddyfile for local dev
+- **Description**: `infra/proxy/Caddyfile`: listens on `:8443`, auto-TLS via internal CA, reverse-proxies to `web:3000`, sets `X-Forwarded-*` headers, rate-limits `/api/*` at 60 req/s per IP.
+- **Acceptance**: `docker compose up proxy` brings up Caddy; `curl -k https://localhost:8443/` returns 200; rate limit triggers above threshold.
+- **Depends on**: T0-1-3, T0-3-8
+- **Refs**: §4.10
+
+### T0-11-2 Nginx config template
+- **Description**: `infra/proxy/nginx.conf` template: TLS 1.2+, HSTS, static asset caching, deny path filter (`.env`, `.git`), allowlist inbound paths. Documented in `infra/proxy/README.md`.
+- **Acceptance**: `nginx -t` passes; manual smoke test in a container succeeds.
+- **Depends on**: T0-11-1
+- **Refs**: §4.10
+
+### T0-11-3 Proxy deny-path & allowlist verification
+- **Description**: Automated test against the running proxy: `/.env` → 404 at edge, `/.git/HEAD` → 404 at edge, `/` → 200, `/api/health` → 200.
+- **Acceptance**: Test in `infra/proxy/test.sh` passes in CI.
+- **Depends on**: T0-11-1
+
+---
+
+## §4.11 — Env & Secrets (T0-12)
+
+### T0-12-1 Author complete `.env.example`
+- **Description**: Per §4.11, list every variable with a comment. Group: Database, S3, SES, Session, App/Proxy.
+- **Acceptance**: File committed; covered by the zod schema in T0-1-5.
+- **Depends on**: T0-1-5
+- **Refs**: §4.11
+
+### T0-12-2 `zod` env schema tests
+- **Description**: Unit tests for the env loader: missing required → throws; wrong type → throws; minimal valid → ok.
+- **Acceptance**: Tests pass; CI blocks invalid env changes.
+- **Depends on**: T0-1-5
+
+### T0-12-3 IAM role / credentials plan
+- **Description**: `docs/infra/iam.md` describing the server's IAM role: S3 + SES only, no console, no static keys in production. Lists policy actions and resource ARNs.
+- **Acceptance**: Doc committed; reviewed by ops/security.
+- **Refs**: §12
+
+---
+
+## Cross-cutting — Health, Version, Audit (T0-13)
+
+### T0-13-1 `GET /health` endpoint
+- **Description**: `apps/web/app/api/health/route.ts`. Pings DB (`SELECT 1`), storage (`head` on a probe key), and SES (describe-account). Returns `{ ok, db, storage, ses, version }`. 200 if all up, 503 otherwise.
+- **Acceptance**: All-up → 200 with the right JSON; mocked-down subsystem → 503.
+- **Depends on**: T0-3-1, T0-5-2, T0-6-2, T0-9-1, T0-3-7
+- **Refs**: §6, §1
+
+### T0-13-2 `GET /version` endpoint
+- **Description**: Returns build SHA, build time (env-injected at build).
+- **Acceptance**: Response includes `gitSha` and `builtAt`.
+- **Depends on**: T0-1-3
+
+### T0-13-3 Audit log startup ping
+- **Description**: On boot, write one `audit_log` row of action `system.startup` with payload including version and requestId.
+- **Acceptance**: After app boot, the `AuditLog` table has at least one row.
+- **Depends on**: T0-13-1, T0-9-2
+
+---
+
+## Cross-cutting — Security Baseline (T0-14)
+
+### T0-14-1 Security headers via `next.config.js`
+- **Description**: `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Content-Security-Policy` (start strict, document exceptions for SES/S3).
+- **Acceptance**: `curl -I http://localhost:3000/` shows all four headers.
+- **Depends on**: T0-1-3
+- **Refs**: §8
+
+### T0-14-2 Cookie baseline
+- **Description**: Session cookies set with `httpOnly`, `secure`, `sameSite=lax`; document the helper used in `packages/session`.
+- **Acceptance**: Inspecting cookies in a browser shows the right flags.
+- **Depends on**: T0-7-1
+- **Refs**: §8
+
+### T0-14-3 CSP allowlist docs
+- **Description**: `docs/security/csp.md` listing every allowed source for scripts, styles, images, connect, frame. Updated as features grow.
+- **Acceptance**: Doc committed; matches the active `Content-Security-Policy` header.
+- **Depends on**: T0-14-1
+
+---
+
+## Cross-cutting — Accessibility (T0-15)
+
+### T0-15-1 Focus ring styles
+- **Description**: Global `:focus-visible` ring in lime. Verify on every primitive (T0-2 series).
+- **Acceptance**: Tab through `/`; every interactive element has a visible lime focus ring.
+- **Depends on**: T0-2-3, T0-2-4, T0-2-5
+
+### T0-15-2 Type scale enforcement
+- **Description**: Body text ≥ 18px (NB International Pro); UI labels in JetBrains Mono. Encode as tokens; do not allow smaller in components.
+- **Acceptance**: axe-core + a CI lint rule (`stylelint` or custom) flags any font-size under 18px on body-classed elements.
+- **Depends on**: T0-2-1
+
+### T0-15-3 Axe-core CI check
+- **Description**: Add `axe-core` to Playwright runs; assert zero serious/critical issues on `/` and `/health`.
+- **Acceptance**: CI fails on new serious/critical a11y regressions.
+- **Depends on**: T0-2-7
+
+---
+
+## Cross-cutting — Tests (T0-16)
+
+### T0-16-1 Unit test setup
+- **Description**: Vitest in `apps/web` and each `packages/*` that has logic. Coverage thresholds: 70% lines on `packages/audit`, `packages/rbac`, `packages/session`.
+- **Acceptance**: `pnpm test` runs all unit tests; coverage report available.
+- **Depends on**: T0-1-3
+
+### T0-16-2 Integration: `/health` happy path
+- **Description**: Spin up Postgres + MinIO + stub SES; hit `/health`; expect 200 with all `up`.
+- **Acceptance**: Test passes in CI.
+- **Depends on**: T0-13-1, T0-3-8, T0-5-3
+
+### T0-16-3 E2E: landing page
+- **Description**: Playwright test: `/` renders, lime CTA visible, footer visible, no console errors.
+- **Acceptance**: Test passes in CI.
+- **Depends on**: T0-2-7, T0-15-3
+- **Refs**: §9
+
+### T0-16-4 E2E: RBAC redirects
+- **Description**: Playwright test: unauthenticated user hitting `/admin` is redirected to login placeholder; `/api/admin/anything` returns 401.
+- **Acceptance**: Test passes in CI.
+- **Depends on**: T0-8-2
+
+### T0-16-5 E2E: Docker Compose boot
+- **Description**: `docker compose up -d` brings up all services; integration test asserts each is reachable.
+- **Acceptance**: Test script committed; runs green.
+- **Depends on**: T0-3-8, T0-5-3, T0-11-1
+
+---
+
+## Cross-cutting — Final Acceptance (T0-17)
+
+### T0-17-1 Acceptance-criteria sweep
+- **Description**: Walk through §10 of the phase doc. Tick boxes that are now true. For any unchecked, file a follow-up task or document the deferral.
+- **Acceptance**: All 10 boxes either ticked or explicitly deferred with rationale.
+- **Depends on**: All T0-1 … T0-16
+
+### T0-17-2 USER DEPENDENCY walkthrough
+- **Description**: For each item in §12, mark "resolved" or "still open". Open items block the phase from being marked complete.
+- **Acceptance**: Every USER DEPENDENCY has a current status.
+- **Refs**: §12
+
+### T0-17-3 Phase closeout doc
+- **Description**: Append a short "Phase 0 retrospective" section to the phase doc or a new `docs/retros/phase-0.md` covering: what landed, what slipped, lessons for Phase 1.
+- **Acceptance**: Doc committed.
+
+---
+
+## Suggested parallel tracks
+
+When you have multiple engineers, these tracks can run concurrently after T0-1-3 lands:
+
+- **Track A (Design & UI)**: T0-2-* (design system + landing)
+- **Track B (Data & Infra)**: T0-3-*, T0-4-*, T0-5-*, T0-12-*
+- **Track C (Cross-cutting)**: T0-7-*, T0-8-*, T0-9-*, T0-13-*, T0-14-*, T0-15-*, T0-16-*
+
+Tracks B and C can each spawn sub-parallel work; A blocks on the design tokens (T0-2-1) only.
+
+---
+
+## Effort roll-up
+
+Roughly 60–80 task-days. Matches the §14 estimate of "1 week, 2–3 engineers" assuming mature pnpm/Next/Prisma familiarity.
