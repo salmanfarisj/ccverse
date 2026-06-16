@@ -24,20 +24,20 @@
 
 | Metric         | Count   |
 | -------------- | ------- |
-| ✅ Done        | 0       |
+| ✅ Done        | 7       |
 | 🟡 In progress | 0       |
 | 🔴 Blocked     | 0       |
 | ⏭ Skipped     | 0       |
-| ⬜ Pending     | 70      |
+| ⬜ Pending     | 63      |
 | **Total**      | **70**  |
-| **Completion** | **0 %** |
+| **Completion** | **10 %** |
 
 ### By section
 
 | Group | Section                        | Total |  ✅ |  🟡 |  🔴 |  ⏭ |  ⬜ |
 | ----- | ------------------------------ | ----: | --: | --: | --: | --: | --: |
 | T0-1  | §4.1 Repo (single Next.js app) |     5 |   0 |   0 |   0 |   0 |   5 |
-| T0-2  | §4.2 Design System             |     7 |   0 |   0 |   0 |   0 |   7 |
+| T0-2  | §4.2 Design System             |     7 |   7 |   0 |   0 |   0 |   0 |
 | T0-3  | §4.3 Database & Prisma         |     8 |   0 |   0 |   0 |   0 |   8 |
 | T0-4  | §4.4 Background Jobs           |     5 |   0 |   0 |   0 |   0 |   5 |
 | T0-5  | §4.5 Object Storage            |     5 |   0 |   0 |   0 |   0 |   5 |
@@ -63,13 +63,13 @@
 | T0-1-3  | Configure TS strict, ESLint, Prettier, Vitest, Playwright |   ⬜   |       |     |       |
 | T0-1-4  | Root scripts + .gitignore + .editorconfig                 |   ⬜   |       |     |       |
 | T0-1-5  | `.env.example` + zod env loader (`lib/env.ts`)            |   ⬜   |       |     |       |
-| T0-2-1  | Copy design tokens to `styles/tokens.css`                 |   ⬜   |       |     |       |
-| T0-2-2  | Configure Tailwind v4 with `@theme`                       |   ⬜   |       |     |       |
-| T0-2-3  | `LimeButton` + `GhostButton`                              |   ⬜   |       |     |       |
-| T0-2-4  | `Input`, `DataTag`, `Section`                             |   ⬜   |       |     |       |
-| T0-2-5  | `TopNav` + `Footer`                                       |   ⬜   |       |     |       |
-| T0-2-6  | `Hero` + `FullBleedImage`                                 |   ⬜   |       |     |       |
-| T0-2-7  | Landing page at `/`                                       |   ⬜   |       |     |       |
+| T0-2-1  | Copy design tokens to `styles/tokens.css`                 |   ✅   |       |     | tokens.css byte-identical to DESIGN.md; FIXME flagged for typo on `--surface-obsidian-loam` |
+| T0-2-2  | Configure Tailwind v4 with `@theme`                       |   ✅   |       |     | tailwindcss@4.3.1 + @tailwindcss/postcss installed; postcss.config.mjs added; globals.css imports tokens + tailwind + @theme |
+| T0-2-3  | `LimeButton` + `GhostButton`                              |   ✅   |       |     | components/ui/; polymorphic via `href` prop (button ↔ Next Link); design tokens resolved in built CSS |
+| T0-2-4  | `Input`, `DataTag`, `Section`                             |   ✅   |       |     | components/ui/; Input has label + error + hint; DataTag variants solid/outline; Section max-w-1200 |
+| T0-2-5  | `TopNav` + `Footer`                                       |   ✅   |       |     | components/landing/; TopNav with skip-link, brand wordmark, Menu + dot; Footer with 3 columns + build metadata from env |
+| T0-2-6  | `Hero` + `FullBleedImage`                                 |   ✅   |       |     | components/landing/; Hero uses CSS-gradient placeholder (USER DEPENDENCY: brand assets); FullBleedImage degrades to solid band without src |
+| T0-2-7  | Landing page at `/`                                       |   ✅   |       |     | TopNav → Hero → Mission section → FullBleedImage band → How-it-works section → Registry section → Footer; metadata + metadataBase set |
 | T0-3-1  | Prisma + `prisma/schema.prisma`                           |   ⬜   |       |     |       |
 | T0-3-2  | Initial schema for all FRD §6 tables                      |   ⬜   |       |     |       |
 | T0-3-3  | Migration `0000_init`                                     |   ⬜   |       |     |       |
@@ -134,6 +134,13 @@
 <!-- Append a one-line entry per status change: `- YYYY-MM-DD — T0-x-y: <old> → <new> (owner)` -->
 
 - _No changes yet._
+- 2026-06-16 — T0-2-1: ⬜ → ✅ (tokens extracted from DESIGN.md to styles/tokens.css; typo on --surface-obsidian-loam flagged via FIXME)
+- 2026-06-16 — T0-2-2: ⬜ → ✅ (Tailwind v4.3.1 installed; @theme block in app/globals.css bridges tokens to utility classes)
+- 2026-06-16 — T0-2-3: ⬜ → ✅ (LimeButton + GhostButton; href-driven polymorphism)
+- 2026-06-16 — T0-2-4: ⬜ → ✅ (Input with label/error/hint; DataTag solid|outline; Section primitive)
+- 2026-06-16 — T0-2-5: ⬜ → ✅ (TopNav with skip-link; Footer sourcing GIT_SHA/BUILT_AT from env)
+- 2026-06-16 — T0-2-6: ⬜ → ✅ (Hero + FullBleedImage; CSS-gradient placeholder pending brand assets)
+- 2026-06-16 — T0-2-7: ⬜ → ✅ (Landing page composes TopNav → Hero → 3 sections → Footer; metadataBase added to root layout)
 
 ---
 

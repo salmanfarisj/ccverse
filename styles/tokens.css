@@ -1,0 +1,84 @@
+/*
+ * Design tokens — CSS Custom Properties.
+ *
+ * Source of truth: DESIGN.md §"Quick Start — CSS Custom Properties" (verbatim
+ * copy, lines 200–285 of the design doc as of 16 Jun 2026). The Tailwind v4
+ * `@theme` block in `app/globals.css` is the bridge that turns these into
+ * utility classes (`bg-obsidian-loam`, `font-jetbrains-mono`, etc.).
+ *
+ * If you change a value here, also update DESIGN.md and `app/globals.css`'s
+ * `@theme` block to keep the three layers in sync.
+ *
+ * FIXME: `--surface-obsidian-loam` is `#13140` in DESIGN.md (5 hex chars,
+ * invalid CSS). The token table in DESIGN.md gives `#13140e` (6 hex chars).
+ * Carried over verbatim per T0-2-1 acceptance ("byte-identical to DESIGN.md
+ * source"). Fix upstream in DESIGN.md and re-copy.
+ */
+
+:root {
+  /* Colors */
+  --color-obsidian-loam: #13140e;
+  --color-bone-vellum: #f4f3e8;
+  --color-iron-filings: #404040;
+  --color-drift-ash: #84837b;
+  --color-lime-surveyor: #ebfc72;
+  --color-marsh-olive: #bacd31;
+
+  /* Typography — Font Families */
+  --font-nb-international-pro:
+    'NB International Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+  --font-jetbrains-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Typography — Scale */
+  --text-caption: 13px;
+  --leading-caption: 1.2;
+  --text-body: 18px;
+  --leading-body: 1.62;
+  --tracking-body: -0.54px;
+  --text-subheading: 29px;
+  --leading-subheading: 1.28;
+  --text-heading: 58px;
+  --leading-heading: 1.06;
+  --tracking-heading: -1.74px;
+  --text-display: 72px;
+  --leading-display: 0.9;
+  --tracking-display: -2.16px;
+
+  /* Typography — Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-bold: 700;
+
+  /* Spacing */
+  --spacing-5: 5px;
+  --spacing-7: 7px;
+  --spacing-14: 14px;
+  --spacing-18: 18px;
+  --spacing-21: 21px;
+  --spacing-29: 29px;
+  --spacing-59: 59px;
+  --spacing-86: 86px;
+  --spacing-104: 104px;
+  --spacing-119: 119px;
+
+  /* Layout */
+  --page-max-width: 1200px;
+  --section-gap: 86-104px;
+  --card-padding: 14-18px;
+  --element-gap: 18px;
+
+  /* Border Radius */
+  --radius-md: 3.6px;
+
+  /* Named Radii */
+  --radius-tags: 3.6px;
+  --radius-cards: 0px;
+  --radius-inputs: 3.6px;
+  --radius-buttons: 3.6px;
+
+  /* Surfaces */
+  --surface-obsidian-loam: #13140;
+  --surface-iron-filings: #404040;
+}

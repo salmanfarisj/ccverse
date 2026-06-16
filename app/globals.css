@@ -1,37 +1,87 @@
 /*
- * Global styles. Design tokens are added in T0-2-1 (`styles/tokens.css`); this
- * file is intentionally minimal in Phase 0 so the scaffold renders cleanly
- * before the design system lands. The bare reset below follows DESIGN.md §2
- * (dark canvas, system fallback stack) so the dev server never flashes a
- * white background.
+ * Global styles — INVERSA design system.
+ *
+ * Layered as: (1) Tailwind v4 reset/utilities, (2) `:root` tokens from
+ * `styles/tokens.css`, (3) the `@theme` block that exposes tokens to Tailwind
+ * as utility classes, (4) page-level overrides that anchor the canvas to
+ * the obsidian-loam / bone-vellum pairing from DESIGN.md.
+ *
+ * Source of truth: DESIGN.md. `styles/tokens.css` and this file's `@theme`
+ * block must move together.
  */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@import 'tailwindcss';
+@import '../styles/tokens.css';
+
+@theme {
+  /* Colors */
+  --color-obsidian-loam: #13140e;
+  --color-bone-vellum: #f4f3e8;
+  --color-iron-filings: #404040;
+  --color-drift-ash: #84837b;
+  --color-lime-surveyor: #ebfc72;
+  --color-marsh-olive: #bacd31;
+
+  /* Typography */
+  --font-nb-international-pro:
+    'NB International Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+  --font-jetbrains-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Typography — Scale (the type ramp is consumed via arbitrary values, e.g.
+     text-[length:var(--text-display)] / leading-[var(--leading-display)] —
+     Tailwind's default scale is bypassed so DESIGN.md stays the source) */
+  --text-caption: 13px;
+  --leading-caption: 1.2;
+  --text-body: 18px;
+  --leading-body: 1.62;
+  --tracking-body: -0.54px;
+  --text-subheading: 29px;
+  --leading-subheading: 1.28;
+  --text-heading: 58px;
+  --leading-heading: 1.06;
+  --tracking-heading: -1.74px;
+  --text-display: 72px;
+  --leading-display: 0.9;
+  --tracking-display: -2.16px;
+
+  /* Spacing palette (consumed via `p-[var(--spacing-86)]` etc.) */
+  --spacing-5: 5px;
+  --spacing-7: 7px;
+  --spacing-14: 14px;
+  --spacing-18: 18px;
+  --spacing-21: 21px;
+  --spacing-29: 29px;
+  --spacing-59: 59px;
+  --spacing-86: 86px;
+  --spacing-104: 104px;
+  --spacing-119: 119px;
+
+  /* Border Radius */
+  --radius-md: 3.6px;
 }
+
+/* ── Page canvas ─────────────────────────────────────────────────────────── */
 
 html,
 body {
-  margin: 0;
-  padding: 0;
-  background: #0a0a0a;
-  color: #f5f5f5;
-  font-family:
-    'NB International Pro',
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  font-size: 18px;
-  line-height: 1.5;
+  background-color: var(--color-obsidian-loam);
+  color: var(--color-bone-vellum);
+  font-family: var(--font-nb-international-pro);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+}
+
+/* ── Default link treatment ──────────────────────────────────────────────── */
 
 a {
   color: inherit;
@@ -39,15 +89,25 @@ a {
   text-underline-offset: 3px;
 }
 
-button {
-  font: inherit;
-}
+/* ── Focus ring — the only chromatic accent on interaction ────────────────── */
 
 :focus-visible {
-  outline: 2px solid #c6f24e;
+  outline: 2px solid var(--color-lime-surveyor);
   outline-offset: 2px;
   border-radius: 2px;
 }
+
+/* Buttons and inputs must inherit a system-level font by default; the
+   component-level class sets the precise mono/sans treatment. */
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* ── Utility: visually hidden but announced to AT ────────────────────────── */
 
 .visually-hidden {
   position: absolute;

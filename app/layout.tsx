@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { getEnv } from '@/lib/env';
 import './globals.css';
 
 export const metadata: Metadata = {
+  // Resolve relative og/twitter image URLs against the public app origin
+  // (per Next.js metadataBase contract). Sourced from env so the production
+  // build uses the real `APP_ORIGIN` rather than the localhost fallback.
+  metadataBase: new URL(getEnv().APP_ORIGIN),
   title: {
     default: 'CC Verse',
     template: '%s · CC Verse',
