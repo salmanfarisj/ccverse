@@ -24,13 +24,13 @@
 
 | Metric         | Count   |
 | -------------- | ------- |
-| ✅ Done        | 7       |
+| ✅ Done        | 15      |
 | 🟡 In progress | 0       |
 | 🔴 Blocked     | 0       |
 | ⏭ Skipped     | 0       |
-| ⬜ Pending     | 63      |
+| ⬜ Pending     | 55      |
 | **Total**      | **70**  |
-| **Completion** | **10 %** |
+| **Completion** | **21 %** |
 
 ### By section
 
@@ -38,13 +38,13 @@
 | ----- | ------------------------------ | ----: | --: | --: | --: | --: | --: |
 | T0-1  | §4.1 Repo (single Next.js app) |     5 |   0 |   0 |   0 |   0 |   5 |
 | T0-2  | §4.2 Design System             |     7 |   7 |   0 |   0 |   0 |   0 |
-| T0-3  | §4.3 Database & Prisma         |     8 |   0 |   0 |   0 |   0 |   8 |
+| T0-3  | §4.3 Database & Prisma         |     8 |   8 |   0 |   0 |   0 |   0 |
 | T0-4  | §4.4 Background Jobs           |     5 |   0 |   0 |   0 |   0 |   5 |
 | T0-5  | §4.5 Object Storage            |     5 |   0 |   0 |   0 |   0 |   5 |
 | T0-6  | §4.5b Email (SES)              |     5 |   0 |   0 |   0 |   0 |   5 |
 | T0-7  | §4.6 Auth Scaffold             |     4 |   0 |   0 |   0 |   0 |   4 |
 | T0-8  | §4.7 RBAC                      |     3 |   0 |   0 |   0 |   0 |   3 |
-| T0-9  | §4.8 Observability             |     2 |   0 |   0 |   0 |   0 |   2 |
+| T0-9  | §4.8 Observability             |     2 |   0 |   0   |   0 |   0 |   2 |
 | T0-10 | §4.9 CI/CD                     |     3 |   0 |   0 |   0 |   0 |   3 |
 | T0-11 | §4.10 Proxy                    |     3 |   0 |   0 |   0 |   0 |   3 |
 | T0-12 | §4.11 Env & Secrets            |     3 |   0 |   0 |   0 |   0 |   3 |
@@ -70,14 +70,14 @@
 | T0-2-5  | `TopNav` + `Footer`                                       |   ✅   |       |     | components/landing/; TopNav with skip-link, brand wordmark, Menu + dot; Footer with 3 columns + build metadata from env |
 | T0-2-6  | `Hero` + `FullBleedImage`                                 |   ✅   |       |     | components/landing/; Hero uses CSS-gradient placeholder (USER DEPENDENCY: brand assets); FullBleedImage degrades to solid band without src |
 | T0-2-7  | Landing page at `/`                                       |   ✅   |       |     | TopNav → Hero → Mission section → FullBleedImage band → How-it-works section → Registry section → Footer; metadata + metadataBase set |
-| T0-3-1  | Prisma + `prisma/schema.prisma`                           |   ⬜   |       |     |       |
-| T0-3-2  | Initial schema for all FRD §6 tables                      |   ⬜   |       |     |       |
-| T0-3-3  | Migration `0000_init`                                     |   ⬜   |       |     |       |
-| T0-3-4  | `citext` for emails                                       |   ⬜   |       |     |       |
-| T0-3-5  | `prisma/seed.ts` (admin + config)                         |   ⬜   |       |     |       |
-| T0-3-6  | `FailedJob` model                                         |   ⬜   |       |     |       |
-| T0-3-7  | `AuditLog` model                                          |   ⬜   |       |     |       |
-| T0-3-8  | Docker Compose for Postgres                               |   ⬜   |       |     |       |
+| T0-3-1  | Prisma + `prisma/schema.prisma`                           |   ✅   |       |     | prisma@5.22.0 + @prisma/client installed; lib/db singleton; globalThis-cached, dev/prod logging |
+| T0-3-2  | Initial schema for all FRD §6 tables                      |   ✅   |       |     | 17 models (16 FRD §6 + _prisma_migrations); §5 tables with full column set, rest minimal (id, status, createdAt, userId) |
+| T0-3-3  | Migration `0000_init`                                     |   ✅   |       |     | 20260616174314_init applied; CREATE EXTENSION citext manually added at top (Prisma 5.x does not auto-emit) |
+| T0-3-4  | `citext` for emails                                       |   ✅   |       |     | User.email @db.Citext; case-insensitive uniqueness verified via psql (Foo@x.com vs foo@x.com raises violation) |
+| T0-3-5  | `prisma/seed.ts` (admin + config)                         |   ✅   |       |     | argon2id hash (m=64MB, t=3, p=4); idempotent; 1 admin + 10 PlatformConfig keys; sentinel password on missing env |
+| T0-3-6  | `FailedJob` model                                         |   ✅   |       |     | jobType/payload/error/attempts/createdAt/failedAt; failedAt index; manual psql insert verified |
+| T0-3-7  | `AuditLog` model                                          |   ✅   |       |     | actorId/actorRole/action/targetType/targetId/ip/timestamp/payload; indexes on actorId, action, timestamp; manual psql insert verified |
+| T0-3-8  | Docker Compose for Postgres                               |   ✅   |       |     | infra/docker-compose.yml with postgres:16-alpine, healthcheck, named volume ccverse-postgres-data, port 127.0.0.1:5432 |
 | T0-4-1  | Job runner scaffold (`jobs/runner.ts`)                    |   ⬜   |       |     |       |
 | T0-4-2  | Job type registry + dispatcher                            |   ⬜   |       |     |       |
 | T0-4-3  | Retry with exponential backoff                            |   ⬜   |       |     |       |
@@ -141,6 +141,14 @@
 - 2026-06-16 — T0-2-5: ⬜ → ✅ (TopNav with skip-link; Footer sourcing GIT_SHA/BUILT_AT from env)
 - 2026-06-16 — T0-2-6: ⬜ → ✅ (Hero + FullBleedImage; CSS-gradient placeholder pending brand assets)
 - 2026-06-16 — T0-2-7: ⬜ → ✅ (Landing page composes TopNav → Hero → 3 sections → Footer; metadataBase added to root layout)
+- 2026-06-16 — T0-3-1: ⬜ → ✅ (prisma@5.22.0 + @prisma/client installed; lib/db singleton with globalThis-cached PrismaClient)
+- 2026-06-16 — T0-3-2: ⬜ → ✅ (prisma/schema.prisma with 16 FRD §6 models + 10 enums; §5 tables full, rest minimal)
+- 2026-06-16 — T0-3-3: ⬜ → ✅ (20260616174314_init migration applied; CREATE EXTENSION citext manually added at top of SQL)
+- 2026-06-16 — T0-3-4: ⬜ → ✅ (User.email @db.Citext; citext extension enabled; case-insensitive uniqueness verified via psql)
+- 2026-06-16 — T0-3-5: ⬜ → ✅ (prisma/seed.ts with argon2id hash + 10 PlatformConfig defaults; idempotent; sentinel password on missing env)
+- 2026-06-16 — T0-3-6: ⬜ → ✅ (FailedJob model + index on failedAt; manual psql insert verified)
+- 2026-06-16 — T0-3-7: ⬜ → ✅ (AuditLog model + indexes on actorId/action/timestamp; manual psql insert verified)
+- 2026-06-16 — T0-3-8: ⬜ → ✅ (infra/docker-compose.yml: postgres:16-alpine + healthcheck + named volume + infra/README.md)
 
 ---
 

@@ -11,3 +11,9 @@ package-lock.json
 yarn.lock
 *.min.js
 *.min.css
+# Prisma owns its own formatting via `prisma format` (and the
+# `db:format` / `db:format:check` npm scripts). Prettier rewrites
+# Prisma's SQL/SDL in ways that break `prisma migrate dev` and
+# `prisma format --check`.
+prisma
+prisma/migrations

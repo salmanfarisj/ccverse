@@ -1,0 +1,311 @@
+// CC Verse — Prisma schema (Phase 0).
+//
+// Source of truth for the data model. The phase-0 plan (T0-3) creates
+// *all* FRD §6 tables now so subsequent migrations are additive only.
+// Each table starts with the minimum columns required by §5 of
+// `docs/phases/phase-0-foundation.md`; full column sets are added in
+// the owning phase (2, 3, 4, …) via `prisma migrate dev`.
+//
+// Architectural invariants encoded here (see `docs/plan.md` §7 and
+// `docs/phases/phase-0-foundation.md` §4.3, §4.6, §4.8):
+//
+//   - `User.email` is `Citext` so case-insensitive uniqueness holds
+//     even if an upstream client sends `Foo@x.com` vs `foo@x.com`.
+//   - `RegistryEntry.cvcSerial` is `UNIQUE` — the registry is the
+//     single source of truth and serials never duplicate.
+//   - `AuditLog.payload` is JSONB and the model is append-only by
+//     convention (no `updatedAt`, no UPDATE path in `lib/audit/`).
+//   - IDs are `uuid()`-generated application-side; no DB extension
+//     dependency for primary keys.
+
+generator client {
+  provider      = "prisma-client-js"
+  // `native` covers the local dev box (macOS arm64, glibc, musl);
+  // `linux-musl-openssl-3.0.x` covers CI (ubuntu-latest) and the
+  // Aliyun/Railway musl images we plan to deploy onto. Add more
+  // targets here if a new deploy target appears.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  BUYER
+  SELLER
+  AUDITOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING_KYC
+  SUSPENDED
+  DELETED
+}
+
+enum ProjectStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  ACTIVE
+  RETIRED
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_AUDIT
+  ACTIVE
+  SOLD_OUT
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  INITIATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+enum CertificateStatus {
+  PENDING
+  ISSUED
+  REVOKED
+}
+
+enum AuditDecisionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_REVISION
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum RegistryState {
+  AVAILABLE
+  HELD
+  RETIRED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REVERSED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────
+
+/// A registered user. Roles and statuses are enum-bounded; an
+/// unauthenticated visitor is represented by the *absence* of a User
+/// row (i.e. no session) — `public` is not a role value. The single
+/// admin row is created by `prisma/seed.ts`.
+model User {
+  id           String     @id @default(uuid())
+  // Case-insensitive uniqueness via the PostgreSQL `citext` extension.
+  // Prisma 5+ emits `CREATE EXTENSION IF NOT EXISTS citext;` in the
+  // generated migration automatically when it sees `@db.Citext`.
+  email        String     @unique @db.Citext
+  passwordHash String     @map("password_hash")
+  role         UserRole
+  status       UserStatus @default(PENDING_KYC)
+  mfaEnabled   Boolean    @default(false) @map("mfa_enabled")
+  lastLoginAt  DateTime?  @map("last_login_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@map("user")
+}
+
+/// Seller-side profile (1:1 with User). Final schema lands in Phase 2.
+model SellerProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("seller_profile")
+}
+
+/// Buyer-side profile (1:1 with User). Final schema lands in Phase 1.
+model BuyerProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("buyer_profile")
+}
+
+/// A registered carbon-reduction project. Full schema lands in
+/// Phase 2 (Project Registration & CVC Registry).
+model Project {
+  id        String        @id @default(uuid())
+  status    ProjectStatus @default(DRAFT)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("project")
+}
+
+/// A formal project registration record. Full schema in Phase 2.
+model ProjectRegistration {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("project_registration")
+}
+
+/// A tradeable listing of registry entries. Full schema in Phase 3.
+model Listing {
+  id        String        @id @default(uuid())
+  status    ListingStatus @default(DRAFT)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("listing")
+}
+
+/// A buyer's purchase intent and the post-payment lifecycle.
+model Order {
+  id        String      @id @default(uuid())
+  status    OrderStatus @default(PENDING)
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@map("order")
+}
+
+/// A payment record, one per Order. Phase 6.
+model Payment {
+  id        String        @id @default(uuid())
+  status    PaymentStatus @default(INITIATED)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("payment")
+}
+
+/// A signed certificate of ownership / retirement. Phase 7.
+model Certificate {
+  id        String            @id @default(uuid())
+  status    CertificateStatus @default(PENDING)
+  createdAt DateTime          @default(now()) @map("created_at")
+
+  @@map("certificate")
+}
+
+/// An auditor's decision on a project or listing. Phase 4.
+model AuditDecision {
+  id        String              @id @default(uuid())
+  status    AuditDecisionStatus @default(PENDING)
+  createdAt DateTime            @default(now()) @map("created_at")
+
+  @@map("audit_decision")
+}
+
+/// A dispute raised by a buyer or seller. Phase 8.
+model Dispute {
+  id        String        @id @default(uuid())
+  status    DisputeStatus @default(OPEN)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("dispute")
+}
+
+/// One row per Verified Carbon Credit serial. The `cvcSerial` unique
+/// constraint is the architectural invariant from `docs/plan.md` §7:
+/// no two rows may share a serial, ever. The registry is the *only*
+/// place that creates or transitions these rows (via `lib/registry/`
+/// in Phase 2).
+model RegistryEntry {
+  id        String        @id @default(uuid())
+  state     RegistryState @default(AVAILABLE)
+  cvcSerial String        @unique @map("cvc_serial")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([state])
+  @@map("registry_entry")
+}
+
+/// A batch of CVCs allocated to a Seller against a Project. Phase 2.
+model CvcBatch {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("cvc_batch")
+}
+
+/// Append-only audit trail. Every state-changing action across the
+/// app writes a row here via `lib/audit/`. There is intentionally no
+/// `updatedAt` — the table is append-only by convention (a 7-year
+/// retention is enforced by `audit_log_retention_days` in
+/// `PlatformConfig`).
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?  @map("actor_id")
+  actorRole  String?  @map("actor_role")
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  ip         String?
+  timestamp  DateTime @default(now())
+  payload    Json     @default("{}")
+
+  @@index([actorId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("audit_log")
+}
+
+/// A payout to a Seller. Phase 9.
+model Payout {
+  id        String       @id @default(uuid())
+  status    PayoutStatus @default(PENDING)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@map("payout")
+}
+
+/// Singleton-by-convention configuration table. The `key` column is
+/// the primary key; the seed inserts a fixed set of default keys.
+/// All callers should read via `lib/registry/` or a thin helper that
+/// falls back to defaults — never assume a key exists without
+/// handling the missing-key case.
+model PlatformConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_config")
+}
+
+/// A job that exhausted its retry budget. Surfaces in the Admin
+/// console for manual replay. The job *runner* itself (T0-4) writes
+/// here on terminal failure.
+model FailedJob {
+  id        String   @id @default(uuid())
+  jobType   String   @map("job_type")
+  payload   Json
+  error     String
+  attempts  Int
+  createdAt DateTime @default(now()) @map("created_at")
+  failedAt  DateTime @default(now()) @map("failed_at")
+
+  @@index([failedAt])
+  @@map("failed_job")
+}
