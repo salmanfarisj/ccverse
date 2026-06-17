@@ -43,9 +43,51 @@ enum UserRole {
 
 enum UserStatus {
   ACTIVE
-  PENDING_KYC
   SUSPENDED
-  DELETED
+  BANNED
+  PENDING_VERIFICATION
+}
+
+enum KycStatus {
+  NOT_STARTED
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum KycDocumentType {
+  PAN
+  GSTIN
+  PASSPORT
+  UTILITY_BILL
+  BANK_STATEMENT
+  INCORPORATION_CERT
+  OTHER
+}
+
+enum KycDocumentReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BuyerKycStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum BuyerKycMethod {
+  NONE
+  MANUAL
+}
+
+enum DefaultCurrency {
+  INR
+  USD
 }
 
 enum ProjectStatus {
@@ -122,37 +164,143 @@ enum PayoutStatus {
 /// row (i.e. no session) — `public` is not a role value. The single
 /// admin row is created by `prisma/seed.ts`.
 model User {
-  id           String     @id @default(uuid())
+  id               String      @id @default(uuid())
   // Case-insensitive uniqueness via the PostgreSQL `citext` extension.
   // Prisma 5+ emits `CREATE EXTENSION IF NOT EXISTS citext;` in the
   // generated migration automatically when it sees `@db.Citext`.
-  email        String     @unique @db.Citext
-  passwordHash String     @map("password_hash")
-  role         UserRole
-  status       UserStatus @default(PENDING_KYC)
-  mfaEnabled   Boolean    @default(false) @map("mfa_enabled")
-  lastLoginAt  DateTime?  @map("last_login_at")
-  createdAt    DateTime   @default(now()) @map("created_at")
+  email            String      @unique @db.Citext
+  passwordHash     String?     @map("password_hash")
+  role             UserRole    @default(BUYER)
+  status           UserStatus  @default(PENDING_VERIFICATION)
+  mfaEnabled       Boolean     @default(false) @map("mfa_enabled")
+  emailVerified    Boolean     @default(false) @map("email_verified")
+  emailVerifiedAt  DateTime?   @map("email_verified_at")
+  failedLoginCount Int         @default(0) @map("failed_login_count")
+  lockedUntil      DateTime?   @map("locked_until")
+  lastLoginAt      DateTime?   @map("last_login_at")
+  lastLoginIp      String?     @map("last_login_ip") // inet in PG, stored as String
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  sellerProfile    SellerProfile?
+  buyerProfile     BuyerProfile?
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  kycDocuments            KycDocument[] @relation("SubjectUser")
+  kycDocumentsUploaded    KycDocument[] @relation("UploadedBy")
+  bankAccounts            BankAccount[]
 
   @@map("user")
 }
 
 /// Seller-side profile (1:1 with User). Final schema lands in Phase 2.
 model SellerProfile {
-  id        String   @id @default(uuid())
-  userId    String   @unique @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at")
+  id                       String   @id @default(uuid())
+  userId                   String   @unique @map("user_id")
+  legalName                String?  @map("legal_name")
+  registrationNo           String?  @map("registration_no")
+  country                  String?
+  authorizedSignatoryName  String?  @map("authorized_signatory_name")
+  authorizedSignatoryEmail String?  @map("authorized_signatory_email")
+  kycStatus                KycStatus @default(NOT_STARTED) @map("kyc_status")
+  kycMethod                String   @default("manual") @map("kyc_method")
+  kycReviewedBy           String?  @map("kyc_reviewed_by")
+  kycReviewedAt            DateTime? @map("kyc_reviewed_at")
+  kycReviewNotes           String?  @map("kyc_review_notes")
+  bankAccountId            String?  @unique @map("bank_account_id")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id])
+  bankAccount BankAccount? @relation(fields: [bankAccountId], references: [id])
 
   @@map("seller_profile")
 }
 
 /// Buyer-side profile (1:1 with User). Final schema lands in Phase 1.
 model BuyerProfile {
-  id        String   @id @default(uuid())
-  userId    String   @unique @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at")
+  id              String          @id @default(uuid())
+  userId          String          @unique @map("user_id")
+  legalName       String?         @map("legal_name")
+  country         String?
+  kycStatus       BuyerKycStatus @default(NOT_REQUIRED) @map("kyc_status")
+  kycMethod       BuyerKycMethod  @default(NONE) @map("kyc_method")
+  defaultCurrency DefaultCurrency @default(USD) @map("default_currency")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
 
   @@map("buyer_profile")
+}
+
+/// A KYC document uploaded by a seller during the onboarding wizard.
+model KycDocument {
+  id             String                   @id @default(uuid())
+  subjectUserId  String                   @map("subject_user_id")
+  documentType   KycDocumentType          @map("document_type")
+  s3Key          String                   @map("s3_key")
+  sha256         String?
+  uploadedAt     DateTime                 @default(now()) @map("uploaded_at")
+  uploadedById  String                   @map("uploaded_by")
+  reviewStatus  KycDocumentReviewStatus  @default(PENDING) @map("review_status")
+  reviewedBy    String?                  @map("reviewed_by")
+  reviewedAt    DateTime?                @map("reviewed_at")
+  reviewNotes   String?                  @map("review_notes")
+
+  // Relations
+  subjectUser User @relation("SubjectUser", fields: [subjectUserId], references: [id])
+  uploader    User @relation("UploadedBy", fields: [uploadedById], references: [id])
+
+  @@map("kyc_document")
+}
+
+/// A seller's bank account for T+2 payouts.
+model BankAccount {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  accountHolder   String    @map("account_holder")
+  bankName        String    @map("bank_name")
+  accountNoLast4  String    @map("account_no_last4")
+  routingOrIfsc   String    @map("routing_or_ifsc")
+  verified        Boolean   @default(false)
+  verifiedAt      DateTime? @map("verified_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user          User            @relation(fields: [userId], references: [id])
+  sellerProfile SellerProfile?
+
+  @@map("bank_account")
+}
+
+/// One-time email verification token for new user activation.
+model EmailVerificationToken {
+  token     String    @id
+  userId    String    @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("email_verification_token")
+}
+
+/// One-time password reset token.
+model PasswordResetToken {
+  token     String    @id
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  ip        String?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("password_reset_token")
 }
 
 /// A registered carbon-reduction project. Full schema lands in

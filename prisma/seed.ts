@@ -11,6 +11,12 @@
  *   2. A fixed set of `PlatformConfig` default keys used across the
  *      app (commission, currency, payout settlement days, etc.).
  *
+ * Phase 1 (T1-1) adds three test accounts for manual testing:
+ *   - admin@ccverse.local (role=ADMIN, emailVerified=true)
+ *   - buyer@ccverse.local (role=BUYER, emailVerified=true, BuyerProfile)
+ *   - seller@ccverse.local (role=SELLER, emailVerified=true, SellerProfile
+ *     with kycStatus=APPROVED, BankAccount)
+ *
  * The seed is idempotent: re-running it is safe and updates the
  * admin's password hash in place (so a re-seed after rotating
  * `SEED_ADMIN_PASSWORD` works as expected).
@@ -22,7 +28,14 @@
  * Connection details come from `process.env.DATABASE_URL`, which
  * Prisma loads from `.env` automatically.
  */
-import { PrismaClient, UserRole, UserStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  UserRole,
+  UserStatus,
+  KycStatus,
+  BuyerKycStatus,
+  DefaultCurrency,
+} from '@prisma/client';
 import argon2 from 'argon2';
 
 const prisma = new PrismaClient();
@@ -138,9 +151,115 @@ async function seedConfig(): Promise<void> {
   console.log(`✓ Seeded ${CONFIG_DEFAULTS.length} PlatformConfig keys`);
 }
 
+async function seedTestAccounts(): Promise<void> {
+  const TEST_PASSWORD = 'Test@12345678';
+
+  // Test admin — same as Phase 0 admin but with emailVerified=true
+  const adminEmail = 'admin@ccverse.local';
+  const adminHash = await argon2.hash(TEST_PASSWORD, ARGON2_OPTS);
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
+    create: {
+      email: adminEmail,
+      passwordHash: adminHash,
+      role: UserRole.ADMIN,
+      status: UserStatus.ACTIVE,
+      emailVerified: true,
+    },
+    update: { passwordHash: adminHash, emailVerified: true },
+  });
+  // eslint-disable-next-line no-console
+  console.log(`✓ Seeded admin: ${admin.email}`);
+
+  // Test buyer
+  const buyerEmail = 'buyer@ccverse.local';
+  const buyerHash = await argon2.hash(TEST_PASSWORD, ARGON2_OPTS);
+  const buyer = await prisma.user.upsert({
+    where: { email: buyerEmail },
+    create: {
+      email: buyerEmail,
+      passwordHash: buyerHash,
+      role: UserRole.BUYER,
+      status: UserStatus.ACTIVE,
+      emailVerified: true,
+    },
+    update: { passwordHash: buyerHash, emailVerified: true },
+  });
+  await prisma.buyerProfile.upsert({
+    where: { userId: buyer.id },
+    create: {
+      userId: buyer.id,
+      kycStatus: BuyerKycStatus.NOT_REQUIRED,
+      defaultCurrency: DefaultCurrency.USD,
+    },
+    update: {},
+  });
+  // eslint-disable-next-line no-console
+  console.log(`✓ Seeded buyer: ${buyer.email}`);
+
+  // Test seller (kycStatus=APPROVED for easy manual testing)
+  const sellerEmail = 'seller@ccverse.local';
+  const sellerHash = await argon2.hash(TEST_PASSWORD, ARGON2_OPTS);
+  const seller = await prisma.user.upsert({
+    where: { email: sellerEmail },
+    create: {
+      email: sellerEmail,
+      passwordHash: sellerHash,
+      role: UserRole.SELLER,
+      status: UserStatus.ACTIVE,
+      emailVerified: true,
+    },
+    update: { passwordHash: sellerHash, emailVerified: true },
+  });
+
+  // Create bank account first
+  const bankAccount = await prisma.bankAccount.upsert({
+    where: { id: seller.id }, // upsert by id placeholder
+    create: {
+      id: seller.id, // reuse seller.id as bankAccount id for 1:1
+      userId: seller.id,
+      accountHolder: 'Test Seller Inc.',
+      bankName: 'Test Bank',
+      accountNoLast4: '1234',
+      routingOrIfsc: 'TEST0001',
+      verified: true,
+    },
+    update: {},
+  }).catch(() => // handle case where id conflict — create with random id
+    prisma.bankAccount.create({
+      data: {
+        userId: seller.id,
+        accountHolder: 'Test Seller Inc.',
+        bankName: 'Test Bank',
+        accountNoLast4: '1234',
+        routingOrIfsc: 'TEST0001',
+        verified: true,
+      },
+    })
+  );
+
+  await prisma.sellerProfile.upsert({
+    where: { userId: seller.id },
+    create: {
+      userId: seller.id,
+      legalName: 'Test Seller Inc.',
+      registrationNo: 'TEST-REG-001',
+      country: 'IN',
+      authorizedSignatoryName: 'Test Signatory',
+      authorizedSignatoryEmail: sellerEmail,
+      kycStatus: KycStatus.APPROVED,
+      bankAccountId: bankAccount.id,
+    },
+    update: { kycStatus: KycStatus.APPROVED },
+  });
+  // eslint-disable-next-line no-console
+  console.log(`✓ Seeded seller: ${seller.email} (kycStatus=APPROVED)`);
+}
+
 async function main(): Promise<void> {
   await seedAdmin();
   await seedConfig();
+  await seedTestAccounts();
 }
 
 main()
