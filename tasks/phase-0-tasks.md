@@ -24,13 +24,13 @@
 
 | Metric         | Count   |
 | -------------- | ------- |
-| ✅ Done        | 15      |
+| ✅ Done        | 20      |
 | 🟡 In progress | 0       |
 | 🔴 Blocked     | 0       |
 | ⏭ Skipped     | 0       |
-| ⬜ Pending     | 55      |
+| ⬜ Pending     | 50      |
 | **Total**      | **70**  |
-| **Completion** | **21 %** |
+| **Completion** | **29 %** |
 
 ### By section
 
@@ -39,7 +39,7 @@
 | T0-1  | §4.1 Repo (single Next.js app) |     5 |   0 |   0 |   0 |   0 |   5 |
 | T0-2  | §4.2 Design System             |     7 |   7 |   0 |   0 |   0 |   0 |
 | T0-3  | §4.3 Database & Prisma         |     8 |   8 |   0 |   0 |   0 |   0 |
-| T0-4  | §4.4 Background Jobs           |     5 |   0 |   0 |   0 |   0 |   5 |
+| T0-4  | §4.4 Background Jobs           |     5 |   5 |   0 |   0 |   0 |   0 |
 | T0-5  | §4.5 Object Storage            |     5 |   0 |   0 |   0 |   0 |   5 |
 | T0-6  | §4.5b Email (SES)              |     5 |   0 |   0 |   0 |   0 |   5 |
 | T0-7  | §4.6 Auth Scaffold             |     4 |   0 |   0 |   0 |   0 |   4 |
@@ -78,11 +78,11 @@
 | T0-3-6  | `FailedJob` model                                         |   ✅   |       |     | jobType/payload/error/attempts/createdAt/failedAt; failedAt index; manual psql insert verified |
 | T0-3-7  | `AuditLog` model                                          |   ✅   |       |     | actorId/actorRole/action/targetType/targetId/ip/timestamp/payload; indexes on actorId, action, timestamp; manual psql insert verified |
 | T0-3-8  | Docker Compose for Postgres                               |   ✅   |       |     | infra/docker-compose.yml with postgres:16-alpine, healthcheck, named volume ccverse-postgres-data, port 127.0.0.1:5432 |
-| T0-4-1  | Job runner scaffold (`jobs/runner.ts`)                    |   ⬜   |       |     |       |
-| T0-4-2  | Job type registry + dispatcher                            |   ⬜   |       |     |       |
-| T0-4-3  | Retry with exponential backoff                            |   ⬜   |       |     |       |
-| T0-4-4  | `enqueue()` API + idempotency                             |   ⬜   |       |     |       |
-| T0-4-5  | Scheduled job registration                                |   ⬜   |       |     |       |
+| T0-4-1  | Job runner scaffold (`jobs/runner.ts`)                    |   ✅   |       |     |       |
+| T0-4-2  | Job type registry + dispatcher                            |   ✅   |       |     |       |
+| T0-4-3  | Retry with exponential backoff                            |   ✅   |       |     |       |
+| T0-4-4  | `enqueue()` API + idempotency                             |   ✅   |       |     |       |
+| T0-4-5  | Scheduled job registration                                |   ✅   |       |     |       |
 | T0-5-1  | `StorageDriver` interface (`lib/storage`)                 |   ⬜   |       |     |       |
 | T0-5-2  | `S3Driver` for AWS S3                                     |   ⬜   |       |     |       |
 | T0-5-3  | Local S3 mock in Docker Compose                           |   ⬜   |       |     |       |
@@ -134,6 +134,7 @@
 <!-- Append a one-line entry per status change: `- YYYY-MM-DD — T0-x-y: <old> → <new> (owner)` -->
 
 - _No changes yet._
+- 2026-06-17 — T0-4-1 to T0-4-5: ⬜ → ✅ (jobs/ runner scaffold, registry, retry/backoff, enqueue idempotency, scheduled jobs; 26 unit tests green; typecheck + lint clean)
 - 2026-06-16 — T0-2-1: ⬜ → ✅ (tokens extracted from DESIGN.md to styles/tokens.css; typo on --surface-obsidian-loam flagged via FIXME)
 - 2026-06-16 — T0-2-2: ⬜ → ✅ (Tailwind v4.3.1 installed; @theme block in app/globals.css bridges tokens to utility classes)
 - 2026-06-16 — T0-2-3: ⬜ → ✅ (LimeButton + GhostButton; href-driven polymorphism)
