@@ -19,7 +19,7 @@ export interface Job {
   id: string;
   type: string;
   payload: unknown;
-  key?: string;          // idempotency key — deduplicated against in-flight/queued
+  key?: string; // idempotency key — deduplicated against in-flight/queued
   attempts: number;
   maxAttempts: number;
   createdAt: Date;

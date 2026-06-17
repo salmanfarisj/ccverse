@@ -27,7 +27,9 @@ const variants: Record<DataTagVariant, string> = {
 };
 
 export function DataTag({ variant = 'solid', children, className, ...rest }: DataTagProps) {
-  const classes = className ? `${base} ${variants[variant]} ${className}` : `${base} ${variants[variant]}`;
+  const classes = className
+    ? `${base} ${variants[variant]} ${className}`
+    : `${base} ${variants[variant]}`;
   return (
     <span className={classes} {...rest}>
       {children}

@@ -16,17 +16,23 @@ const REQUIRED: Record<string, string> = {
   SESSION_SECRET: 'a'.repeat(32),
 };
 
+/** Delete a process.env key without triggering TS2704 (readonly property). */
+function unset(key: string): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delete (process.env as Record<string, string | undefined>)[key];
+}
+
 describe('env loader', () => {
   const original = { ...process.env };
 
   beforeEach(() => {
     resetEnvForTesting();
-    for (const k of Object.keys(process.env)) delete process.env[k];
+    for (const k of Object.keys(process.env)) unset(k);
     Object.assign(process.env, REQUIRED);
   });
 
   afterEach(() => {
-    for (const k of Object.keys(process.env)) delete process.env[k];
+    for (const k of Object.keys(process.env)) unset(k);
     Object.assign(process.env, original);
     resetEnvForTesting();
   });
@@ -45,7 +51,7 @@ describe('env loader', () => {
   });
 
   it('throws when a required variable is missing', () => {
-    delete process.env.DATABASE_URL;
+    unset('DATABASE_URL');
     expect(() => getEnv()).toThrow(/Invalid environment/);
   });
 
@@ -60,8 +66,8 @@ describe('env loader', () => {
   });
 
   it('logs each issue on failure', () => {
-    delete process.env.S3_REGION;
-    delete process.env.SES_REGION;
+    unset('S3_REGION');
+    unset('SES_REGION');
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       expect(() => getEnv()).toThrow();
@@ -72,5 +78,45 @@ describe('env loader', () => {
     } finally {
       spy.mockRestore();
     }
+  });
+
+  it('PROXY_ORIGIN empty string becomes undefined', () => {
+    process.env.PROXY_ORIGIN = '';
+    resetEnvForTesting();
+    expect(getEnv().PROXY_ORIGIN).toBeUndefined();
+  });
+
+  it('S3_FORCE_PATH_STYLE false from string', () => {
+    process.env.S3_FORCE_PATH_STYLE = 'false';
+    resetEnvForTesting();
+    expect(getEnv().S3_FORCE_PATH_STYLE).toBe(false);
+  });
+
+  it('throws when DATABASE_URL is not a valid URL', () => {
+    process.env.DATABASE_URL = 'not-a-database-url';
+    expect(() => getEnv()).toThrow(/DATABASE_URL/);
+  });
+
+  it('throws when SES_SENDER_DOMAIN is missing', () => {
+    unset('SES_SENDER_DOMAIN');
+    expect(() => getEnv()).toThrow(/SES_SENDER_DOMAIN/);
+  });
+
+  it('defaults NODE_ENV to development', () => {
+    unset('NODE_ENV');
+    resetEnvForTesting();
+    expect(getEnv().NODE_ENV).toBe('development');
+  });
+
+  it('defaults GIT_SHA to dev', () => {
+    unset('GIT_SHA');
+    resetEnvForTesting();
+    expect(getEnv().GIT_SHA).toBe('dev');
+  });
+
+  it('defaults BUILT_AT to empty string', () => {
+    unset('BUILT_AT');
+    resetEnvForTesting();
+    expect(getEnv().BUILT_AT).toBe('');
   });
 });

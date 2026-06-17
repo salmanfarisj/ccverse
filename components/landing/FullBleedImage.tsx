@@ -28,9 +28,7 @@ export function FullBleedImage({
   aspect = DEFAULT_ASPECT,
   className,
 }: FullBleedImageProps) {
-  const wrapper = className
-    ? `relative w-screen ${className}`
-    : 'relative w-screen';
+  const wrapper = className ? `relative w-screen ${className}` : 'relative w-screen';
   if (!src) {
     // No asset yet — render a solid obsidian band at the requested aspect.
     return (
@@ -44,14 +42,7 @@ export function FullBleedImage({
   }
   return (
     <div className={wrapper} style={{ aspectRatio: aspect.toString() }}>
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes="100vw"
-        priority={false}
-        className="object-cover"
-      />
+      <Image src={src} alt={alt} fill sizes="100vw" priority={false} className="object-cover" />
     </div>
   );
 }

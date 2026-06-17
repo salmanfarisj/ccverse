@@ -18,12 +18,12 @@ import { randomUUID } from 'crypto';
 import type { Job } from './types';
 
 interface IQueue {
-  enqueue(job: Job): string;   // returns job id
+  enqueue(job: Job): string; // returns job id
   dequeue(): Job | undefined;
   size(): number;
   findByKey(key: string): Job | undefined;
   hasInFlight(key: string): boolean;
-  completeJob(key: string): void;  // removes from in-flight AND from pending
+  completeJob(key: string): void; // removes from in-flight AND from pending
 }
 
 /** Global in-memory queue instance (survives HMR in dev). */
@@ -88,15 +88,15 @@ export function _resetQueueForTesting(): void {
 export interface EnqueueOptions<TPayload = unknown> {
   type: string;
   payload: TPayload;
-  key?: string;                 // idempotency key
+  key?: string; // idempotency key
   maxAttempts?: number;
-  runAt?: Date;                 // scheduled future execution; defaults to now
-  delayMs?: number;            // alternative to runAt: ms from now
+  runAt?: Date; // scheduled future execution; defaults to now
+  delayMs?: number; // alternative to runAt: ms from now
 }
 
 export interface EnqueueResult {
   id: string;
-  queued: boolean;             // false = deduplicated (key already existed)
+  queued: boolean; // false = deduplicated (key already existed)
 }
 
 /**

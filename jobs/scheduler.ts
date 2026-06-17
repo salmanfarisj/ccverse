@@ -17,9 +17,9 @@ import type { JobHandler } from './types';
 interface ScheduledJob {
   type: string;
   intervalMs: number;
-  handler: JobHandler<unknown, void>;   // the async work to run
-  timeoutMs: number;                    // max time before we kill the interval
-  offsetMs: number;                    // startup delay to avoid thundering herd
+  handler: JobHandler<unknown, void>; // the async work to run
+  timeoutMs: number; // max time before we kill the interval
+  offsetMs: number; // startup delay to avoid thundering herd
   timer: ReturnType<typeof setInterval> | null;
   running: boolean;
 }

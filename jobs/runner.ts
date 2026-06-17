@@ -43,12 +43,13 @@ class Runner {
 
   constructor(config: WorkerPoolConfig = {}) {
     this.concurrency = (config.concurrency ?? DEFAULT_CONFIG.concurrency) as number;
-    this.defaultMaxAttempts = (config.defaultMaxAttempts ?? DEFAULT_CONFIG.defaultMaxAttempts) as number;
+    this.defaultMaxAttempts = (config.defaultMaxAttempts ??
+      DEFAULT_CONFIG.defaultMaxAttempts) as number;
     this.pollIntervalMs = (config.pollIntervalMs ?? DEFAULT_CONFIG.pollIntervalMs) as number;
 
     // Wire graceful shutdown.
     process.on('SIGTERM', () => this._beginShutdown('SIGTERM'));
-    process.on('SIGINT',  () => this._beginShutdown('SIGINT'));
+    process.on('SIGINT', () => this._beginShutdown('SIGINT'));
   }
 
   // ─── Public API ───────────────────────────────────────────────────────────
@@ -118,14 +119,22 @@ class Runner {
   }
 
   private async _runWorker(job: Job): Promise<void> {
-    logger.info('[jobs] Worker picked up job', { jobId: job.id, type: job.type, attempt: job.attempts + 1 });
+    logger.info('[jobs] Worker picked up job', {
+      jobId: job.id,
+      type: job.type,
+      attempt: job.attempts + 1,
+    });
 
     const incremented: Job = { ...job, attempts: job.attempts + 1 };
     const result = await dispatchJob(incremented);
 
     if (result.ok) {
       if (job.key) completeJob(job.key);
-      logger.info('[jobs] Job completed', { jobId: job.id, type: job.type, durationMs: result.durationMs });
+      logger.info('[jobs] Job completed', {
+        jobId: job.id,
+        type: job.type,
+        durationMs: result.durationMs,
+      });
       return;
     }
 
@@ -141,7 +150,13 @@ class Runner {
         nextRunAt: nextRunAt.toISOString(),
         delayMs: delay,
       });
-      enqueue({ type: job.type, payload: job.payload, key: job.key, maxAttempts: job.maxAttempts, runAt: nextRunAt });
+      enqueue({
+        type: job.type,
+        payload: job.payload,
+        key: job.key,
+        maxAttempts: job.maxAttempts,
+        runAt: nextRunAt,
+      });
       if (job.key) completeJob(job.key);
     } else {
       // Terminal failure — write to FailedJob.
@@ -181,8 +196,13 @@ class Runner {
         logger.info('[jobs] Runner stopped gracefully');
         process.exit(0);
       } else {
-        logger.info('[jobs] Waiting for in-flight workers to finish', { pending: this.workers.size });
-        await Promise.race([Promise.all([...this.workers]), new Promise((r) => setTimeout(r, 30_000))]);
+        logger.info('[jobs] Waiting for in-flight workers to finish', {
+          pending: this.workers.size,
+        });
+        await Promise.race([
+          Promise.all([...this.workers]),
+          new Promise((r) => setTimeout(r, 30_000)),
+        ]);
         await waitForWorkers();
       }
     };

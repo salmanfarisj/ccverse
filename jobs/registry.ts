@@ -80,7 +80,12 @@ export async function dispatchJob(job: Job): Promise<JobRunResult> {
     };
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
-    logger.warn('Job handler threw', { jobId: job.id, type: job.type, error, attempts: job.attempts });
+    logger.warn('Job handler threw', {
+      jobId: job.id,
+      type: job.type,
+      error,
+      attempts: job.attempts,
+    });
 
     return {
       ok: false,

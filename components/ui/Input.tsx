@@ -28,7 +28,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const hintId = `${inputId}-hint`;
 
   return (
-    <div className={className ? `flex flex-col gap-[var(--spacing-7)] ${className}` : 'flex flex-col gap-[var(--spacing-7)]'}>
+    <div
+      className={
+        className
+          ? `flex flex-col gap-[var(--spacing-7)] ${className}`
+          : 'flex flex-col gap-[var(--spacing-7)]'
+      }
+    >
       <label
         htmlFor={inputId}
         className="font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-bone-vellum"
@@ -58,11 +64,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         </p>
       ) : null}
       {error ? (
-        <p
-          id={errorId}
-          className="font-jetbrains-mono text-[13px] text-lime-surveyor"
-          role="alert"
-        >
+        <p id={errorId} className="font-jetbrains-mono text-[13px] text-lime-surveyor" role="alert">
           {error}
         </p>
       ) : null}

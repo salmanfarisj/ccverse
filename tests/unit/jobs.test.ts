@@ -20,12 +20,21 @@ import {
   _resetQueueForTesting,
 } from '@/jobs';
 import { backoffDelay, shouldRetry, nextRunAt } from '@/jobs';
-import { registerScheduledJob, unregisterScheduledJob, stopAllScheduledJobs } from '@/jobs/scheduler';
+import {
+  registerScheduledJob,
+  unregisterScheduledJob,
+  stopAllScheduledJobs,
+} from '@/jobs/scheduler';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /** Minimal in-memory FailedJob mock for tests that call dispatchJob on unknown types. */
-const mockFailedJobs: Array<{ jobType: string; payload: unknown; error: string; attempts: number }> = [];
+const mockFailedJobs: Array<{
+  jobType: string;
+  payload: unknown;
+  error: string;
+  attempts: number;
+}> = [];
 
 vi.mock('@/lib/db', () => ({
   prisma: {
@@ -243,10 +252,7 @@ describe('T0-4-5 — scheduled job registration', () => {
   it('registerScheduledJob calls the handler after offset', async () => {
     const spy = vi.fn().mockResolvedValue(undefined);
 
-    registerScheduledJob(
-      { id: 's1', type: 's1', intervalMs: 10_000, offsetMaxMs: 200 },
-      spy,
-    );
+    registerScheduledJob({ id: 's1', type: 's1', intervalMs: 10_000, offsetMaxMs: 200 }, spy);
 
     // First tick fires after ~offsetMs.
     await vi.advanceTimersByTimeAsync(250);
@@ -257,10 +263,7 @@ describe('T0-4-5 — scheduled job registration', () => {
   it('subsequent ticks fire at the configured intervalMs', async () => {
     const spy = vi.fn().mockResolvedValue(undefined);
 
-    registerScheduledJob(
-      { id: 's2', type: 's2', intervalMs: 5_000, offsetMaxMs: 50 },
-      spy,
-    );
+    registerScheduledJob({ id: 's2', type: 's2', intervalMs: 5_000, offsetMaxMs: 50 }, spy);
 
     // Let first tick fire.
     await vi.advanceTimersByTimeAsync(100);
@@ -281,10 +284,7 @@ describe('T0-4-5 — scheduled job registration', () => {
       await vi.advanceTimersByTimeAsync(2_000);
     });
 
-    registerScheduledJob(
-      { id: 's3', type: 's3', intervalMs: 500, offsetMaxMs: 50 },
-      spy,
-    );
+    registerScheduledJob({ id: 's3', type: 's3', intervalMs: 500, offsetMaxMs: 50 }, spy);
 
     // First tick fires and starts async handler.
     await vi.advanceTimersByTimeAsync(100);
@@ -303,10 +303,7 @@ describe('T0-4-5 — scheduled job registration', () => {
   it('unregisterScheduledJob stops the job', async () => {
     const spy = vi.fn().mockResolvedValue(undefined);
 
-    registerScheduledJob(
-      { id: 's4', type: 's4', intervalMs: 1_000, offsetMaxMs: 50 },
-      spy,
-    );
+    registerScheduledJob({ id: 's4', type: 's4', intervalMs: 1_000, offsetMaxMs: 50 }, spy);
 
     await vi.advanceTimersByTimeAsync(100);
     expect(spy).toHaveBeenCalledTimes(1);

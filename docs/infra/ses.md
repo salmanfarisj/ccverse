@@ -17,11 +17,11 @@ AWS supports two methods: **DKIM** (preferred) and **SPF**.
 3. Select **Domain** and enter `ccverse.com` (or your chosen sending domain).
 4. SES will display three DNS records to add to your domain registrar:
 
-| Type  | Name                          | Value / Data                                   | TTL   |
-| ----- | ----------------------------- | ---------------------------------------------- | ----- |
-| TXT   | `ccverse.com`                 | `v=spf1 include:amazonses.com ~all`            | 3600  |
-| MX    | `feedback._domainkey.ccverse.com` | (SES-provided DKIM record)                | 3600  |
-| TXT   | `_amazonses.ccverse.com`      | (SES-provided DKIM token)                      | 3600  |
+| Type | Name                              | Value / Data                        | TTL  |
+| ---- | --------------------------------- | ----------------------------------- | ---- |
+| TXT  | `ccverse.com`                     | `v=spf1 include:amazonses.com ~all` | 3600 |
+| MX   | `feedback._domainkey.ccverse.com` | (SES-provided DKIM record)          | 3600 |
+| TXT  | `_amazonses.ccverse.com`          | (SES-provided DKIM token)           | 3600 |
 
 > **Note:** `feedback._domainkey.ccverse.com` is the DKIM selector. If you use
 > multiple selectors, add a TXT record for each (`*._domainkey.ccverse.com`).
@@ -71,7 +71,7 @@ In the SES sandbox you must verify each `From:` address individually.
 
 By default every new SES account is in **sandbox mode**:
 
-- You can only send to *verified* addresses.
+- You can only send to _verified_ addresses.
 - The daily sending limit is 200 emails.
 
 ### How to exit the sandbox
@@ -143,13 +143,13 @@ send required).
 
 ## 7. Troubleshooting
 
-| Symptom                        | Likely Cause                       | Fix                                      |
-| ------------------------------ | ---------------------------------- | ---------------------------------------- |
-| Email goes to spam             | SPF/DKIM not propagated or missing| Check DNS records; wait for propagation  |
-| "Email address not verified"   | Sandbox mode, unverified address   | Verify address or request production access |
-| Bounce events not received     | SNS topic not subscribed           | Confirm subscription in SNS console      |
-| Signature verification fails   | Webhook secret mismatch            | Verify HMAC in `app/api/webhooks/ses`     |
+| Symptom                      | Likely Cause                       | Fix                                         |
+| ---------------------------- | ---------------------------------- | ------------------------------------------- |
+| Email goes to spam           | SPF/DKIM not propagated or missing | Check DNS records; wait for propagation     |
+| "Email address not verified" | Sandbox mode, unverified address   | Verify address or request production access |
+| Bounce events not received   | SNS topic not subscribed           | Confirm subscription in SNS console         |
+| Signature verification fails | Webhook secret mismatch            | Verify HMAC in `app/api/webhooks/ses`       |
 
 ---
 
-*Last updated: 2026-06-17*
+_Last updated: 2026-06-17_

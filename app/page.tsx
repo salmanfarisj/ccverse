@@ -16,8 +16,7 @@ export const metadata: Metadata = {
   // and replace the relative path below once the asset is supplied.
   openGraph: {
     title: 'CC Verse — Verified carbon credits, end to end',
-    description:
-      'Signed at issuance. Tracked on a registry. Retired with proof of ownership.',
+    description: 'Signed at issuance. Tracked on a registry. Retired with proof of ownership.',
     images: ['/og/home.png'],
   },
 };
@@ -64,10 +63,9 @@ export default function HomePage() {
                 lineHeight: 'var(--leading-body)',
               }}
             >
-              Carbon markets are full of promises. CC Verse replaces them with a single
-              source of truth: a registry entry per credit, signed at issuance, and a
-              chain of state transitions that buyers, sellers, and auditors can verify
-              without trusting each other.
+              Carbon markets are full of promises. CC Verse replaces them with a single source of
+              truth: a registry entry per credit, signed at issuance, and a chain of state
+              transitions that buyers, sellers, and auditors can verify without trusting each other.
             </p>
             <p
               className="mt-[var(--spacing-18)] text-bone-vellum"
@@ -76,9 +74,8 @@ export default function HomePage() {
                 lineHeight: 'var(--leading-body)',
               }}
             >
-              Every listing is bound to a project. Every order is bound to a buyer.
-              Every retirement is bound to a date. Nothing is overwritten, nothing is
-              silent, and nothing disappears.
+              Every listing is bound to a project. Every order is bound to a buyer. Every retirement
+              is bound to a date. Nothing is overwritten, nothing is silent, and nothing disappears.
             </p>
           </div>
         </Section>
@@ -151,9 +148,8 @@ export default function HomePage() {
                 lineHeight: 'var(--leading-body)',
               }}
             >
-              The buyer flow, project console, and auditor console land in
-              Phases 1–5. This page is the first piece of the product — the rest
-              is being built.
+              The buyer flow, project console, and auditor console land in Phases 1–5. This page is
+              the first piece of the product — the rest is being built.
             </p>
           </div>
         </Section>

@@ -45,12 +45,9 @@ describe('StorageDriver interface', () => {
       const mock = mockClient(S3Client);
       mock.on(PutObjectCommand).resolves({ ETag: '"abc123"' });
 
-      const result = await s3Driver.put(
-        BUCKETS.KYC,
-        'kyc/user-1/doc.pdf',
-        Buffer.from('hello'),
-        { contentType: 'application/pdf' },
-      );
+      const result = await s3Driver.put(BUCKETS.KYC, 'kyc/user-1/doc.pdf', Buffer.from('hello'), {
+        contentType: 'application/pdf',
+      });
 
       expect(result.etag).toBe('"abc123"');
 

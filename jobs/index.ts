@@ -29,7 +29,14 @@ export { getRunner, _resetRunnerForTesting } from './runner';
 export { _resetQueueForTesting } from './enqueue';
 
 // Types
-export type { Job, JobHandler, JobResult, JobFailure, JobRunResult, WorkerPoolConfig } from './types';
+export type {
+  Job,
+  JobHandler,
+  JobResult,
+  JobFailure,
+  JobRunResult,
+  WorkerPoolConfig,
+} from './types';
 
 // Retry
 export { backoffDelay, shouldRetry, nextRunAt } from './retry';
