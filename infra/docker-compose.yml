@@ -7,13 +7,16 @@
 # single managed Postgres) without Compose.
 #
 # Usage:
-#   docker compose -f infra/docker-compose.yml up -d db
+#   docker compose -f infra/docker-compose.yml up -d db,minio
 #   docker compose -f infra/docker-compose.yml down           # stop
 #   docker compose -f infra/docker-compose.yml down -v        # nuke the volume
 #   docker compose -f infra/docker-compose.yml logs -f db
+#   docker compose -f infra/docker-compose.yml logs -f minio
 #
 # Connection details match the root `.env.example`:
 #   DATABASE_URL=postgresql://ccverse:ccverse@localhost:5432/ccverse?schema=public
+#   S3_ENDPOINT=http://localhost:9000
+#   S3_FORCE_PATH_STYLE=true
 
 services:
   db:
@@ -42,6 +45,55 @@ services:
       retries: 10
       start_period: 5s
 
+  minio:
+    image: minio/minio:latest
+    container_name: ccverse-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - '127.0.0.1:9000:9000'   # API
+      - '127.0.0.1:9001:9001'   # Console
+    volumes:
+      - ccverse-minio-data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mc alias set local http://localhost:9000 minioadmin minioadmin 2>/dev/null && mc ready local
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: ccverse-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    # Bootstrap script creates the four CC Verse buckets and applies CORS.
+    # CORS: allow GET + PUT from APP_ORIGIN only. Expose ETag header.
+    command: |
+      -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin;
+      mc mb --ignore-existing local/ccverse-kyc;
+      mc mb --ignore-existing local/ccverse-projects;
+      mc mb --ignore-existing local/ccverse-certificates;
+      mc mb --ignore-existing local/ccverse-audit-exports;
+      mc anonymous set-json cors.json local/ccverse-kyc;
+      mc anonymous set-json cors.json local/ccverse-projects;
+      mc anonymous set-json cors.json local/ccverse-certificates;
+      mc anonymous set-json cors.json local/ccverse-audit-exports;
+      mc anonymous set-json cors.json local/;
+      echo 'MinIO bootstrap complete';
+      "
+    volumes:
+      - ./minio-cors.json:/cors.json:ro
+
 volumes:
   ccverse-postgres-data:
     name: ccverse-postgres-data
+  ccverse-minio-data:
+    name: ccverse-minio-data

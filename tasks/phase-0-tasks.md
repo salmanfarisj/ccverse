@@ -24,13 +24,13 @@
 
 | Metric         | Count   |
 | -------------- | ------- |
-| ✅ Done        | 20      |
+| ✅ Done        | 25      |
 | 🟡 In progress | 0       |
 | 🔴 Blocked     | 0       |
 | ⏭ Skipped     | 0       |
-| ⬜ Pending     | 50      |
+| ⬜ Pending     | 45      |
 | **Total**      | **70**  |
-| **Completion** | **29 %** |
+| **Completion** | **36 %** |
 
 ### By section
 
@@ -40,7 +40,7 @@
 | T0-2  | §4.2 Design System             |     7 |   7 |   0 |   0 |   0 |   0 |
 | T0-3  | §4.3 Database & Prisma         |     8 |   8 |   0 |   0 |   0 |   0 |
 | T0-4  | §4.4 Background Jobs           |     5 |   5 |   0 |   0 |   0 |   0 |
-| T0-5  | §4.5 Object Storage            |     5 |   0 |   0 |   0 |   0 |   5 |
+| T0-5  | §4.5 Object Storage            |     5 |   5 |   0 |   0 |   0 |   0 |
 | T0-6  | §4.5b Email (SES)              |     5 |   0 |   0 |   0 |   0 |   5 |
 | T0-7  | §4.6 Auth Scaffold             |     4 |   0 |   0 |   0 |   0 |   4 |
 | T0-8  | §4.7 RBAC                      |     3 |   0 |   0 |   0 |   0 |   3 |
@@ -83,11 +83,11 @@
 | T0-4-3  | Retry with exponential backoff                            |   ✅   |       |     |       |
 | T0-4-4  | `enqueue()` API + idempotency                             |   ✅   |       |     |       |
 | T0-4-5  | Scheduled job registration                                |   ✅   |       |     |       |
-| T0-5-1  | `StorageDriver` interface (`lib/storage`)                 |   ⬜   |       |     |       |
-| T0-5-2  | `S3Driver` for AWS S3                                     |   ⬜   |       |     |       |
-| T0-5-3  | Local S3 mock in Docker Compose                           |   ⬜   |       |     |       |
-| T0-5-4  | Presigned URL helpers                                     |   ⬜   |       |     |       |
-| T0-5-5  | CORS config on buckets                                    |   ⬜   |       |     |       |
+| T0-5-1  | `StorageDriver` interface (`lib/storage`)                 |   ✅   |       |     | `lib/storage/driver.ts` — put/get/delete/head/presignPut/presignGet + BUCKETS constants |
+| T0-5-2  | `S3Driver` for AWS S3                                     |   ✅   |       |     | Uses @aws-sdk/client-s3 + @aws-sdk/s3-request-presigner; SSE AES256 enforced on all PUTs |
+| T0-5-3  | Local S3 mock in Docker Compose                           |   ✅   |       |     | MinIO + bootstrap script creates 4 buckets; healthcheck on minio service |
+| T0-5-4  | Presigned URL helpers                                     |   ✅   |       |     | `presignPut` + `presignGet` on S3Driver; audit-logged via jobs/logger |
+| T0-5-5  | CORS config on buckets                                    |   ✅   |       |     | `infra/minio-cors.json` — GET+PUT from APP_ORIGIN only; ETag exposed |
 | T0-6-1  | `EmailDriver` interface (`lib/email`)                     |   ⬜   |       |     |       |
 | T0-6-2  | `SesDriver`                                               |   ⬜   |       |     |       |
 | T0-6-3  | React Email templates scaffold                            |   ⬜   |       |     |       |
@@ -134,6 +134,7 @@
 <!-- Append a one-line entry per status change: `- YYYY-MM-DD — T0-x-y: <old> → <new> (owner)` -->
 
 - _No changes yet._
+- 2026-06-17 — T0-5-1 to T0-5-5: ⬜ → ✅ (StorageDriver interface, S3Driver with SSE AES256, MinIO docker-compose bootstrap, presigned URL helpers, CORS config; 10 unit tests green; lint + typecheck clean)
 - 2026-06-17 — T0-4-1 to T0-4-5: ⬜ → ✅ (jobs/ runner scaffold, registry, retry/backoff, enqueue idempotency, scheduled jobs; 26 unit tests green; typecheck + lint clean)
 - 2026-06-16 — T0-2-1: ⬜ → ✅ (tokens extracted from DESIGN.md to styles/tokens.css; typo on --surface-obsidian-loam flagged via FIXME)
 - 2026-06-16 — T0-2-2: ⬜ → ✅ (Tailwind v4.3.1 installed; @theme block in app/globals.css bridges tokens to utility classes)
