@@ -25,7 +25,7 @@ export interface SessionData {
   userAgent?: string;
 }
 
-const COOKIE_NAME = '__Host-ccverse_session';
+const COOKIE_NAME = 'ccverse_session';
 
 function getSessionOptions(): SessionOptions {
   const env = getEnv();

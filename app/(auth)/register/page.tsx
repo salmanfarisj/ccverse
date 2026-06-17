@@ -6,22 +6,20 @@ import { useState, type FormEvent } from 'react';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [retryAfter, setRetryAfter] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
-    setRetryAfter(null);
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth/register/buyer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -29,30 +27,13 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-      if (res.status === 423) {
-        // Locked out
-        setRetryAfter(data.retryAfter ?? 1800);
-        setError(data.error ?? 'Account is temporarily locked.');
-        return;
-      }
-
       if (!res.ok) {
-        setError(data.error ?? 'Login failed');
+        setError(data.error ?? 'Registration failed');
         return;
       }
 
-      // Redirect based on role
-      const role = (data.role ?? '').toLowerCase();
-      let destination = '/buyer';
-      if (role === 'admin' || role === 'auditor') {
-        destination = '/admin';
-      } else if (role === 'seller') {
-        destination = '/seller';
-      }
-
-      await router.push(destination);
-    } catch (err) {
-      console.error('Login error', err);
+      router.push('/register/success');
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -71,22 +52,9 @@ export default function LoginPage() {
             CC Verse
           </Link>
           <p className="mt-2 font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">
-            Sign in to your account
+            Create your buyer account
           </p>
         </div>
-
-        {/* Lockout notice */}
-        {retryAfter !== null && (
-          <div className="rounded-md border border-lime-surveyor bg-[#141414] p-4">
-            <p className="font-jetbrains-mono text-[13px] text-lime-surveyor">
-              Account locked. Try again in{' '}
-              <strong>
-                {Math.ceil(retryAfter / 60)} minute{Math.ceil(retryAfter / 60) !== 1 ? 's' : ''}
-              </strong>
-              .
-            </p>
-          </div>
-        )}
 
         {/* Form */}
         <form
@@ -109,10 +77,13 @@ export default function LoginPage() {
             label="Password"
             type="password"
             name="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             required
+            minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="Min. 8 characters"
+            hint="At least 8 characters"
           />
 
           {error && (
@@ -122,21 +93,15 @@ export default function LoginPage() {
           )}
 
           <LimeButton type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Creating account…' : 'Create account'}
           </LimeButton>
         </form>
 
-        {/* Footer links */}
+        {/* Footer */}
         <p className="text-center font-jetbrains-mono text-[13px] text-drift-ash">
-          <Link
-            href="/forgot-password"
-            className="!text-lime-surveyor !no-underline hover:text-lime/80"
-          >
-            Forgot password?
-          </Link>
-          {' · '}
-          <Link href="/register" className="!text-lime-surveyor !no-underline hover:text-lime/80">
-            Create account
+          Already have an account?{' '}
+          <Link href="/login" className="!text-lime-surveyor !no-underline hover:text-lime/80">
+            Sign in
           </Link>
         </p>
       </div>

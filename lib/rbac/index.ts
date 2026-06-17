@@ -13,7 +13,7 @@
  * "public" is not a role value — it is the absence of a session.
  */
 
-import { getIronSession } from 'iron-session';
+import { getIronSession, unsealData } from 'iron-session';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -33,7 +33,7 @@ export interface SessionData {
 
 // ─── requireRole ─────────────────────────────────────────────────────────────
 
-const COOKIE_NAME = '__Host-ccverse_session';
+const COOKIE_NAME = 'ccverse_session';
 
 /**
  * Guard a route handler or server action.
@@ -68,19 +68,25 @@ export async function requireRole(allowed: Role[]): Promise<SessionData> {
 
 // ─── middleware helper (used by middleware.ts) ───────────────────────────────
 
-/** Parse the session from a NextRequest cookie (Edge-compatible, no iron-session). */
-export function getSessionFromRequest(request: NextRequest): SessionData {
+/**
+ * Parse the session from a NextRequest cookie on the Edge.
+ *
+ * Uses iron-session's `unsealData` to decrypt the cookie value so we can
+ * read userId and role for middleware path gating. The full signature
+ * verification is done by getIronSession in requireRole (Node runtime).
+ */
+export async function getSessionFromRequest(
+  request: NextRequest,
+): Promise<SessionData> {
   const cookie = request.cookies.get(COOKIE_NAME);
   if (!cookie?.value) return {};
 
   try {
-    // iron-session encrypted cookie value — we decode just enough to read
-    // the role/userId for middleware path gating. The real validation
-    // (signature check) happens in requireRole on the Node runtime side.
-    // This is safe because the cookie is httpOnly + signed; middleware only
-    // reads the plaintext payload after iron-session verifies the MAC.
-    const parsed = JSON.parse(cookie.value) as SessionData;
-    return parsed;
+    const env = getEnv();
+    const data = await unsealData<SessionData>(cookie.value, {
+      password: env.SESSION_SECRET,
+    });
+    return data ?? {};
   } catch {
     return {};
   }

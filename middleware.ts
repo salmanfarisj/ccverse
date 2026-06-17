@@ -52,7 +52,7 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-export function middleware(request: NextRequest): NextResponse {
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // Public paths: allow through
@@ -67,8 +67,8 @@ export function middleware(request: NextRequest): NextResponse {
     return NextResponse.next();
   }
 
-  // Read session from cookie
-  const session = getSessionFromRequest(request);
+  // Read session from cookie (Edge-compatible, uses unsealData)
+  const session = await getSessionFromRequest(request);
   if (!session?.userId) {
     // No session — redirect pages to /login, return 401 for API routes
     if (pathname.startsWith('/api/')) {
