@@ -24,13 +24,13 @@
 
 | Metric         | Count   |
 | -------------- | ------- |
-| ✅ Done        | 25      |
+| ✅ Done        | 34      |
 | 🟡 In progress | 0       |
 | 🔴 Blocked     | 0       |
 | ⏭ Skipped     | 0       |
 | ⬜ Pending     | 45      |
 | **Total**      | **70**  |
-| **Completion** | **36 %** |
+| **Completion** | **49 %** |
 
 ### By section
 
@@ -41,8 +41,8 @@
 | T0-3  | §4.3 Database & Prisma         |     8 |   8 |   0 |   0 |   0 |   0 |
 | T0-4  | §4.4 Background Jobs           |     5 |   5 |   0 |   0 |   0 |   0 |
 | T0-5  | §4.5 Object Storage            |     5 |   5 |   0 |   0 |   0 |   0 |
-| T0-6  | §4.5b Email (SES)              |     5 |   0 |   0 |   0 |   0 |   5 |
-| T0-7  | §4.6 Auth Scaffold             |     4 |   0 |   0 |   0 |   0 |   4 |
+| T0-6  | §4.5b Email (SES)              |     5 |   5 |   0 |   0 |   0 |   0 |
+| T0-7  | §4.6 Auth Scaffold             |     4 |   4 |   0 |   0 |   0 |   0 |
 | T0-8  | §4.7 RBAC                      |     3 |   0 |   0 |   0 |   0 |   3 |
 | T0-9  | §4.8 Observability             |     2 |   0 |   0   |   0 |   0 |   2 |
 | T0-10 | §4.9 CI/CD                     |     3 |   0 |   0 |   0 |   0 |   3 |
@@ -88,15 +88,15 @@
 | T0-5-3  | Local S3 mock in Docker Compose                           |   ✅   |       |     | MinIO + bootstrap script creates 4 buckets; healthcheck on minio service |
 | T0-5-4  | Presigned URL helpers                                     |   ✅   |       |     | `presignPut` + `presignGet` on S3Driver; audit-logged via jobs/logger |
 | T0-5-5  | CORS config on buckets                                    |   ✅   |       |     | `infra/minio-cors.json` — GET+PUT from APP_ORIGIN only; ETag exposed |
-| T0-6-1  | `EmailDriver` interface (`lib/email`)                     |   ⬜   |       |     |       |
-| T0-6-2  | `SesDriver`                                               |   ⬜   |       |     |       |
-| T0-6-3  | React Email templates scaffold                            |   ⬜   |       |     |       |
-| T0-6-4  | SES sender-identity DNS checklist                         |   ⬜   |       |     |       |
-| T0-6-5  | SES webhook handler                                       |   ⬜   |       |     |       |
-| T0-7-1  | `iron-session` integration (`lib/session`)                |   ⬜   |       |     |       |
-| T0-7-2  | Password hashing helper (argon2id)                        |   ⬜   |       |     |       |
-| T0-7-3  | TOTP MFA helper (scaffold only)                           |   ⬜   |       |     |       |
-| T0-7-4  | `trackFailedLogin` helper                                 |   ⬜   |       |     |       |
+| T0-6-1  | `EmailDriver` interface (`lib/email`)                     |   ✅   |       |     | `lib/email/driver.ts` — send() returning MessageId |
+| T0-6-2  | `SesDriver`                                               |   ✅   |       |     | `lib/email/ses.ts` — uses SESv2Client; SSE enforced at account level |
+| T0-6-3  | React Email templates scaffold                            |   ✅   |       |     | `lib/email/templates/welcome.tsx` — HTML+text render functions |
+| T0-6-4  | SES sender-identity DNS checklist                         |   ✅   |       |     | `docs/infra/ses.md` — DKIM/SPF/DMARC checklist + sandbox/production steps |
+| T0-6-5  | SES webhook handler                                       |   ✅   |       |     | `app/api/webhooks/ses/route.ts` — SubscriptionConfirmation/Notification/UnsubscribeConfirmation; HMAC verification stub |
+| T0-7-1  | `iron-session` integration (`lib/session`)                |   ✅   |       |     | `lib/session/index.ts` — __Host- prefixed cookie, httpOnly/secure/sameSite=strict |
+| T0-7-2  | Password hashing helper (argon2id)                        |   ✅   |       |     | `lib/auth/hashing.ts` — m=64MB, t=3, p=4 per OWASP 2023 |
+| T0-7-3  | TOTP MFA helper (scaffold only)                           |   ✅   |       |       | `lib/auth/totp.ts` — generateSecret/verifyTotpToken/getProvisioningUri (not wired to login) |
+| T0-7-4  | `trackFailedLogin` helper                                 |   ✅   |       |     | `lib/auth/failed-login.ts` — stub logging to jobs/logger; User.failedLoginCount deferred to Phase 1 |
 | T0-8-1  | `requireRole` helper (`lib/rbac`)                         |   ⬜   |       |     |       |
 | T0-8-2  | `app/middleware.ts` path gating                           |   ⬜   |       |     |       |
 | T0-8-3  | Role-route shells                                         |   ⬜   |       |     |       |
@@ -134,7 +134,8 @@
 <!-- Append a one-line entry per status change: `- YYYY-MM-DD — T0-x-y: <old> → <new> (owner)` -->
 
 - _No changes yet._
-- 2026-06-17 — T0-5-1 to T0-5-5: ⬜ → ✅ (StorageDriver interface, S3Driver with SSE AES256, MinIO docker-compose bootstrap, presigned URL helpers, CORS config; 10 unit tests green; lint + typecheck clean)
+- 2026-06-17 — T0-6-1 to T0-6-5: ⬜ → ✅ (EmailDriver interface, SesDriver with SESv2Client, welcome email template, SES infra docs, SES webhook handler; typecheck + lint clean; @aws-sdk/client-sesv2, @aws-sdk/client-sns, otplib installed)
+- 2026-06-17 — T0-7-1 to T0-7-4: ⬜ → ✅ (iron-session with __Host- prefix + strict sameSite, argon2id hashing, TOTP MFA scaffold, trackFailedLogin stub; typecheck + lint clean)
 - 2026-06-17 — T0-4-1 to T0-4-5: ⬜ → ✅ (jobs/ runner scaffold, registry, retry/backoff, enqueue idempotency, scheduled jobs; 26 unit tests green; typecheck + lint clean)
 - 2026-06-16 — T0-2-1: ⬜ → ✅ (tokens extracted from DESIGN.md to styles/tokens.css; typo on --surface-obsidian-loam flagged via FIXME)
 - 2026-06-16 — T0-2-2: ⬜ → ✅ (Tailwind v4.3.1 installed; @theme block in app/globals.css bridges tokens to utility classes)
