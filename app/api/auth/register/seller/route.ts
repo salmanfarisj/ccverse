@@ -1,9 +1,9 @@
 /**
- * POST /api/auth/register/buyer
+ * POST /api/auth/register/seller
  *
- * Public buyer self-registration. Creates a User (status=pending_verification,
- * role=buyer), a BuyerProfile, an EmailVerificationToken (24h TTL), and sends
- * the verification email.
+ * Public seller entity registration. Creates a User (status=pending_verification,
+ * role=seller), a SellerProfile (kycStatus=not_started), an EmailVerificationToken
+ * (24h TTL), and sends the verification email.
  *
  * Audit events: auth.register
  */
@@ -21,6 +21,11 @@ import { renderVerifyEmailHtml, renderVerifyEmailText } from '@/lib/email/templa
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
+  legalName: z.string().min(1, 'Legal name is required'),
+  registrationNo: z.string().min(1, 'Registration number is required'),
+  country: z.string().min(1, 'Country is required'),
+  authorizedSignatoryName: z.string().min(1, 'Authorized signatory name is required'),
+  authorizedSignatoryEmail: z.string().email(),
 });
 
 const EMAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -33,7 +38,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.message }, { status: 400 });
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, legalName, registrationNo, country, authorizedSignatoryName, authorizedSignatoryEmail } = parsed.data;
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined;
 
     // Check for duplicate email
@@ -44,24 +49,28 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await hashPassword(password);
 
-    // Create user + buyer profile in a transaction
+    // Create user + seller profile in a transaction
     const user = await prisma.$transaction(async (tx) => {
       const u = await tx.user.create({
         data: {
           email,
           passwordHash,
-          role: 'BUYER',
+          role: 'SELLER',
           status: 'PENDING_VERIFICATION',
           emailVerified: false,
         },
       });
 
-      await tx.buyerProfile.create({
+      await tx.sellerProfile.create({
         data: {
           userId: u.id,
-          kycStatus: 'NOT_REQUIRED',
-          kycMethod: 'NONE',
-          defaultCurrency: 'USD',
+          legalName,
+          registrationNo,
+          country,
+          authorizedSignatoryName,
+          authorizedSignatoryEmail,
+          kycStatus: 'NOT_STARTED',
+          kycMethod: 'manual',
         },
       });
 
@@ -89,18 +98,19 @@ export async function POST(req: NextRequest) {
         tags: ['auth', 'verify-email'],
       });
     } catch (emailErr) {
-      console.error('buyer register: email send failed', emailErr);
+      // Log but don't fail — user is already created.
+      console.error('seller register: email send failed', emailErr);
     }
 
     // Audit event
     await writeAuditEvent({
       actorId: user.id,
-      actorRole: 'buyer',
+      actorRole: 'seller',
       action: 'auth.register',
       targetType: 'user',
       targetId: user.id,
       ip,
-      payload: { email, role: 'buyer' },
+      payload: { email, role: 'seller' },
     });
 
     return NextResponse.json(
@@ -108,7 +118,7 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     );
   } catch (err) {
-    console.error('buyer register error', err);
+    console.error('seller register error', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

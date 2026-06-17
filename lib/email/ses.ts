@@ -21,26 +21,44 @@ export class SesDriver implements EmailDriver {
     this.senderDomain = env.SES_SENDER_DOMAIN;
     this.configurationSet = env.SES_CONFIGURATION_SET;
 
+    // Dev mode: no static credentials configured — use anonymous credentials.
+    // The client will still be constructed; actual sends are guarded in send().
+    const isDev = !env.SES_ACCESS_KEY_ID || !env.SES_SECRET_ACCESS_KEY;
+
     this.client = new SESv2Client({
       region: env.SES_REGION,
-      credentials:
-        env.SES_ACCESS_KEY_ID && env.SES_SECRET_ACCESS_KEY
-          ? {
-              accessKeyId: env.SES_ACCESS_KEY_ID,
-              secretAccessKey: env.SES_SECRET_ACCESS_KEY,
-            }
-          : undefined,
+      credentials: isDev
+        ? { accessKeyId: 'devkey', secretAccessKey: 'devsecret' }
+        : {
+            accessKeyId: env.SES_ACCESS_KEY_ID,
+            secretAccessKey: env.SES_SECRET_ACCESS_KEY,
+          },
     });
+
+    this.isDev = isDev;
 
     logger.info('SesDriver initialised', {
       region: env.SES_REGION,
       senderDomain: this.senderDomain,
       configurationSet: this.configurationSet,
+      devMode: isDev,
     });
   }
 
+  private readonly isDev: boolean = false;
+
   async send(msg: EmailMessage): Promise<string> {
     const toAddresses = Array.isArray(msg.to) ? msg.to : [msg.to];
+
+    // Dev mode: no real SES credentials — log and return a fake ID instead of throwing.
+    if (this.isDev) {
+      logger.warn('[SesDriver] Dev mode — email not sent', {
+        to: toAddresses,
+        subject: msg.subject,
+        tags: msg.tags,
+      });
+      return `dev-${Date.now()}-mock`;
+    }
 
     const command = new SendEmailCommand({
       FromEmailAddress: msg.from ?? `noreply@${this.senderDomain}`,

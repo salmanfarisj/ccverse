@@ -227,3 +227,36 @@ npm run typecheck && npm run lint && npm run build
 ```
 For auth flows specifically, use Playwright to trace the full browser redirect chain
 (`POST /api/auth/login` → cookie set → `GET /protected` → 307 redirect? → final URL).
+
+## E2E verification requirement (UI tasks)
+
+**Every task that introduces UI pages must be verified with Playwright E2E tests before considering the task done.** Unit tests alone are insufficient — they cannot catch:
+- Page loads returning 500 instead of 200
+- Redirect chains breaking (auth redirects, form submissions)
+- Cookie rejection / session not persisting
+- Form validation not triggering, or wrong error messages
+- Server Components throwing 403/500 at render time
+
+**Required verification workflow for UI tasks:**
+1. Write the feature (pages + API routes)
+2. Run `npm run typecheck && npm run lint && npm run build` — fix all errors
+3. Run `npm run test:e2e` — all tests must pass
+4. If tests fail, debug with Playwright's trace viewer (`npx playwright show-trace`)
+5. Commit only after step 3 is green
+
+**Writing E2E tests** (`tests/e2e/`):
+- One `.spec.ts` file per feature/phase
+- Use `request.post(... , { data: ... })` for API calls that don't need a browser cookie
+- Use `page.goto()` + `page.getByLabel()` for browser-based flows
+- Clean up test data in `beforeEach` or `afterAll` via `PrismaClient` directly — don't rely on DB reset between tests
+- Use `uniqueEmail()` with a `+e2e-` infix so cleanup `deleteMany({ where: { email: { contains: '+e2e-' } } })` only removes test rows
+- Tests that need a session should log in via the UI (`page.goto('/login')` + form fill) or use the cookie from a prior page context
+- Target full happy-path flows end-to-end; sad paths can be API-level
+
+**Running tests:**
+```bash
+npm run test:e2e:install   # one-time
+npm run test:e2e           # runs dev server + all specs
+npx playwright test tests/e2e/seller-kyc.spec.ts  # one file
+npx playwright test -g "seller registration"       # one test name
+```

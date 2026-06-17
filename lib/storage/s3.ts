@@ -55,11 +55,13 @@ function buildClient() {
 export class S3Driver implements StorageDriver {
   private readonly client: S3Client;
   private readonly sseAlgorithm: string;
+  private readonly isDevWithoutEndpoint: boolean;
 
   constructor() {
     this.client = buildClient();
-    // Prefer KMS if KMS key ARN is set; fall back to AES256.
-    // For MVP all uploads use AES256 — KMS is noted as a future option.
+    const env = getEnv();
+    this.isDevWithoutEndpoint =
+      (!env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) && !env.S3_ENDPOINT;
     this.sseAlgorithm = SSE_AES256;
   }
 
@@ -69,6 +71,16 @@ export class S3Driver implements StorageDriver {
     body: Buffer | Uint8Array | string,
     metadata?: StorageObjectMetadata,
   ): Promise<{ etag: string }> {
+    // Dev mode without S3_ENDPOINT: log and return a fake etag so the app works without a mock S3.
+    if (this.isDevWithoutEndpoint) {
+      logger.warn('[S3Driver] Dev mode — upload skipped (no S3_ENDPOINT configured)', {
+        bucket,
+        key,
+        size: body instanceof Buffer ? body.length : 'unknown',
+      });
+      return { etag: `dev-fake-${Date.now()}` };
+    }
+
     const input: PutObjectCommandInput = {
       Bucket: bucket,
       Key: key,
