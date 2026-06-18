@@ -41,10 +41,12 @@ const PROTECTED_ROUTES: Array<{ pattern: RegExp; role: string }> = [
   { pattern: /^\/seller(\/.*)?$/, role: 'SELLER' },
   { pattern: /^\/auditor(\/.*)?$/, role: 'AUDITOR' },
   { pattern: /^\/admin(\/.*)?$/, role: 'ADMIN' },
+  { pattern: /^\/account(\/.*)?$/, role: 'ANY_AUTHENTICATED' },
   { pattern: /^\/api\/buyer(\/.*)?$/, role: 'BUYER' },
   { pattern: /^\/api\/seller(\/.*)?$/, role: 'SELLER' },
   { pattern: /^\/api\/auditor(\/.*)?$/, role: 'AUDITOR' },
   { pattern: /^\/api\/admin(\/.*)?$/, role: 'ADMIN' },
+  { pattern: /^\/api\/me(\/.*)?$/, role: 'ANY_AUTHENTICATED' },
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -79,8 +81,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Session exists but check role
-  if (session.role !== route.role) {
+  // Session exists but check role (skip for ANY_AUTHENTICATED routes)
+  if (route.role !== 'ANY_AUTHENTICATED' && session.role !== route.role) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
