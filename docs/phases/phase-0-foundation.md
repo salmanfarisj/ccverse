@@ -177,11 +177,11 @@ RegistryEntry, CvcBatch, AuditLog, Payout, PlatformConfig
 
 - `lib/storage` exposes a `StorageDriver` interface; concrete `S3Driver` targets AWS S3.
 - Local dev uses **a local S3 mock** (`@aws-sdk/client-s3` pointed at a MinIO or `s3rver` instance via Docker Compose) with the same driver code path.
-- Buckets:
-  - `ccverse-kyc` (KYC documents, bank statements) — Phase 1+
-  - `ccverse-projects` (PDDs, monitoring reports, verification statements) — Phase 2+
-  - `ccverse-certificates` (signed PDFs) — Phase 7+
-  - `ccverse-audit-exports` (long-term audit log exports) — Phase 9
+- Single bucket (`S3_BUCKET`) with logical path prefixes:
+  - `kyc/` — KYC documents, bank statements — Phase 1+
+  - `projects/` — PDDs, monitoring reports, verification statements — Phase 2+
+  - `certificates/` — signed PDFs — Phase 7+
+  - `audit-exports/` — long-term audit log exports — Phase 9
 - All objects server-side-encrypted (SSE-S3 or SSE-KMS). Bucket policies deny unencrypted uploads.
 - Access pattern: presigned PUT (upload) and presigned GET (download) with short TTLs; access logged to `audit_log` server-side.
 - CORS configured to allow only the app's origin.
@@ -269,7 +269,7 @@ The proxy **must not** be reachable from the server side; all outbound calls (SE
 - AWS credentials loaded via IAM role in production (no static keys on the server).
 - `.env.example` must include:
   - `DATABASE_URL`
-  - `S3_BUCKET_KYC`, `S3_BUCKET_PROJECTS`, `S3_BUCKET_CERTIFICATES`, `S3_BUCKET_AUDIT_EXPORTS`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` (dev only)
+  - `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` (dev only)
   - `SES_REGION`, `SES_SENDER_DOMAIN`, `SES_CONFIGURATION_SET`
   - `SESSION_SECRET`
   - `APP_ORIGIN`, `PROXY_ORIGIN`

@@ -167,7 +167,7 @@ Constraints:
   - `vintage_year <= current_year`.
   - `methodology` must be `isRecognised(...)` true.
   - PDF: MIME check, size cap (e.g., 50 MB), SHA-256 computed and stored.
-  - File uploaded to S3 (`s3://ccverse-projects/{projectId}/pdd-{uuid}.pdf`).
+  - File uploaded to S3 (`s3://{S3_BUCKET}/projects/{projectId}/pdd-{uuid}.pdf`).
 - Status starts at `pending_auditor_review`.
 - On Auditor approval (Phase 4 wires the UI, but the underlying service lives here):
   - Allocate `CCV-######`.

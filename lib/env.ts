@@ -44,10 +44,7 @@ const s3Schema = z.object({
     .union([z.boolean(), z.enum(['true', 'false'])])
     .default(false)
     .transform((v) => v === true || v === 'true'),
-  S3_BUCKET_KYC: z.string().min(1),
-  S3_BUCKET_PROJECTS: z.string().min(1),
-  S3_BUCKET_CERTIFICATES: z.string().min(1),
-  S3_BUCKET_AUDIT_EXPORTS: z.string().min(1),
+  S3_BUCKET: z.string().min(1),
 });
 
 const sesSchema = z.object({

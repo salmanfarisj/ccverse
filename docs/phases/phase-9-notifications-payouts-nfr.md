@@ -159,7 +159,7 @@ Implementation:
 ### 4.7 Auditability (production-grade)
 
 - Append-only `AuditLog` with `actor_id`, `actor_role`, `action`, `target_type`, `target_id`, `ip`, `timestamp`, `payload`.
-- **Daily export to S3:** an in-process job copies the prior day's `AuditLog` rows to `s3://ccverse-audit-exports/audit/{YYYY-MM-DD}.jsonl.gz`.
+- **Daily export to S3:** an in-process job copies the prior day's `AuditLog` rows to `s3://{S3_BUCKET}/audit-exports/{YYYY-MM-DD}.jsonl.gz`.
 - **7-year retention:** S3 Object Lock `Compliance` mode, 7 years; lifecycle transitions to Glacier Deep Archive after 1 year for cost.
 - **Tamper-evidence:** daily export is hashed (SHA-256) and the hash is published in a daily-signed JSON (same mechanism as certificates) for third-party verifiers.
 - **DB-side immutability:** revoke `UPDATE`, `DELETE` on `AuditLog` for the app role (same pattern as `AuditDecision`).

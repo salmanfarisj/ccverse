@@ -174,7 +174,7 @@ This guarantees no listing can claim more than the batch has uncommitted. The ac
 
 - Multipart upload to S3 with server-side encryption (SSE-KMS).
 - Server computes SHA-256 and stores in `ListingDocument.sha256`.
-- On replace/delete: old S3 key archived to `s3://ccverse-projects/archived/{listingId}/{docId}/...` for 10 years (NFR record-keeping).
+- On replace/delete: old S3 key archived to `s3://{S3_BUCKET}/projects/archived/{listingId}/{docId}/...` for 10 years (NFR record-keeping).
 
 ---
 

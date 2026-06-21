@@ -6,10 +6,7 @@ const REQUIRED: Record<string, string> = {
   NODE_ENV: 'development',
   DATABASE_URL: 'postgresql://ccverse:ccverse@localhost:5432/ccverse?schema=public',
   S3_REGION: 'us-east-1',
-  S3_BUCKET_KYC: 'ccverse-kyc',
-  S3_BUCKET_PROJECTS: 'ccverse-projects',
-  S3_BUCKET_CERTIFICATES: 'ccverse-certificates',
-  S3_BUCKET_AUDIT_EXPORTS: 'ccverse-audit-exports',
+  S3_BUCKET: 'ccverse-storage',
   SES_REGION: 'us-east-1',
   SES_SENDER_DOMAIN: 'ccverse.local',
   SES_CONFIGURATION_SET: 'ccverse-default',
@@ -40,7 +37,7 @@ describe('env loader', () => {
   it('parses a minimal valid env', () => {
     const env = getEnv();
     expect(env.APP_ORIGIN).toBe('http://localhost:3000');
-    expect(env.S3_BUCKET_KYC).toBe('ccverse-kyc');
+    expect(env.S3_BUCKET).toBe('ccverse-storage');
     expect(env.SESSION_SECRET).toHaveLength(32);
   });
 

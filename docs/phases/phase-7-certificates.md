@@ -102,7 +102,7 @@ Triggered by the in-process `certificate.generate` job enqueued by Phase 6 on `p
 3. For each certificate, build the PDF (see §4.3).
 4. Compute SHA-256 of the canonical body (a deterministic JSON with all snapshot fields, sorted keys).
 5. Sign the PDF with PAdES (PDF Advanced Electronic Signatures) using a private key in AWS KMS. The signature is stored in `Certificate.signature`; the signing certificate chain in `Certificate.signing_cert_id`.
-6. Upload the signed PDF to `s3://ccverse-certificates/{year}/{serial_no}.pdf` with S3 Object Lock (`Compliance` mode, 10-year retention).
+6. Upload the signed PDF to `s3://{S3_BUCKET}/certificates/{year}/{serial_no}.pdf` with S3 Object Lock (`Compliance` mode, 10-year retention).
 7. Update `Certificate.pdf_s3_key`, `sha256`, `signature`, `status='valid'`, `issued_at`.
 8. Insert `CertificateStateTransition` (null → valid).
 9. Write `AuditLog` (`certificate.issued`).
