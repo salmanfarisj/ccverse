@@ -1,10 +1,11 @@
-# CC Verse → Convex Migration Plan (v2)
+# CC Verse → Convex Migration Plan (v3)
 
 **Author:** Claude Code (ground-truthed against codebase — 21 Jun 2026)
-**Base:** `convex-migration-plan.md` v1
-**Changes from v1:** 10 corrections from rigorous codebase audit (see §8 for delta log)
+**Base:** `convex-migration-plan.md` v2
+**Changes from v2:** Added §0 — Convex MCP server + agent skills; all agents/devs must use official methods
 **Status:** Draft — ready for review
 **Stack:** Next.js 14 (frontend + payment webhooks) + Convex (backend: DB, auth, storage, email, jobs, scheduling)
+**Agent/Dev Tooling:** Convex MCP server + Agent Skills — all agents must use the official Convex tooling (MCP + skills) to set up and interact with the project. See §0.
 
 ---
 
@@ -27,6 +28,95 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
 - CI/CD workflow (`.github/workflows/ci.yml`) — updated to run Convex CLI
 - `prisma/` directory — retired after Phase 3 (moved from v1's Phase 2)
 - `jobs/logger.ts` stub — replaced by Convex logging
+
+---
+
+## §0 — Developer & Agent Tooling (Convex MCP + Skills)
+
+**All agents and developers must use Convex's official MCP server and agent skills for setting up and interacting with the Convex backend.** Do not use ad-hoc scripts or manual CLI calls — use the official tooling throughout.
+
+### Convex MCP Server
+
+The Convex MCP server exposes structured tools that allow AI agents to query and mutate Convex deployment data directly, inspect function logs, manage environment variables, and more.
+
+**Setup — per editor:**
+
+| Editor | Setup Command / Link |
+|--------|---------------------|
+| Claude Code | See [Using Claude Code](https://docs.convex.dev/ai/using-claude-code#setup-the-convex-mcp-server) — add to your MCP servers config |
+| Codex | See [Using Codex](https://docs.convex.dev/ai/using-codex.md#setup-the-convex-mcp-server) |
+| Cursor | `npx -y convex@latest mcp start` or use the [quick link](https://cursor.com/en/install-mcp?name=convex&config=eyJjb21tYW5kIjoibnB4IC15IGNvbnZleEBsYXRlc3QgbWNwIHN0YXJ0In0%3D) |
+| VS Code (Copilot) | See [Using GitHub Copilot](https://docs.convex.dev/ai/using-github-copilot#setup-the-convex-mcp-server) |
+| Generic / CI | `npx -y convex@latest mcp start --project-dir /path/to/ccverse` |
+
+**MCP tools available:**
+
+| Tool | Purpose |
+|------|---------|
+| `status` | List deployments (dev/prod/preview) |
+| `tables` | List all tables + schemas (declared + inferred) |
+| `data` | Paginate through documents in a table |
+| `runOneoffQuery` | Execute read-only JavaScript queries against deployment |
+| `functionSpec` | Inspect all deployed functions (types, visibility, interfaces) |
+| `run` | Execute deployed Convex functions with provided arguments |
+| `logs` | Fetch recent function execution logs (structured, like `npx convex logs`) |
+| `insights` | Health insights: OCC conflicts, resource limit issues (72h window) |
+| `envList` / `envGet` / `envSet` / `envRemove` | Manage deployment environment variables |
+
+**Key MCP configuration flags:**
+- `--prod` — connect to production deployment (requires `--dangerously-enable-production-deployments`)
+- `--preview-name <name>` — connect to a named preview deployment
+- `--deployment-name <name>` — connect to a specific deployment by name
+- `--env-file <path>` — custom env file for deployment selection
+- `--disable-tools data,run,envSet` — disable specific tools to restrict permissions
+
+**When to use MCP tools in this migration:**
+- **P1-1:** Use `status` to verify `npx convex dev` is connected; use `tables` to confirm schema after codegen
+- **P1-2 / P3:** Use `runOneoffQuery` to inspect live data during schema migration
+- **P3-4 (Registry):** Use `run` + `logs` to test OCC behavior; use `insights` to catch OCC conflicts
+- **P4-2:** Use `logs` to verify cron job executions
+- **P5-5:** Use `envList` / `envGet` / `envSet` to manage production env vars; use `insights` for smoke-test verification
+
+### Convex Agent Skills
+
+[Agent Skills](https://agentskills.io) are portable packages of instructions that teach AI agents specialized workflows. Convex provides ready-made skills covering the full lifecycle.
+
+**Installation:**
+```bash
+# Add all skills at once
+npx skills add get-convex/agent-skills --all
+
+# Or add individually
+npx skills add get-convex/agent-skills
+```
+
+Skills are installed into `.agents/skills/` and auto-picked up by Cursor, Claude Code, and GitHub Copilot.
+
+**Available skills:**
+
+| Skill | When to Use | Phase |
+|-------|-------------|-------|
+| `/convex-quickstart` | Bootstrap new Convex project | P1-1 |
+| `/convex-setup-auth` | Configure auth (login, register, sessions) | P1-3 |
+| `/convex-migration-helper` | Plan and run data migrations | P2, P3 |
+| `/convex-create-component` | Create a new Convex component (queries/mutations/actions) | P2–P3 |
+| `/convex-performance-audit` | Audit queries and mutations for performance | P4–P5 |
+
+**Manual invocation:**
+
+| Tool | Invocation |
+|------|-----------|
+| Cursor | `/skill-name` |
+| VS Code (Copilot) | `/skill-name` |
+| Claude Code | `/skill-name` |
+| Codex | `$skill-name` |
+
+### §0 Checklist
+
+- [ ] Convex MCP server installed and connected to local dev deployment
+- [ ] Agent skills installed: `npx skills add get-convex/agent-skills --all`
+- [ ] `.agents/skills/` directory committed to repo (or added to `.gitignore` if per-machine)
+- [ ] Agent is using `/convex-quickstart` for project bootstrap, `/convex-setup-auth` for auth setup, `/convex-migration-helper` for schema changes
 
 ---
 
@@ -54,11 +144,13 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
 
 - [ ] Install Convex (`npm install convex`)
 - [ ] Run `npx convex init` to create `convex/`, `convex.json`, and generated types
+- [ ] **Agent/dev setup:** Install Convex MCP server (`npx -y convex@latest mcp start --project-dir /path/to/ccverse`) and agent skills (`npx skills add get-convex/agent-skills --all`) — see §0
 - [ ] Add `CONVEX_DEPLOYMENT` and `CONVEX_DEPLOY_KEY` env vars to `.env.example`
 - [ ] Update `tsconfig.json` paths to include `"./convex/**/*"` for generated types
-- [ ] Add `convex/` to `.gitignore` (build artifacts + deployment state)
+- [ ] Add `convex/` and `.agents/` to `.gitignore` (build artifacts, deployment state, local skill configs)
 - [ ] Update `package.json` scripts: add `convex:dev` (`npx convex dev`), `convex:deploy` (`npx convex deploy`), `convex:codegen` (`npx convex codegen`)
 - [ ] Verify `npx convex dev` starts the local Convex backend without errors
+- [ ] Verify MCP server connects: use `status` tool to confirm local dev deployment is reachable
 
 #### P1-2: Schema migration (`convex/schema.ts`)
 
@@ -164,6 +256,8 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 
 ### Phase 1 Checklist
 
+- [ ] Convex MCP server installed and connected to local dev deployment (see §0)
+- [ ] Agent skills installed (`npx skills add get-convex/agent-skills --all`)
 - [ ] Convex project boots (`npx convex dev`)
 - [ ] All 21 tables defined in `convex/schema.ts` with correct indexes
 - [ ] `npx convex codegen` generates `dataModel.d.ts` without errors
@@ -195,6 +289,8 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 **⚠️ PREREQUISITE DECISION before starting:** Choose Option A or B for each storage bucket (see P2-1 below). This decision gates the entire storage migration approach.
 
 ### Tasks
+
+**Agent guidance:** Use `/convex-migration-helper` when planning storage, email, and audit migrations. Use `/convex-create-component` when scaffolding new Convex components.
 
 #### P2-1: File storage
 
@@ -277,6 +373,8 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 
 ### Phase 2 Checklist
 
+- [ ] Agent used `/convex-migration-helper` for migration planning
+- [ ] Agent used `/convex-create-component` for scaffolding new storage/email/audit components
 - [ ] Option A or B decided per bucket before starting
 - [ ] All file uploads go through chosen storage approach (Convex or S3 Node action)
 - [ ] All emails go through Convex Node action → AWS SES (dev mock preserved)
@@ -301,6 +399,8 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 **Goal:** All remaining business logic moved to Convex mutations/queries/actions. Prisma removed after all routes migrated.
 
 ### Tasks
+
+**Agent guidance:** Use `/convex-create-component` for scaffolding new Convex components (queries/mutations/actions). Use `/convex-migration-helper` for route migration sequencing. Use `insights` MCP tool to monitor OCC conflicts after deploying registry mutations.
 
 #### P3-1: Auth routes → Convex mutations
 
@@ -385,6 +485,8 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 ### Phase 3 Checklist
 
+- [ ] Agent used `/convex-create-component` for scaffolding Convex components
+- [ ] Agent used `insights` MCP tool to monitor OCC conflicts during registry testing
 - [ ] All auth flows (login, logout, register, verify email, forgot/reset password, change password) via Convex mutations
 - [ ] All seller KYC flows (submit, upload document, bank account, check status) via Convex
 - [ ] All admin KYC flows (list, approve, reject, get document URL) via Convex
@@ -420,6 +522,8 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 - [ ] Confirm no remaining imports of `jobs/` module (run: `grep -r "jobs/" app/ lib/ convex/` — should return nothing)
 - [ ] Delete `jobs/enqueue.ts`, `jobs/runner.ts`, `jobs/registry.ts`, `jobs/types.ts`, `jobs/retry.ts`, `jobs/scheduler.ts`, `jobs/logger.ts`, `jobs/index.ts`
+
+**Agent guidance:** Use `/convex-performance-audit` after deploying cron jobs to verify query performance. Use `logs` MCP tool to confirm job executions.
 
 #### P4-2: Cron jobs infrastructure
 
@@ -458,6 +562,8 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 ### Phase 4 Checklist
 
+- [ ] Agent used `/convex-performance-audit` to audit cron job queries
+- [ ] Agent used `logs` MCP tool to verify cron job executions
 - [ ] `jobs/` directory deleted — no orphaned job code
 - [ ] All cron jobs defined in `convex/crons.ts`
 - [ ] `audit.export` job built and registered
@@ -482,6 +588,8 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 **⚠️ CORRECTION from v1:** `app/api/webhooks/razorpay/route.ts` and `app/api/webhooks/stripe/route.ts` **do not exist** — they must be created, not "kept".
 
 ### Tasks
+
+**Agent guidance:** Use `/convex-performance-audit` before final production deployment. Use `insights` MCP tool to verify no OCC conflicts or resource limit issues after live traffic. Use `envList`/`envGet`/`envSet` via MCP for production env var verification.
 
 #### P5-1: Payment webhooks (Next.js routes — create, don't keep)
 
@@ -541,6 +649,9 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 ### Phase 5 Checklist
 
+- [ ] Agent used `/convex-performance-audit` before production deployment
+- [ ] Agent used `insights` MCP tool to verify no OCC conflicts or resource limit issues
+- [ ] Agent used `envList`/`envGet`/`envSet` via MCP to verify production env vars
 - [ ] Payment webhook routes created (not "kept" — created new)
 - [ ] Payment webhooks call Convex mutations and update Order/Payment status correctly
 - [ ] All old `lib/` modules removed
@@ -667,6 +778,7 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 | Self-hosting needed for data residency | 1 | Low | Medium | Open-source Convex backend supports PostgreSQL backend — can self-host |
 | `audit.export` job needs to be built (not migrated) | 4 | High | Medium | v2: explicitly listed as "build" not "migrate" |
 | Payment webhook routes don't exist (razorpay/stripe) | 5 | High | Medium | v2: explicitly listed as "create" not "keep" |
+| Agent uses non-official methods (ad-hoc scripts, manual CLI instead of MCP/skills) | All | Medium | Medium | v3: §0 enforces official tooling; MCP + skills must be used throughout |
 
 ---
 
@@ -684,6 +796,7 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 | 8 | seller/projects stub | 🟡 Moderate | P3-2 | Treated as real route to migrate | Clarified: Phase 2 stub (501), implement in Phase 2 |
 | 9 | Deletion list gaps | 🟡 Moderate | Files to Delete | `lib/rbac/seller.ts (if exists)`, missing `lib/auth/failed-login.ts` | Listed unconditionally; added `lib/auth/failed-login.ts` |
 | 10 | email citext handling | 🟢 Minor | P1-2 | Unclear | Added note about `citext` → Convex lowercase validator |
+| 11 | Agent tooling missing | 🟡 Moderate | N/A (new) | N/A | v3: Added §0 — Convex MCP server + agent skills; all agents must use official methods |
 
 ---
 
@@ -699,6 +812,7 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 ✅ FailedJob table for removal — correct  
 ✅ Docker Compose Postgres removal — correct  
 ✅ CI update to `npx convex deploy` — correct  
+✅ All agents use official Convex MCP server + agent skills (§0) — official methods only, no ad-hoc scripts  
 
 ---
 
