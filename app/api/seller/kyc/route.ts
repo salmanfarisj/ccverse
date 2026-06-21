@@ -1,19 +1,6 @@
-/**
- * GET /api/seller/kyc
- * PATCH /api/seller/kyc
- *
- * Returns the full KYC state for the authenticated seller (entity details,
- * documents, bank account, current wizard step).
- *
- * PATCH updates entity details on the SellerProfile.
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/db';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
+import { api } from '@/convex/_generated/api';
 
 const updateEntitySchema = z.object({
   legalName: z.string().min(1).optional(),
@@ -138,13 +125,14 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    await writeAuditEvent({
+    const convex = getConvexClient();
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: 'seller',
       action: 'kyc.entity_updated',
       targetType: 'seller_profile',
       targetId: updated.id,
-      payload: { legalName, registrationNo, country },
+      payload: JSON.stringify({ legalName, registrationNo, country }),
     });
 
     return NextResponse.json({ message: 'Entity details updated', kycStatus: updated.kycStatus });

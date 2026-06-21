@@ -1,21 +1,7 @@
-/**
- * POST /api/admin/kyc/:userId/reject
- *
- * Reject a seller's KYC application.
- * Sets kycStatus=REJECTED, all KycDocument reviewStatus=REJECTED,
- * requires reviewNotes, sends kyc-rejected email.
- *
- * Audit events: kyc.rejected
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/db';
+import type { Id } from 'convex/values';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
-import { SesDriver } from '@/lib/email/ses';
-import { renderKycRejectedHtml, renderKycRejectedText } from '@/lib/email/templates/kyc-rejected';
+import { api } from '@/convex/_generated/api';
 import { getEnv } from '@/lib/env';
 
 const rejectSchema = z.object({
@@ -70,40 +56,30 @@ export async function POST(
       });
     });
 
-    // Send rejection email
+    const convex = getConvexClient();
+
+    // Send rejection email via Convex
     try {
       const env = getEnv();
       const supportUrl = `${env.APP_ORIGIN}/support`;
-      const ses = new SesDriver();
-      await ses.send({
-        to: profile.user.email,
-        subject: 'Your KYC application was not approved — CC Verse',
-        html: renderKycRejectedHtml({
-          email: profile.user.email,
-          legalName: profile.legalName ?? profile.user.email,
-          reason,
-          supportUrl,
-        }),
-        text: renderKycRejectedText({
-          email: profile.user.email,
-          legalName: profile.legalName ?? profile.user.email,
-          reason,
-          supportUrl,
-        }),
-        tags: ['kyc', 'kyc-rejected'],
+      await convex.action(api.email.actions.sendKycRejectedEmailAction, {
+        userId: userId as Id<"users">,
+        legalName: profile.legalName ?? profile.user.email,
+        reason,
+        supportUrl,
       });
     } catch (emailErr) {
       console.error('kyc reject: email send failed', emailErr);
     }
 
-    await writeAuditEvent({
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: 'admin',
       action: 'kyc.rejected',
       targetType: 'seller_profile',
       targetId: profile.id,
       ip,
-      payload: { userId, legalName: profile.legalName, reason },
+      payload: JSON.stringify({ userId, legalName: profile.legalName, reason }),
     });
 
     return NextResponse.json({ message: 'KYC rejected', kycStatus: 'REJECTED' });

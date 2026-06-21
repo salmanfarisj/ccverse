@@ -1,21 +1,6 @@
-/**
- * POST /api/seller/kyc/documents
- *
- * Accepts documentType + file (multipart). Computes SHA256, uploads to S3
- * at kyc/{userId}/{documentType}/{uuid}, creates a KycDocument row
- * (reviewStatus=pending), returns document id.
- *
- * Audit event: kyc.document_uploaded
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { createHash } from 'crypto';
-import { prisma } from '@/lib/db';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
-import { getStorageDriver, BUCKETS } from '@/lib/storage';
+import { api } from '@/convex/_generated/api';
 
 const uploadSchema = z.object({
   documentType: z.enum(['PAN', 'GSTIN', 'PASSPORT', 'UTILITY_BILL', 'BANK_STATEMENT', 'INCORPORATION_CERT', 'OTHER']),
@@ -80,11 +65,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upload to S3
+    // Upload to S3 via Convex Node action
     const docId = crypto.randomUUID();
     const s3Key = `kyc/${session.userId}/${documentType}/${docId}`;
-    const storage = getStorageDriver();
-    await storage.put(BUCKETS.KYC, s3Key, fileBuffer, {
+    const convex = getConvexClient();
+    await convex.action(api.storage.actions.putObjectAction, {
+      bucket: 'ccverse-kyc',
+      key: s3Key,
+      body: new Uint8Array(fileBuffer),
       contentType: 'application/octet-stream',
       metadata: { sha256, uploadedBy: session.userId! },
     });
@@ -102,14 +90,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await writeAuditEvent({
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: 'seller',
       action: 'kyc.document_uploaded',
       targetType: 'kyc_document',
       targetId: document.id,
       ip: req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined,
-      payload: { documentType, s3Key, sha256 },
+      payload: JSON.stringify({ documentType, s3Key, sha256 }),
     });
 
     return NextResponse.json({ id: document.id, documentType, sha256 }, { status: 201 });

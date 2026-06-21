@@ -1,14 +1,6 @@
-/**
- * POST /api/admin/users/:id/suspend — Set user status to SUSPENDED.
- *
- * Audit events: user.suspended
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
+import { api } from '@/convex/_generated/api';
 
 export async function POST(
   req: NextRequest,
@@ -25,14 +17,15 @@ export async function POST(
       select: { id: true, email: true, status: true },
     });
 
-    await writeAuditEvent({
+    const convex = getConvexClient();
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: 'admin',
       action: 'user.suspended',
       targetType: 'user',
       targetId: user.id,
       ip,
-      payload: { email: user.email },
+      payload: JSON.stringify({ email: user.email }),
     });
 
     return NextResponse.json({ message: 'User suspended', user });

@@ -1,15 +1,6 @@
-/**
- * PATCH /api/admin/users/:id — Update a user's role or status.
- *
- * Audit events: user.role_changed
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/db';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
+import { api } from '@/convex/_generated/api';
 
 export async function PATCH(
   req: NextRequest,
@@ -43,15 +34,15 @@ export async function PATCH(
       select: { id: true, email: true, role: true, status: true },
     });
 
-    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined;
-    await writeAuditEvent({
+    const convex = getConvexClient();
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: 'admin',
       action: 'user.role_changed',
       targetType: 'user',
       targetId: user.id,
       ip,
-      payload: { updatedFields: updates, email: user.email },
+      payload: JSON.stringify({ updatedFields: updates, email: user.email }),
     });
 
     return NextResponse.json({ user });

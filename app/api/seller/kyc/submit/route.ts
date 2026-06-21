@@ -1,20 +1,7 @@
-/**
- * POST /api/seller/kyc/submit
- *
- * Validates that all required KYC data is present, sets kycStatus=pending,
- * and sends the kyc-submitted email.
- *
- * Audit events: kyc.submitted
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import type { Id } from 'convex/values';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
-import { SesDriver } from '@/lib/email/ses';
-import { renderKycSubmittedHtml, renderKycSubmittedText } from '@/lib/email/templates/kyc-submitted';
-
+import { api } from '@/convex/_generated/api';
 export async function POST(req: NextRequest) {
   try {
     const session = await requireRole(['SELLER']);
@@ -63,25 +50,26 @@ export async function POST(req: NextRequest) {
       where: { userId: session.userId },
       data: { kycStatus: 'PENDING' },
     });
+    const convex = getConvexClient();
 
-    // Send kyc-submitted email
-    const ses = new SesDriver();
-    await ses.send({
-      to: profile.user.email,
-      subject: 'KYC application received — CC Verse',
-      html: renderKycSubmittedHtml({ email: profile.user.email, legalName: profile.legalName ?? undefined }),
-      text: renderKycSubmittedText({ email: profile.user.email, legalName: profile.legalName ?? undefined }),
-      tags: ['kyc', 'kyc-submitted'],
-    });
+    // Send kyc-submitted email via Convex
+    try {
+      await convex.action(api.email.actions.sendKycSubmittedEmailAction, {
+        userId: session.userId as Id<"users">,
+        legalName: profile.legalName ?? undefined,
+      });
+    } catch (emailErr) {
+      console.error('kyc submit: email send failed', emailErr);
+    }
 
-    await writeAuditEvent({
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: 'seller',
       action: 'kyc.submitted',
       targetType: 'seller_profile',
       targetId: profile.id,
       ip: req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined,
-      payload: { legalName: profile.legalName },
+      payload: JSON.stringify({ legalName: profile.legalName }),
     });
 
     return NextResponse.json({ message: 'KYC application submitted for review', kycStatus: 'PENDING' });

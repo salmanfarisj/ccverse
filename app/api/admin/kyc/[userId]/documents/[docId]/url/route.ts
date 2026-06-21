@@ -1,14 +1,6 @@
-/**
- * GET /api/admin/kyc/:userId/documents/:docId/url
- *
- * Generate a 5-minute presigned GET URL for an S3 document.
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { getStorageDriver } from '@/lib/storage';
+import { api } from '@/convex/_generated/api';
 
 export async function GET(
   req: NextRequest,
@@ -27,13 +19,13 @@ export async function GET(
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
 
-    const storage = getStorageDriver();
-    const url = await storage.presignGet('ccverse-kyc', doc.s3Key, 300);
+    const convex = getConvexClient();
+    const result = await convex.action(api.storage.actions.presignGetAction, {
+      bucket: 'ccverse-kyc',
+      key: doc.s3Key,
+      ttlSeconds: 300,
+    });
 
-    return NextResponse.json({ url });
-  } catch (err) {
-    if (err instanceof NextResponse) throw err;
-    console.error('GET /api/admin/kyc/:userId/documents/:docId/url error', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ url: result.url });
   }
 }

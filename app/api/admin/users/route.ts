@@ -1,16 +1,6 @@
-/**
- * GET /api/admin/users — List all users with optional email search.
- * POST /api/admin/users — Create an Auditor or Admin account.
- *
- * Audit events: user.role_changed (on create)
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/db';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
+import { api } from '@/convex/_generated/api';
 import { hashPassword } from '@/lib/auth/hashing';
 
 export async function GET(req: NextRequest) {
@@ -85,14 +75,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await writeAuditEvent({
+    const convex = getConvexClient();
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: 'admin',
       action: 'user.role_changed',
       targetType: 'user',
       targetId: user.id,
       ip,
-      payload: { email, role, action: 'created' },
+      payload: JSON.stringify({ email, role, action: 'created' }),
     });
 
     return NextResponse.json(

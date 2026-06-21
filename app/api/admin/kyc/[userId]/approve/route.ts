@@ -1,22 +1,8 @@
-/**
- * POST /api/admin/kyc/:userId/approve
- *
- * Approve a seller's KYC application.
- * Sets kycStatus=APPROVED, all KycDocument reviewStatus=APPROVED,
- * sets kycReviewedBy/At, sends kyc-approved email.
- *
- * Audit events: kyc.approved
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import type { Id } from 'convex/values';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
-import { SesDriver } from '@/lib/email/ses';
-import { renderKycApprovedHtml, renderKycApprovedText } from '@/lib/email/templates/kyc-approved';
+import { api } from '@/convex/_generated/api';
 import { getEnv } from '@/lib/env';
-
 export async function POST(
   req: NextRequest,
   { params }: { params: { userId: string } },
@@ -56,38 +42,29 @@ export async function POST(
       });
     });
 
-    // Send approval email
+    const convex = getConvexClient();
+
+    // Send approval email via Convex
     try {
       const env = getEnv();
       const loginUrl = `${env.APP_ORIGIN}/login`;
-      const ses = new SesDriver();
-      await ses.send({
-        to: profile.user.email,
-        subject: 'Your KYC has been approved — CC Verse',
-        html: renderKycApprovedHtml({
-          email: profile.user.email,
-          legalName: profile.legalName ?? profile.user.email,
-          loginUrl,
-        }),
-        text: renderKycApprovedText({
-          email: profile.user.email,
-          legalName: profile.legalName ?? profile.user.email,
-          loginUrl,
-        }),
-        tags: ['kyc', 'kyc-approved'],
+      await convex.action(api.email.actions.sendKycApprovedEmailAction, {
+        userId: userId as Id<"users">,
+        legalName: profile.legalName ?? profile.user.email,
+        loginUrl,
       });
     } catch (emailErr) {
       console.error('kyc approve: email send failed', emailErr);
     }
 
-    await writeAuditEvent({
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: 'admin',
       action: 'kyc.approved',
       targetType: 'seller_profile',
       targetId: profile.id,
       ip,
-      payload: { userId, legalName: profile.legalName },
+      payload: JSON.stringify({ userId, legalName: profile.legalName }),
     });
 
     return NextResponse.json({ message: 'KYC approved', kycStatus: 'APPROVED' });

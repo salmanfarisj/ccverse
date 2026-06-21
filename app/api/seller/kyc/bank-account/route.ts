@@ -1,18 +1,6 @@
-/**
- * POST /api/seller/kyc/bank-account
- *
- * Creates a BankAccount row for the authenticated seller.
- * Only one bank account per seller is allowed.
- *
- * Audit event: kyc.bank_account_added
- */
-
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/db';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
+import { api } from '@/convex/_generated/api';
 
 const bankAccountSchema = z.object({
   accountHolder: z.string().min(1, 'Account holder name is required'),
@@ -71,14 +59,15 @@ export async function POST(req: NextRequest) {
       data: { bankAccountId: bankAccount.id },
     });
 
-    await writeAuditEvent({
+    const convex = getConvexClient();
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: 'seller',
       action: 'kyc.bank_account_added',
       targetType: 'bank_account',
       targetId: bankAccount.id,
       ip: req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined,
-      payload: { bankName, accountNoLast4 },
+      payload: JSON.stringify({ bankName, accountNoLast4 }),
     });
 
     return NextResponse.json(
