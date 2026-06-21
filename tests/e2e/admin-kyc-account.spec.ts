@@ -77,6 +77,8 @@ async function apiWithSession(
 /** Browser-based login — sets session cookie in the page context */
 async function loginByEmail(page: Page, email: string, password = 'TestPass123!') {
   await page.goto('/login');
+  // Wait for the email input to be attached and visible before filling
+  await page.getByLabel(/email address/i).waitFor({ state: 'attached', timeout: 15000 });
   await page.getByLabel(/email address/i).fill(email);
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
@@ -84,7 +86,7 @@ async function loginByEmail(page: Page, email: string, password = 'TestPass123!'
   let expectedPath = '/buyer';
   if (email.toLowerCase().includes('admin')) expectedPath = '/admin';
   else if (email.toLowerCase().includes('seller')) expectedPath = '/seller';
-  await page.waitForURL(new RegExp(expectedPath), { timeout: 15000 });
+  await page.waitForURL(`**${expectedPath}`, { timeout: 15000 });
   await page.waitForLoadState('networkidle');
 }
 
@@ -208,9 +210,14 @@ test.describe('Account pages', () => {
 
   test('PATCH /api/me updates buyer profile', async ({ page }) => {
     await loginByEmail(page, buyerEmail, buyerPassword);
+    // First verify GET works (session is present)
+    const getRes = await apiWithSession(page, 'get', '/api/me');
+    console.log('GET /api/me status:', getRes.status, 'body:', JSON.stringify(getRes.body));
+    expect(getRes.status).toBe(200);
     const res = await apiWithSession(page, 'patch', '/api/me', {
       data: { legalName: 'Updated Buyer Name', country: 'IN' },
     });
+    console.log('PATCH /api/me status:', res.status, 'body:', JSON.stringify(res.body));
     expect(res.status).toBe(200);
     const body = res.body as { message: string };
     expect(body.message).toBe('Profile updated');

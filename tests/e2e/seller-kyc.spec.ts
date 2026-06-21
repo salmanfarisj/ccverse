@@ -113,10 +113,13 @@ async function apiWithSession(
 /** Browser-based login — sets session cookie in the page context */
 async function loginSeller(page: Page, email: string, password = 'TestPass123!') {
   await page.goto('/login');
+  // Wait for the email input to be attached and visible before filling
+  await page.getByLabel(/email address/i).waitFor({ state: 'attached', timeout: 15000 });
   await page.getByLabel(/email address/i).fill(email);
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
-  await page.waitForURL(/\/seller/);
+  // Wait for navigation to /seller — use glob pattern (matches full URL like http://localhost:3000/seller)
+  await page.waitForURL('**/seller', { timeout: 15000 });
   // Wait for the page to settle so the session cookie is guaranteed to be set
   await page.waitForLoadState('networkidle');
 }

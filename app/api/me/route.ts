@@ -60,9 +60,12 @@ const patchMeSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest) {
+  console.log('[DEBUG] PATCH /api/me called, content-type:', req.headers.get('content-type'));
   try {
     const session = await requireRole(['BUYER', 'SELLER', 'AUDITOR', 'ADMIN']);
+    console.log('[DEBUG] PATCH /api/me session.role:', session.role);
     const body = await req.json();
+    console.log('[DEBUG] PATCH /api/me body:', JSON.stringify(body));
     const parsed = patchMeSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.message }, { status: 400 });
