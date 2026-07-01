@@ -1,20 +1,16 @@
 /**
- * Typed environment loader.
+ * Typed environment loader for the Next.js app shell.
  *
- * Reads `process.env` once at module load, validates it with zod, and exports
- * a frozen `env` object. If any required variable is missing or malformed,
- * the process crashes with a clear, actionable error — fail-fast at boot is
- * required by §4.11 of the phase-0 plan.
+ * Validates only what the Next.js process needs at boot (app origin, session
+ * secret, Convex client config, build metadata). Storage and email env vars
+ * live on the Convex deployment — see `convex/storage/actions.ts` and
+ * `convex/email/actions.ts` — and are optional there (dev mocks when unset).
  *
- * Edge runtime note: `iron-session` and most third-party SDKs are Node-only,
- * so this module is only imported from Node-runtime code (API route
- * handlers, server components, scripts). The Next.js `middleware.ts` runs
- * on the Edge and may read only `process.env.APP_ORIGIN` and
- * `process.env.PROXY_ORIGIN` directly.
+ * Edge runtime note: `middleware.ts` runs on the Edge and may read only
+ * `process.env.APP_ORIGIN` and `process.env.PROXY_ORIGIN` directly; do not
+ * import this module from middleware.
  */
 import { z } from 'zod';
-
-// Sub-schemas ────────────────────────────────────────────────────────────────
 
 const appSchema = z.object({
   APP_ORIGIN: z.string().url('APP_ORIGIN must be a valid URL'),
@@ -26,42 +22,16 @@ const appSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
-const databaseSchema = z.object({
+const convexSchema = z.object({
   CONVEX_DEPLOYMENT: z.string().optional().default(''),
   CONVEX_DEPLOY_KEY: z.string().optional().default(''),
   // Server-only URL used by lib/convex/client.ts when NEXT_PUBLIC_CONVEX_URL
-  // is not set. Optional — Phase 5 (payment webhooks) is the primary
-  // consumer that needs a server-side-only URL.
+  // is not set (e.g. payment webhooks).
   CONVEX_DEPLOYMENT_URL: z
     .string()
     .url()
     .optional()
     .or(z.literal('').transform(() => undefined)),
-});
-
-const s3Schema = z.object({
-  S3_REGION: z.string().min(1),
-  // Dev-only static keys. Empty in production (IAM role).
-  S3_ACCESS_KEY_ID: z.string().optional().default(''),
-  S3_SECRET_ACCESS_KEY: z.string().optional().default(''),
-  S3_ENDPOINT: z
-    .string()
-    .url()
-    .optional()
-    .or(z.literal('').transform(() => undefined)),
-  S3_FORCE_PATH_STYLE: z
-    .union([z.boolean(), z.enum(['true', 'false'])])
-    .default(false)
-    .transform((v) => v === true || v === 'true'),
-  S3_BUCKET: z.string().min(1),
-});
-
-const sesSchema = z.object({
-  SES_REGION: z.string().min(1),
-  SES_SENDER_DOMAIN: z.string().min(1),
-  SES_CONFIGURATION_SET: z.string().min(1),
-  SES_ACCESS_KEY_ID: z.string().optional().default(''),
-  SES_SECRET_ACCESS_KEY: z.string().optional().default(''),
 });
 
 const sessionSchema = z.object({
@@ -78,23 +48,16 @@ const buildSchema = z.object({
   BUILT_AT: z.string().optional().default(''),
 });
 
-const envSchema = appSchema
-  .merge(databaseSchema)
-  .merge(s3Schema)
-  .merge(sesSchema)
-  .merge(sessionSchema)
-  .merge(buildSchema);
+const envSchema = appSchema.merge(convexSchema).merge(sessionSchema).merge(buildSchema);
 
 export type Env = z.infer<typeof envSchema>;
-
-// Public API ────────────────────────────────────────────────────────────────
 
 let cached: Env | undefined;
 
 /**
  * Validate and return the typed env object. Crashes the process on failure.
  * Lazy + memoized so unit tests can mutate `process.env` between calls
- * (the test suite resets via `resetEnvForTesting`).
+ * (reset via `resetEnvForTesting`).
  */
 export function getEnv(): Env {
   if (cached) return cached;

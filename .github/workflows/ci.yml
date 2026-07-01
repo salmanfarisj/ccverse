@@ -46,17 +46,7 @@ jobs:
         run: npm run build
         env:
           APP_ORIGIN: 'http://localhost:3000'
-          S3_REGION: 'us-east-1'
-          S3_BUCKET: 'ccverse-storage'
-          SES_REGION: 'us-east-1'
-          SES_SENDER_DOMAIN: 'ccverse.local'
-          SES_CONFIGURATION_SET: 'ccverse-default'
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-placeholder-session-secret-32-chars' }}
           CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOYMENT || '' }}
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY || '' }}
-
-      # NOTE: Production Convex deployment (`npx convex deploy --prod`) is
-      # intentionally NOT run from this CI pipeline. The deploy step requires
-      # a human-approved credentials rotation and is run from a separate
-      # release workflow. See docs/migration/convex-migration-plan-v2.md
-      # §"P1-7 CI update" for the rationale.
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL || 'https://placeholder.convex.cloud' }}

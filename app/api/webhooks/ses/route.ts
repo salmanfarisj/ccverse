@@ -147,8 +147,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       switch (eventType) {
         case 'Bounce':
         case 'Complaint': {
-          // TODO (Phase 1): add recipients to SES account-level suppression list
-          // and update any internal contactable flag on the User model.
+          // TODO: add recipients to suppression list and update contactable flag via Convex.
           logger.warn('SES bounce/complaint received', {
             eventType,
             recipients: mail.destination,

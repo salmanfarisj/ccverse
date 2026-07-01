@@ -7,8 +7,7 @@ import { Stagger, StaggerItem } from '@/components/motion';
  * Hero — DESIGN.md §"Hero Headline".
  *
  * Full-bleed surface (default: a layered dark gradient that stands in for
- * aerial/satellite imagery until real brand assets are supplied — see
- * `docs/phases/phase-0-foundation.md` USER DEPENDENCY "Brand assets"). H1 in
+ * aerial/satellite imagery until real brand assets are supplied). H1 in
  * NB International Pro 72px weight 400, line-height 0.90, letter-spacing
  * -2.16px, anchored bottom-left. A lime primary CTA + optional ghost
  * secondary sit directly under the headline.
