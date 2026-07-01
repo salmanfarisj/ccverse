@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { LimeButton } from '@/components/ui/LimeButton';
 
-export const metadata: Metadata = { title: 'Account created · CC Verse' };
+export const metadata: Metadata = { title: 'Account created' };
 
 export default function RegisterSuccessPage() {
   return (
@@ -9,30 +10,25 @@ export default function RegisterSuccessPage() {
       <div className="w-full max-w-md space-y-8 text-center">
         <Link
           href="/"
-          className="font-jetbrains-mono text-2xl font-bold tracking-tight !text-lime-surveyor !no-underline"
+          className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-lime-surveyor !no-underline"
         >
           CC Verse
         </Link>
 
-        <div className="rounded-md border border-iron-filings bg-[#141414] p-8">
+        <div className="rounded-md border border-iron-filings bg-surface-raised p-8">
           <div className="space-y-4">
-            <div className="text-4xl">✓</div>
-            <h1 className="font-jetbrains-mono text-xl font-bold tracking-tight !text-lime-surveyor">
+            <div className="text-4xl text-lime-surveyor" aria-hidden="true">
+              ✓
+            </div>
+            <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum">
               Account created
             </h1>
-            <p className="font-jetbrains-mono text-[14px] text-drift-ash">
-              We&apos;ve sent a verification link to your email address. Click the link to activate
-              your account and sign in.
+            <p className="font-nb-international-pro text-[length:var(--text-body)] leading-[var(--leading-body)] text-bone-vellum/80">
+              Your account is ready. You can sign in now to access the marketplace and your dashboard.
             </p>
-            <p className="font-jetbrains-mono text-[13px] text-drift-ash">
-              The verification link expires in 24 hours.
-            </p>
-            <Link
-              href="/login"
-              className="inline-block font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] !text-lime-surveyor !no-underline hover:text-marsh-olive"
-            >
-              ← Back to sign in
-            </Link>
+            <LimeButton href="/login" className="mt-4">
+              Sign in
+            </LimeButton>
           </div>
         </div>
       </div>

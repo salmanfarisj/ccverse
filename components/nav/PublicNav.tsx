@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { navItemClass } from '@/components/nav/navStyles';
+import { GhostButton } from '@/components/ui/GhostButton';
 
 type PublicNavProps = {
   transparent?: boolean;
@@ -11,6 +12,8 @@ type PublicNavProps = {
 export function PublicNav({ transparent = false }: PublicNavProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const firstMenuItemRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -22,6 +25,7 @@ export function PublicNav({ transparent = false }: PublicNavProps) {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setOpen(false);
+        menuButtonRef.current?.focus();
       }
     }
 
@@ -33,11 +37,32 @@ export function PublicNav({ transparent = false }: PublicNavProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (open) {
+      firstMenuItemRef.current?.focus();
+    }
+  }, [open]);
+
   const headerClass = transparent
-    ? 'fixed inset-x-0 top-0 z-40 bg-transparent'
+    ? 'fixed inset-x-0 top-0 z-40 border-b border-transparent bg-obsidian-loam/60 backdrop-blur-sm'
     : 'fixed inset-x-0 top-0 z-40 border-b border-iron-filings bg-obsidian-loam';
 
-  const textClass = transparent ? 'text-bone-vellum' : 'text-bone-vellum';
+  const desktopLinks = (
+    <>
+      <Link href="/marketplace" className={navItemClass}>
+        Marketplace
+      </Link>
+      <Link href="/registry" className={navItemClass}>
+        Registry
+      </Link>
+      <Link href="/login" className={navItemClass}>
+        Sign in
+      </Link>
+      <GhostButton href="/register" className="whitespace-nowrap">
+        Register
+      </GhostButton>
+    </>
+  );
 
   return (
     <>
@@ -51,19 +76,24 @@ export function PublicNav({ transparent = false }: PublicNavProps) {
         <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-[var(--spacing-18)] py-[var(--spacing-21)]">
           <Link
             href="/"
-            className={`font-nb-international-pro text-[14px] tracking-[var(--tracking-body)] ${textClass} !no-underline`}
+            className="font-nb-international-pro text-[14px] tracking-[var(--tracking-body)] text-bone-vellum !no-underline"
           >
             CC Verse
           </Link>
 
-          <div className="relative" ref={menuRef}>
+          <nav className="hidden items-center gap-[var(--spacing-18)] md:flex" aria-label="Main">
+            {desktopLinks}
+          </nav>
+
+          <div className="relative md:hidden" ref={menuRef}>
             <button
+              ref={menuButtonRef}
               type="button"
               aria-expanded={open}
               aria-haspopup="true"
               aria-label="Open menu"
               onClick={() => setOpen((value) => !value)}
-              className={`group inline-flex items-center gap-[var(--spacing-7)] bg-transparent font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] ${textClass}`}
+              className="group inline-flex items-center gap-[var(--spacing-7)] bg-transparent font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-bone-vellum"
             >
               <span>Menu</span>
               <span
@@ -80,11 +110,21 @@ export function PublicNav({ transparent = false }: PublicNavProps) {
                 <ul className="flex flex-col gap-[var(--spacing-14)]">
                   <li>
                     <Link
+                      ref={firstMenuItemRef}
                       href="/login"
                       className={navItemClass}
                       onClick={() => setOpen(false)}
                     >
                       Sign in
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/register"
+                      className={navItemClass}
+                      onClick={() => setOpen(false)}
+                    >
+                      Register
                     </Link>
                   </li>
                   <li>

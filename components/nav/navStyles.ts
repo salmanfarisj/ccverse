@@ -4,4 +4,4 @@ export const navItemClass =
 
 export const navButtonClass = `${navItemClass} cursor-pointer appearance-none disabled:cursor-not-allowed disabled:opacity-50`;
 
-export const navSignOutClass = `${navButtonClass} hover:!text-lime-surveyor`;
+export const navSignOutClass = `${navButtonClass} normal-case tracking-normal hover:!text-bone-vellum`;

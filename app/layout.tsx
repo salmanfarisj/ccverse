@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { RouteFocusManager } from '@/components/nav/RouteFocusManager';
+import { ToastProvider } from '@/components/ui/Toast';
 import { getEnv } from '@/lib/env';
 import './globals.css';
 
@@ -26,7 +28,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ToastProvider>
+          <RouteFocusManager />
+          {children}
+        </ToastProvider>
+      </body>
     </html>
   );
 }

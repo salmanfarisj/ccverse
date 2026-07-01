@@ -1,13 +1,11 @@
 'use client';
 
+import { LimeButton } from '@/components/ui/LimeButton';
+
 export function PrintButton() {
   return (
-    <button
-      type="button"
-      onClick={() => window.print()}
-      className="font-jetbrains-mono text-[13px] text-lime-surveyor bg-transparent border-0 cursor-pointer hover:underline"
-    >
+    <LimeButton type="button" onClick={() => window.print()} className="print:hidden whitespace-nowrap">
       Print certificate
-    </button>
+    </LimeButton>
   );
 }

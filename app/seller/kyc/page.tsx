@@ -6,6 +6,8 @@ import { AuthNav } from '@/components/nav/AuthNav';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { GhostButton } from '@/components/ui/GhostButton';
+import { KycSkeleton } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/Toast';
 
 interface KycState {
   step: number;
@@ -46,6 +48,7 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
 
 export default function SellerKycPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [kyc, setKyc] = useState<KycState | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -171,6 +174,7 @@ export default function SellerKycPage() {
     try {
       const res = await fetch('/api/seller/kyc/submit', { method: 'POST' });
       if (res.ok) {
+        toast('KYC application submitted', 'success');
         router.push('/seller');
       } else {
         const data = await res.json();
@@ -183,9 +187,14 @@ export default function SellerKycPage() {
 
   if (loading) {
     return (
-      <main id="main" className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam">
-        <p className="font-jetbrains-mono text-[13px] text-drift-ash">Loading…</p>
-      </main>
+      <>
+        <AuthNav role="SELLER" />
+        <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam px-6 main-offset" tabIndex={-1}>
+          <div className="mx-auto w-full max-w-2xl py-12">
+            <KycSkeleton />
+          </div>
+        </main>
+      </>
     );
   }
 
@@ -197,17 +206,40 @@ export default function SellerKycPage() {
   return (
     <>
       <AuthNav role="SELLER" />
-      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam px-6 pt-[80px]">
+      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam px-6 main-offset">
       <div className="mx-auto w-full max-w-2xl space-y-8 py-12">
         {/* Header */}
         <div className="text-center">
-          <h1 className="font-jetbrains-mono text-2xl font-bold tracking-tight !text-lime-surveyor">
+          <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum">
             Seller Verification
           </h1>
-          <p className="mt-2 font-jetbrains-mono text-[13px] text-drift-ash">
+          <p className="mt-2 font-nb-international-pro text-[length:var(--text-body)] text-bone-vellum/80">
             Complete all steps to submit your KYC application
           </p>
         </div>
+
+        {kycStatus === 'APPROVED' && (
+          <div className="rounded-md border border-lime-surveyor bg-surface-raised p-8 text-center space-y-6">
+            <p className="font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-lime-surveyor">
+              Verification complete
+            </p>
+            <p className="font-nb-international-pro text-[length:var(--text-body)] text-bone-vellum/80">
+              Your seller account is verified. You can list carbon credits on the marketplace.
+            </p>
+            {kyc?.entity.legalName && (
+              <p className="font-jetbrains-mono text-[13px] text-bone-vellum/70">
+                {kyc.entity.legalName} · {kyc.entity.country}
+              </p>
+            )}
+            <div className="flex flex-wrap justify-center gap-3">
+              <LimeButton href="/seller">Go to dashboard</LimeButton>
+              <GhostButton href="/seller/listings/new">Create listing</GhostButton>
+            </div>
+          </div>
+        )}
+
+        {kycStatus !== 'APPROVED' && (
+          <>
 
         {/* KYC status banner */}
         {kycStatus && kycStatus !== 'NOT_STARTED' && (
@@ -216,7 +248,7 @@ export default function SellerKycPage() {
               kycStatus === 'APPROVED'
                 ? 'border-lime-surveyor bg-lime-surveyor/10 text-lime-surveyor'
                 : kycStatus === 'REJECTED'
-                  ? 'border-iron-filings bg-[#141414] text-drift-ash'
+                  ? 'border-iron-filings bg-surface-raised text-drift-ash'
                   : 'border-marsh-olive bg-marsh-olive/10 text-marsh-olive'
             }`}
           >
@@ -252,14 +284,14 @@ export default function SellerKycPage() {
         )}
 
         {error && (
-          <p className="rounded-md border border-lime-surveyor bg-[#141414] p-4 font-jetbrains-mono text-[13px] text-lime-surveyor">
+          <p className="rounded-md border border-lime-surveyor bg-surface-raised p-4 font-jetbrains-mono text-[13px] text-lime-surveyor">
             {error}
           </p>
         )}
 
         {/* Step 1 — Entity details */}
         {(!kycLocked || (kyc?.entity.legalName ?? null) !== null) && (
-          <div className="space-y-4 rounded-md border border-iron-filings bg-[#141414] p-6">
+          <div className="space-y-4 rounded-md border border-iron-filings bg-surface-raised p-6">
             <div className="flex items-center justify-between">
               <h2 className="font-jetbrains-mono text-[14px] font-semibold uppercase tracking-[0.06em] text-lime-surveyor">
                 Step 1 — Entity Details
@@ -325,7 +357,7 @@ export default function SellerKycPage() {
 
         {/* Step 2 — Document upload */}
         {(!kycLocked || (kyc?.documents.length ?? 0) > 0) && (
-          <div className="space-y-4 rounded-md border border-iron-filings bg-[#141414] p-6">
+          <div className="space-y-4 rounded-md border border-iron-filings bg-surface-raised p-6">
             <div className="flex items-center justify-between">
               <h2 className="font-jetbrains-mono text-[14px] font-semibold uppercase tracking-[0.06em] text-lime-surveyor">
                 Step 2 — KYC Documents
@@ -411,7 +443,7 @@ export default function SellerKycPage() {
 
         {/* Step 3 — Bank account */}
         {(!kycLocked || kyc?.bankAccount !== null) && (
-          <div className="space-y-4 rounded-md border border-iron-filings bg-[#141414] p-6">
+          <div className="space-y-4 rounded-md border border-iron-filings bg-surface-raised p-6">
             <div className="flex items-center justify-between">
               <h2 className="font-jetbrains-mono text-[14px] font-semibold uppercase tracking-[0.06em] text-lime-surveyor">
                 Step 3 — Bank Account
@@ -495,7 +527,7 @@ export default function SellerKycPage() {
 
         {/* Step 4 — Review & submit */}
         {currentStep === 4 && !kycLocked && (
-          <div className="space-y-4 rounded-md border border-lime-surveyor/50 bg-[#141414] p-6">
+          <div className="space-y-4 rounded-md border border-lime-surveyor/50 bg-surface-raised p-6">
             <h2 className="font-jetbrains-mono text-[14px] font-semibold uppercase tracking-[0.06em] text-lime-surveyor">
               Step 4 — Review & Submit
             </h2>
@@ -544,6 +576,8 @@ export default function SellerKycPage() {
             </GhostButton>
           )}
         </div>
+        </>
+        )}
       </div>
     </main>
     </>

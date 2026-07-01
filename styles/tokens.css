@@ -23,6 +23,13 @@
   --color-drift-ash: #84837b;
   --color-lime-surveyor: #ebfc72;
   --color-marsh-olive: #bacd31;
+  /* Warm muted tone for error text — distinct from lime accent, AA on obsidian */
+  --color-error: #e8b4a8;
+  /* Raised panel surface — slightly lighter than obsidian canvas */
+  --color-surface-raised: #1a1b14;
+
+  /* Layout — fixed header offset (py-21 × 2 + line + border) */
+  --header-height: calc(var(--spacing-21) * 2 + 1.5rem + 1px);
 
   /* Typography — Font Families */
   --font-nb-international-pro:

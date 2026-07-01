@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { SiteNav } from '@/components/nav/SiteNav';
 import { Footer } from '@/components/landing/Footer';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -7,10 +8,25 @@ import { api } from '@/convex/_generated/api';
 import { DataTag } from '@/components/ui/DataTag';
 import { CertificateBackLink, getCertificateBackLink } from '@/components/certificate/CertificateBackLink';
 import { PrintButton } from './PrintButton';
+import { formatCurrency, formatDate, formatNumber } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
 type PageProps = { params: { certId: string } };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const convex = getConvexClient();
+  const result = await convex.query(api.orders.queries.getCertificate, {
+    certId: params.certId as Id<'certificates'>,
+  });
+  if (!result.found) {
+    return { title: 'Certificate not found' };
+  }
+  return {
+    title: `Certificate ${result.certificate.certNo}`,
+    description: `Ownership certificate for ${result.certificate.quantity} retired carbon credits.`,
+  };
+}
 
 export default async function CertificatePage({ params }: PageProps) {
   const convex = getConvexClient();
@@ -26,29 +42,29 @@ export default async function CertificatePage({ params }: PageProps) {
   }
 
   const cert = result.certificate;
-  const issuedDate = new Date(cert.issuedAt).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const issuedDate = formatDate(cert.issuedAt);
 
   return (
     <>
       <SiteNav />
-      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px] print:bg-white print:pt-0">
+      <main
+        id="main"
+        className="min-h-screen bg-obsidian-loam main-offset print:bg-white print:pt-0"
+        tabIndex={-1}
+      >
         <div className="mx-auto max-w-3xl px-6 py-12 print:py-8">
-          <div className="print:hidden mb-6 flex gap-4">
+          <div className="print:hidden mb-6 flex flex-wrap items-center gap-4">
             <CertificateBackLink href={backLink.href} label={backLink.label} />
             <PrintButton />
           </div>
 
-          <article className="rounded-md border-2 border-lime-surveyor bg-[#141414] p-10 print:border-black print:bg-white print:text-black">
+          <article className="rounded-md border-2 border-lime-surveyor bg-surface-raised p-10 print:border-black print:bg-white print:text-black">
             <div className="text-center space-y-4">
               <DataTag variant="solid">CC VERSE</DataTag>
-              <h1 className="font-jetbrains-mono text-2xl font-bold tracking-tight text-bone-vellum print:text-black">
+              <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] text-bone-vellum print:text-black">
                 Certificate of Ownership
               </h1>
-              <p className="font-jetbrains-mono text-[13px] text-drift-ash print:text-gray-600">
+              <p className="font-jetbrains-mono text-[13px] text-bone-vellum/70 print:text-gray-600">
                 Carbon Credit Retirement Certificate
               </p>
             </div>
@@ -56,31 +72,35 @@ export default async function CertificatePage({ params }: PageProps) {
             <div className="my-8 border-t border-iron-filings print:border-gray-300" />
 
             <dl className="space-y-4 font-jetbrains-mono text-[14px]">
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <dt className="text-drift-ash print:text-gray-600">Certificate No.</dt>
                 <dd className="text-lime-surveyor font-bold print:text-black">{cert.certNo}</dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <dt className="text-drift-ash print:text-gray-600">Issued to</dt>
-                <dd className="text-bone-vellum print:text-black">{cert.buyerEmail}</dd>
+                <dd className="font-nb-international-pro text-bone-vellum print:text-black">
+                  {cert.buyerEmail}
+                </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <dt className="text-drift-ash print:text-gray-600">Project</dt>
-                <dd className="text-bone-vellum print:text-black">{cert.projectName}</dd>
+                <dd className="font-nb-international-pro text-bone-vellum print:text-black">
+                  {cert.projectName}
+                </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <dt className="text-drift-ash print:text-gray-600">Quantity retired</dt>
                 <dd className="text-bone-vellum print:text-black">
-                  {cert.quantity} tCO₂e
+                  {formatNumber(cert.quantity)} tCO₂e
                 </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <dt className="text-drift-ash print:text-gray-600">Total paid</dt>
                 <dd className="text-bone-vellum print:text-black">
-                  {cert.currency} {cert.totalAmount}
+                  {formatCurrency(cert.totalAmount, cert.currency)}
                 </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <dt className="text-drift-ash print:text-gray-600">Issue date</dt>
                 <dd className="text-bone-vellum print:text-black">{issuedDate}</dd>
               </div>

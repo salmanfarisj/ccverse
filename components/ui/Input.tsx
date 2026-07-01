@@ -64,7 +64,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         </p>
       ) : null}
       {error ? (
-        <p id={errorId} className="font-jetbrains-mono text-[13px] text-lime-surveyor" role="alert">
+        <p id={errorId} className="font-jetbrains-mono text-[13px] text-error" role="alert">
           {error}
         </p>
       ) : null}

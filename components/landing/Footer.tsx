@@ -2,14 +2,6 @@ import { getEnv } from '@/lib/env';
 
 /**
  * Footer — DESIGN.md §"Footer".
- *
- * Full-width obsidian-loam band with 1px #404040 top border. Three columns:
- * legal links, contact, and build metadata (git SHA + build time). All copy
- * is JetBrains Mono 13px #f4f3e8 per the design system.
- *
- * The version metadata is sourced from the env loader (T0-1-5) and falls
- * back to `dev` / empty when unset — the same values power `/api/version`
- * (T0-13-2).
  */
 type FooterColumn = { heading: string; items: { label: string; href?: string }[] };
 
@@ -34,6 +26,7 @@ const COLUMNS: FooterColumn[] = [
 
 export function Footer() {
   const env = getEnv();
+  const showBuildMeta = env.NODE_ENV !== 'production';
   const gitSha = env.GIT_SHA || 'dev';
   const builtAt = env.BUILT_AT || '';
   const buildLabel = builtAt ? `${gitSha} · ${builtAt}` : gitSha;
@@ -68,15 +61,21 @@ export function Footer() {
             </div>
           ))}
           <div>
-            <p className="font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">
-              Build
+            {showBuildMeta ? (
+              <>
+                <p className="font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">
+                  Build
+                </p>
+                <ul className="mt-[var(--spacing-14)] space-y-[var(--spacing-7)]">
+                  <li className="font-jetbrains-mono text-[13px] text-bone-vellum">{buildLabel}</li>
+                </ul>
+              </>
+            ) : null}
+            <p
+              className={`font-jetbrains-mono text-[13px] text-drift-ash ${showBuildMeta ? 'mt-[var(--spacing-14)]' : ''}`}
+            >
+              © {new Date().getUTCFullYear()} CC Verse
             </p>
-            <ul className="mt-[var(--spacing-14)] space-y-[var(--spacing-7)]">
-              <li className="font-jetbrains-mono text-[13px] text-bone-vellum">{buildLabel}</li>
-              <li className="font-jetbrains-mono text-[13px] text-drift-ash">
-                © {new Date().getUTCFullYear()} CC Verse
-              </li>
-            </ul>
           </div>
         </div>
       </div>

@@ -74,7 +74,7 @@ export default function ResetPasswordPage({ params }: Props) {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8"
+          className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8"
           noValidate
         >
           <Input
@@ -103,7 +103,7 @@ export default function ResetPasswordPage({ params }: Props) {
           />
 
           {error && (
-            <p className="font-jetbrains-mono text-[13px] text-lime-surveyor" role="alert">
+            <p className="font-jetbrains-mono text-[13px] text-error" role="alert">
               {error}
             </p>
           )}

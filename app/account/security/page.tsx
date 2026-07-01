@@ -63,7 +63,7 @@ export default function AccountSecurityPage() {
   return (
     <>
       <AuthNav />
-      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <main id="main" className="min-h-screen bg-obsidian-loam main-offset">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
           {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 font-jetbrains-mono text-[13px] text-drift-ash">
@@ -74,13 +74,13 @@ export default function AccountSecurityPage() {
             <span className="text-bone-vellum">Security</span>
           </div>
 
-          <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
+          <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum">
             Change password
           </h1>
 
           <form
             onSubmit={handleSubmit}
-            className="mt-8 max-w-lg space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8"
+            className="mt-8 max-w-lg space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8"
             noValidate
           >
             <Input
@@ -115,14 +115,14 @@ export default function AccountSecurityPage() {
             />
 
             {error && (
-              <p className="font-jetbrains-mono text-[13px] text-lime-surveyor" role="alert">
+              <p className="font-jetbrains-mono text-[13px] text-error" role="alert">
                 {error}
               </p>
             )}
 
             {success && (
               <p
-                className="rounded-md border border-marsh-olive bg-[#141414] p-4 font-jetbrains-mono text-[13px] text-marsh-olive"
+                className="rounded-md border border-marsh-olive bg-surface-raised p-4 font-jetbrains-mono text-[13px] text-marsh-olive"
                 role="status"
               >
                 {success}

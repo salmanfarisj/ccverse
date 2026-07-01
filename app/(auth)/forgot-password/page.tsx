@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
+import { useToast } from '@/components/ui/Toast';
 
 export default function ForgotPasswordPage() {
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -26,10 +28,13 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? 'Request failed');
+        const message = data.error ?? 'Request failed';
+        setError(message);
+        toast(message, 'error');
         return;
       }
 
+      toast('If an account exists, a reset link was sent', 'success');
       setSuccess(true);
     } catch {
       setError('Something went wrong. Please try again.');
@@ -42,7 +47,7 @@ export default function ForgotPasswordPage() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam px-6">
         <div className="w-full max-w-md space-y-6 text-center">
-          <h1 className="font-jetbrains-mono text-2xl font-bold tracking-tight !text-lime-surveyor">
+          <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum">
             Check your email
           </h1>
           <p className="font-jetbrains-mono text-[14px] text-drift-ash">
@@ -67,7 +72,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center">
           <Link
             href="/"
-            className="font-jetbrains-mono text-2xl font-bold tracking-tight !text-lime-surveyor !no-underline"
+            className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum !no-underline"
           >
             CC Verse
           </Link>
@@ -78,7 +83,7 @@ export default function ForgotPasswordPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8"
+          className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8"
           noValidate
         >
           <p className="font-jetbrains-mono text-[13px] text-drift-ash">
@@ -97,7 +102,7 @@ export default function ForgotPasswordPage() {
           />
 
           {error && (
-            <p className="font-jetbrains-mono text-[13px] text-lime-surveyor" role="alert">
+            <p className="font-jetbrains-mono text-[13px] text-error" role="alert">
               {error}
             </p>
           )}

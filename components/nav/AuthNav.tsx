@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { navItemClass, navSignOutClass } from '@/components/nav/navStyles';
+import { NavLink } from '@/components/nav/NavLink';
+import { navSignOutClass } from '@/components/nav/navStyles';
+import { useToast } from '@/components/ui/Toast';
 import { getDashboardPath } from '@/lib/rbac/dashboard';
 
 type AuthNavProps = {
@@ -12,6 +14,7 @@ type AuthNavProps = {
 
 export function AuthNav({ role: roleProp }: AuthNavProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loggingOut, setLoggingOut] = useState(false);
   const [role, setRole] = useState(roleProp ?? '');
 
@@ -47,7 +50,8 @@ export function AuthNav({ role: roleProp }: AuthNavProps) {
     setLoggingOut(true);
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
+      toast('Signed out successfully', 'success');
+      await router.push('/login');
     } finally {
       setLoggingOut(false);
     }
@@ -62,38 +66,32 @@ export function AuthNav({ role: roleProp }: AuthNavProps) {
         Skip to main content
       </a>
       <header className="fixed inset-x-0 top-0 z-40 border-b border-iron-filings bg-obsidian-loam">
-      <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-[var(--spacing-18)] py-[var(--spacing-21)]">
-        <Link
-          href={homeHref}
-          className="font-nb-international-pro text-[14px] tracking-[var(--tracking-body)] text-bone-vellum !no-underline"
-        >
-          CC Verse
-        </Link>
-        <nav className="flex items-center gap-[var(--spacing-18)]">
-          {(normalizedRole === 'BUYER' || normalizedRole === 'SELLER') && (
-            <>
-              <Link href="/marketplace" className={navItemClass}>
-                Marketplace
-              </Link>
-              <Link href="/registry" className={navItemClass}>
-                Registry
-              </Link>
-            </>
-          )}
-          <Link href="/account" className={navItemClass}>
-            Account
-          </Link>
-          <button
-            type="button"
-            disabled={loggingOut}
-            onClick={handleLogout}
-            className={navSignOutClass}
+        <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-[var(--spacing-18)] py-[var(--spacing-21)]">
+          <Link
+            href={homeHref}
+            className="font-nb-international-pro text-[14px] tracking-[var(--tracking-body)] text-bone-vellum !no-underline"
           >
-            {loggingOut ? 'Signing out…' : 'Sign out'}
-          </button>
-        </nav>
-      </div>
-    </header>
+            CC Verse
+          </Link>
+          <nav className="flex items-center gap-[var(--spacing-18)]">
+            {(normalizedRole === 'BUYER' || normalizedRole === 'SELLER') && (
+              <>
+                <NavLink href="/marketplace">Marketplace</NavLink>
+                <NavLink href="/registry">Registry</NavLink>
+              </>
+            )}
+            <NavLink href="/account">Account</NavLink>
+            <button
+              type="button"
+              disabled={loggingOut}
+              onClick={() => void handleLogout()}
+              className={navSignOutClass}
+            >
+              {loggingOut ? 'Signing out…' : 'Sign out'}
+            </button>
+          </nav>
+        </div>
+      </header>
     </>
   );
 }

@@ -5,38 +5,36 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
-import { GhostButton } from '@/components/ui/GhostButton';
-
-const DEMO_ACCOUNTS = {
-  buyer: {
-    email: 'buyer@ccverse.local',
-    password: 'Test@12345678',
-  },
-  seller: {
-    email: 'seller@ccverse.local',
-    password: 'Test@12345678',
-  },
-} as const;
-
-type LoginRole = keyof typeof DEMO_ACCOUNTS;
+import { useToast } from '@/components/ui/Toast';
+import { getDashboardPath } from '@/lib/rbac/dashboard';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [retryAfter, setRetryAfter] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeRole, setActiveRole] = useState<LoginRole | null>(null);
 
-  async function loginAs(role: LoginRole) {
+  async function handleLogin(e: FormEvent) {
+    e.preventDefault();
     setError('');
     setRetryAfter(null);
-    setActiveRole(role);
     setLoading(true);
 
     const credentials =
-      email.trim() && password ? { email: email.trim(), password } : DEMO_ACCOUNTS[role];
+      email.trim() && password
+        ? { email: email.trim(), password }
+        : process.env.NODE_ENV === 'development'
+          ? { email: 'buyer@ccverse.local', password: 'Test@12345678' }
+          : null;
+
+    if (!credentials) {
+      setError('Email and password are required');
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -54,31 +52,22 @@ export default function LoginPage() {
       }
 
       if (!res.ok) {
-        setError(data.error ?? 'Login failed');
+        const message = data.error ?? 'Login failed';
+        setError(message);
+        toast(message, 'error');
         return;
       }
 
-      const loggedInRole = (data.role ?? '').toLowerCase();
-      if (loggedInRole !== role) {
-        await fetch('/api/auth/logout', { method: 'POST' });
-        setError(`This account is registered as a ${loggedInRole || 'different role'}, not a ${role}.`);
-        return;
-      }
-
-      const destination = role === 'seller' ? '/seller' : '/buyer';
+      const destination = getDashboardPath(data.role);
+      toast('Signed in successfully', 'success');
       await router.push(destination);
-    } catch (err) {
-      console.error('Login error', err);
-      setError('Something went wrong. Please try again.');
+    } catch {
+      const message = 'Something went wrong. Please try again.';
+      setError(message);
+      toast(message, 'error');
     } finally {
       setLoading(false);
-      setActiveRole(null);
     }
-  }
-
-  function handleSubmit(e: FormEvent, role: LoginRole) {
-    e.preventDefault();
-    void loginAs(role);
   }
 
   return (
@@ -87,7 +76,7 @@ export default function LoginPage() {
         <div className="text-center">
           <Link
             href="/"
-            className="font-jetbrains-mono text-2xl font-bold tracking-tight !text-lime-surveyor !no-underline"
+            className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-lime-surveyor !no-underline"
           >
             CC Verse
           </Link>
@@ -97,8 +86,8 @@ export default function LoginPage() {
         </div>
 
         {retryAfter !== null && (
-          <div className="rounded-md border border-lime-surveyor bg-[#141414] p-4">
-            <p className="font-jetbrains-mono text-[13px] text-lime-surveyor">
+          <div className="rounded-md border border-lime-surveyor bg-surface-raised p-4">
+            <p className="font-jetbrains-mono text-[13px] text-bone-vellum">
               Account locked. Try again in{' '}
               <strong>
                 {Math.ceil(retryAfter / 60)} minute{Math.ceil(retryAfter / 60) !== 1 ? 's' : ''}
@@ -109,9 +98,9 @@ export default function LoginPage() {
         )}
 
         <form
-          className="space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8"
+          className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8"
           noValidate
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={(e) => void handleLogin(e)}
         >
           <Input
             label="Email address"
@@ -130,35 +119,21 @@ export default function LoginPage() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="Your password"
           />
 
           {error && (
-            <p className="font-jetbrains-mono text-[13px] text-lime-surveyor" role="alert">
+            <p className="font-jetbrains-mono text-[13px] text-error" role="alert">
               {error}
             </p>
           )}
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <LimeButton
-              type="button"
-              className="w-full"
-              disabled={loading}
-              onClick={(e) => void handleSubmit(e, 'buyer')}
-            >
-              {loading && activeRole === 'buyer' ? 'Signing in…' : 'Sign in as buyer'}
-            </LimeButton>
-            <GhostButton
-              type="button"
-              className="w-full"
-              disabled={loading}
-              onClick={(e) => void handleSubmit(e, 'seller')}
-            >
-              {loading && activeRole === 'seller' ? 'Signing in…' : 'Sign in as seller'}
-            </GhostButton>
-          </div>
+          <LimeButton type="submit" className="w-full whitespace-nowrap" disabled={loading}>
+            {loading ? 'Signing in…' : 'Sign in'}
+          </LimeButton>
         </form>
 
-        <p className="text-center font-jetbrains-mono text-[13px] text-drift-ash">
+        <p className="text-center font-jetbrains-mono text-[13px] text-bone-vellum/70">
           <Link
             href="/forgot-password"
             className="!text-lime-surveyor !no-underline hover:text-marsh-olive"

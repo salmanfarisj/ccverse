@@ -5,14 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
-import { GhostButton } from '@/components/ui/GhostButton';
+import { useToast } from '@/components/ui/Toast';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState<'buyer' | 'seller' | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function registerAsBuyer() {
     setError('');
@@ -26,7 +27,7 @@ export default function RegisterPage() {
       return;
     }
 
-    setLoading('buyer');
+    setLoading(true);
 
     try {
       const res = await fetch('/api/auth/register/buyer', {
@@ -38,20 +39,21 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? 'Registration failed');
+        const message = data.error ?? 'Registration failed';
+        setError(message);
+        toast(message, 'error');
         return;
       }
 
+      toast('Account created successfully', 'success');
       router.push('/register/success');
     } catch {
-      setError('Something went wrong. Please try again.');
+      const message = 'Something went wrong. Please try again.';
+      setError(message);
+      toast(message, 'error');
     } finally {
-      setLoading(null);
+      setLoading(false);
     }
-  }
-
-  function goToSellerRegister() {
-    router.push('/register/seller');
   }
 
   return (
@@ -60,7 +62,7 @@ export default function RegisterPage() {
         <div className="text-center">
           <Link
             href="/"
-            className="font-jetbrains-mono text-2xl font-bold tracking-tight !text-lime-surveyor !no-underline"
+            className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-lime-surveyor !no-underline"
           >
             CC Verse
           </Link>
@@ -70,9 +72,12 @@ export default function RegisterPage() {
         </div>
 
         <form
-          className="space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8"
+          className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8"
           noValidate
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void registerAsBuyer();
+          }}
         >
           <Input
             label="Email address"
@@ -95,36 +100,28 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Min. 8 characters"
-            hint="At least 8 characters"
           />
 
           {error && (
-            <p className="font-jetbrains-mono text-[13px] text-lime-surveyor" role="alert">
+            <p className="font-jetbrains-mono text-[13px] text-error" role="alert">
               {error}
             </p>
           )}
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <LimeButton
-              type="button"
-              className="w-full"
-              disabled={loading !== null}
-              onClick={() => void registerAsBuyer()}
-            >
-              {loading === 'buyer' ? 'Creating account…' : 'Register as buyer'}
-            </LimeButton>
-            <GhostButton
-              type="button"
-              className="w-full"
-              disabled={loading !== null}
-              onClick={goToSellerRegister}
-            >
-              {loading === 'seller' ? 'Loading…' : 'Register as seller'}
-            </GhostButton>
-          </div>
+          <LimeButton type="submit" className="w-full whitespace-nowrap" disabled={loading}>
+            {loading ? 'Creating account…' : 'Create account'}
+          </LimeButton>
         </form>
 
-        <p className="text-center font-jetbrains-mono text-[13px] text-drift-ash">
+        <p className="text-center font-jetbrains-mono text-[13px] text-bone-vellum/70">
+          Registering as a seller?{' '}
+          <Link
+            href="/register/seller"
+            className="!text-lime-surveyor !no-underline hover:text-marsh-olive"
+          >
+            Seller registration
+          </Link>
+          {' · '}
           Already have an account?{' '}
           <Link href="/login" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
             Sign in

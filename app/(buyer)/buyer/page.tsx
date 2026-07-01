@@ -4,7 +4,14 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { api } from '@/convex/_generated/api';
 import { AuthNav } from '@/components/nav/AuthNav';
-import { GhostButton } from '@/components/ui/GhostButton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { formatCurrency, formatDate, formatNumber } from '@/lib/format';
+
+export const metadata = {
+  title: 'My Purchases',
+  description: 'View your purchased carbon credits and certificates.',
+};
 
 export const dynamic = 'force-dynamic';
 
@@ -19,44 +26,36 @@ export default async function BuyerPage() {
   return (
     <>
       <AuthNav role={session.role} />
-      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam pt-[80px]">
+      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam main-offset" tabIndex={-1}>
         <div className="mx-auto w-full max-w-4xl space-y-8 px-6 py-12">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
-                My Purchases
-              </h1>
-              <p className="mt-1 font-jetbrains-mono text-[13px] text-drift-ash">
-                Credits you have purchased and retired on the registry.
-              </p>
-            </div>
-            <GhostButton href="/marketplace" className="shrink-0">
-              Browse marketplace
-            </GhostButton>
-          </div>
+          <PageHeader
+            eyebrow="BUYER"
+            title="My Purchases"
+            description="Credits you have purchased and retired on the registry."
+          />
 
           {orders.length === 0 ? (
-            <p className="font-jetbrains-mono text-[13px] text-drift-ash">
-              No purchases yet.{' '}
-              <Link href="/marketplace" className="!text-lime-surveyor !no-underline">
-                Browse the marketplace
-              </Link>{' '}
-              to buy credits.
-            </p>
+            <EmptyState
+              title="No purchases yet"
+              description="Browse the marketplace to find verified carbon credits for your portfolio."
+              ctaLabel="Browse marketplace"
+              ctaHref="/marketplace"
+            />
           ) : (
             <div className="space-y-3">
               {orders.map((order) => (
                 <div
                   key={order.id}
-                  className="flex items-center justify-between rounded-md border border-iron-filings bg-[#141414] p-5"
+                  className="flex items-center justify-between rounded-md border border-iron-filings bg-surface-raised p-5"
                 >
                   <div>
-                    <p className="font-jetbrains-mono text-[14px] !text-bone-vellum">
+                    <p className="font-nb-international-pro text-[length:var(--text-body)] !text-bone-vellum">
                       {order.listingTitle}
                     </p>
-                    <p className="font-jetbrains-mono text-[12px] text-drift-ash">
-                      {order.projectName} · {order.quantity} credits · {order.currency}{' '}
-                      {order.totalAmount} · {new Date(order.createdAt).toLocaleDateString()}
+                    <p className="font-jetbrains-mono text-[12px] text-bone-vellum/70">
+                      {order.projectName} · {formatNumber(order.quantity)} credits ·{' '}
+                      {formatCurrency(order.totalAmount, order.currency)} ·{' '}
+                      {formatDate(order.createdAt)}
                     </p>
                     <p className="mt-1 font-jetbrains-mono text-[11px] text-drift-ash">
                       Serials: {order.serials.join(', ')}

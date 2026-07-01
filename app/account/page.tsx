@@ -7,6 +7,10 @@ import { AuthNav } from '@/components/nav/AuthNav';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { GhostButton } from '@/components/ui/GhostButton';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { AccountSkeleton } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/Toast';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 interface UserProfile {
   id: string;
@@ -37,6 +41,7 @@ interface UserProfile {
 
 export default function AccountPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -87,9 +92,12 @@ export default function AccountPage() {
         'Profile updated' +
           (data.kycStatus === 'EXPIRED' ? ' — KYC status set to expired due to name change.' : ''),
       );
+      toast('Profile updated', 'success');
       setEditing(false);
     } catch (err) {
-      setMessage((err as Error).message);
+      const msg = (err as Error).message;
+      setMessage(msg);
+      toast(msg, 'error');
     } finally {
       setSaving(false);
     }
@@ -99,9 +107,9 @@ export default function AccountPage() {
     return (
       <>
         <AuthNav />
-        <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
-          <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)] text-drift-ash">
-            Loading…
+        <main id="main" className="min-h-screen bg-obsidian-loam main-offset" tabIndex={-1}>
+          <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
+            <AccountSkeleton />
           </div>
         </main>
       </>
@@ -122,15 +130,13 @@ export default function AccountPage() {
   return (
     <>
       <AuthNav role={profile.role} />
-      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <main id="main" className="min-h-screen bg-obsidian-loam main-offset" tabIndex={-1}>
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
-          <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
-            Account
-          </h1>
+          <PageHeader eyebrow="ACCOUNT" title="Account" />
 
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Profile form */}
-            <div className="lg:col-span-2 rounded-md border border-iron-filings bg-[#141414] p-8">
+            <div className="lg:col-span-2 rounded-md border border-iron-filings bg-surface-raised p-8">
               <div className="flex items-center justify-between">
                 <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                   Profile
@@ -171,7 +177,7 @@ export default function AccountPage() {
                   />
 
                   {message && (
-                    <p className="font-jetbrains-mono text-[13px] text-lime-surveyor">{message}</p>
+                    <p className="font-jetbrains-mono text-[13px] text-error">{message}</p>
                   )}
 
                   <div className="flex gap-4">
@@ -219,7 +225,7 @@ export default function AccountPage() {
             <div className="space-y-6">
               {/* KYC status (sellers) */}
               {profile.role === 'SELLER' && profile.sellerProfile && (
-                <div className="rounded-md border border-iron-filings bg-[#141414] p-8">
+                <div className="rounded-md border border-iron-filings bg-surface-raised p-8">
                   <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                     KYC Status
                   </h2>
@@ -245,7 +251,7 @@ export default function AccountPage() {
               )}
 
               {/* Quick links */}
-              <div className="rounded-md border border-iron-filings bg-[#141414] p-8">
+              <div className="rounded-md border border-iron-filings bg-surface-raised p-8">
                 <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                   Security
                 </h2>
@@ -260,19 +266,19 @@ export default function AccountPage() {
               </div>
 
               {/* Account info */}
-              <div className="rounded-md border border-iron-filings bg-[#141414] p-8">
+              <div className="rounded-md border border-iron-filings bg-surface-raised p-8">
                 <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                   Account info
                 </h2>
                 <div className="mt-4 space-y-3">
                   <ProfileRow
                     label="Member since"
-                    value={new Date(profile.createdAt).toLocaleDateString()}
+                    value={formatDate(profile.createdAt)}
                   />
                   {profile.lastLoginAt && (
                     <ProfileRow
                       label="Last login"
-                      value={new Date(profile.lastLoginAt).toLocaleString()}
+                      value={formatDateTime(profile.lastLoginAt)}
                     />
                   )}
                   <ProfileRow label="Email verified" value={profile.emailVerified ? 'Yes' : 'No'} />

@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { AuthNav } from '@/components/nav/AuthNav';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
+import { useToast } from '@/components/ui/Toast';
 
 type Project = {
   id: string;
@@ -15,6 +16,7 @@ type Project = {
 
 function NewListingForm() {
   const router = useRouter();
+  const { toast } = useToast();
   const searchParams = useSearchParams();
   const preselectedProject = searchParams.get('projectId') ?? '';
 
@@ -61,11 +63,14 @@ function NewListingForm() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? 'Failed to create listing');
+        const message = data.error ?? 'Failed to create listing';
+        setError(message);
+        toast(message, 'error');
         return;
       }
 
-      router.push('/seller');
+      toast('Listing created successfully', 'success');
+      await router.push('/seller');
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -76,7 +81,7 @@ function NewListingForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8"
+      className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8"
       noValidate
     >
       {projects.length === 0 ? (
@@ -157,7 +162,7 @@ function NewListingForm() {
       )}
 
       {error && (
-        <p className="font-jetbrains-mono text-[13px] text-lime-surveyor" role="alert">
+        <p className="font-jetbrains-mono text-[13px] text-error" role="alert">
           {error}
         </p>
       )}
@@ -175,7 +180,7 @@ export default function NewListingPage() {
   return (
     <>
       <AuthNav role="SELLER" />
-      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam pt-[80px]">
+      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam main-offset">
         <div className="mx-auto w-full max-w-xl space-y-8 px-6 py-12">
           <div>
             <Link
@@ -184,7 +189,7 @@ export default function NewListingPage() {
             >
               ← Back to dashboard
             </Link>
-            <h1 className="mt-4 font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
+            <h1 className="mt-4 font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum">
               List Credits
             </h1>
             <p className="mt-1 font-jetbrains-mono text-[13px] text-drift-ash">

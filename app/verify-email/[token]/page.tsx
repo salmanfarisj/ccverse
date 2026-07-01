@@ -42,11 +42,11 @@ export default async function VerifyEmailPage({ params }: Props) {
           CC Verse
         </Link>
 
-        <div className="rounded-md border border-iron-filings bg-[#141414] p-8">
+        <div className="rounded-md border border-iron-filings bg-surface-raised p-8">
           {status === 'success' ? (
             <div className="space-y-4">
               <div className="text-4xl">✓</div>
-              <h1 className="font-jetbrains-mono text-xl font-bold tracking-tight !text-lime-surveyor">
+              <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum">
                 Email verified
               </h1>
               <p className="font-jetbrains-mono text-[14px] text-drift-ash">{message}</p>
@@ -60,7 +60,7 @@ export default async function VerifyEmailPage({ params }: Props) {
           ) : status === 'error' ? (
             <div className="space-y-4">
               <div className="text-4xl">✗</div>
-              <h1 className="font-jetbrains-mono text-xl font-bold tracking-tight !text-lime-surveyor">
+              <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum">
                 Verification failed
               </h1>
               <p className="font-jetbrains-mono text-[14px] text-drift-ash">{message}</p>

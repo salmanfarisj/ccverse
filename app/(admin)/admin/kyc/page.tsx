@@ -36,7 +36,7 @@ export default function AdminKycPage() {
   return (
     <>
       <AuthNav role="ADMIN" />
-      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <main id="main" className="min-h-screen bg-obsidian-loam main-offset">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
           {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 font-jetbrains-mono text-[13px] text-drift-ash">
@@ -47,7 +47,7 @@ export default function AdminKycPage() {
             <span className="text-bone-vellum">KYC Queue</span>
           </div>
 
-          <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
+          <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum">
             KYC Queue
           </h1>
           <p className="mt-2 font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">

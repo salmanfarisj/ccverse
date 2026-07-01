@@ -4,8 +4,16 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { api } from '@/convex/_generated/api';
 import { AuthNav } from '@/components/nav/AuthNav';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { GhostButton } from '@/components/ui/GhostButton';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { formatCurrency, formatDate, formatNumber } from '@/lib/format';
+
+export const metadata = {
+  title: 'Seller Dashboard',
+  description: 'Manage projects, listings, and sales on CC Verse.',
+};
 
 export const dynamic = 'force-dynamic';
 
@@ -27,23 +35,20 @@ export default async function SellerDashboardPage() {
   return (
     <>
       <AuthNav role={session.role} />
-      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam pt-[80px]">
+      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam main-offset" tabIndex={-1}>
         <div className="mx-auto w-full max-w-4xl space-y-8 px-6 py-12">
-          <div>
-            <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
-              Seller Dashboard
-            </h1>
-            <p className="mt-1 font-jetbrains-mono text-[13px] text-drift-ash">
-              {isApproved
+          <PageHeader
+            eyebrow="SELLER"
+            title="Seller Dashboard"
+            description={
+              isApproved
                 ? 'Your account is verified. Manage projects, listings, and sales.'
-                : 'Complete KYC to start listing credits.'}
-            </p>
-            {!isApproved && (
-              <div className="mt-4">
-                <LimeButton href="/seller/kyc">Complete KYC verification</LimeButton>
-              </div>
-            )}
-          </div>
+                : 'Complete KYC to start listing credits.'
+            }
+            actions={
+              !isApproved ? <LimeButton href="/seller/kyc">Complete KYC</LimeButton> : undefined
+            }
+          />
 
           {isApproved && (
             <div className="flex flex-wrap gap-3">
@@ -57,17 +62,24 @@ export default async function SellerDashboardPage() {
               My Projects ({projects.length})
             </h2>
             {projects.length === 0 ? (
-              <p className="font-jetbrains-mono text-[13px] text-drift-ash">No projects yet.</p>
+              <EmptyState
+                title="No projects"
+                description="Create a verified project before listing carbon credits for sale."
+                ctaLabel={isApproved ? 'New project' : 'Complete KYC first'}
+                ctaHref={isApproved ? '/seller/projects/new' : '/seller/kyc'}
+              />
             ) : (
               <div className="space-y-2">
                 {projects.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between rounded-md border border-iron-filings bg-[#141414] p-4"
+                    className="flex items-center justify-between rounded-md border border-iron-filings bg-surface-raised p-4"
                   >
                     <div>
-                      <p className="font-jetbrains-mono text-[14px] !text-bone-vellum">{p.name}</p>
-                      <p className="font-jetbrains-mono text-[12px] text-drift-ash">
+                      <p className="font-nb-international-pro text-[length:var(--text-body)] !text-bone-vellum">
+                        {p.name}
+                      </p>
+                      <p className="font-jetbrains-mono text-[12px] text-bone-vellum/70">
                         {p.ccverseProjectId} · {p.country} · {p.vintageYear}
                       </p>
                     </div>
@@ -90,19 +102,24 @@ export default async function SellerDashboardPage() {
               My Listings ({listings.length})
             </h2>
             {listings.length === 0 ? (
-              <p className="font-jetbrains-mono text-[13px] text-drift-ash">No listings yet.</p>
+              <p className="font-nb-international-pro text-[length:var(--text-body)] text-bone-vellum/70">
+                No listings yet.
+              </p>
             ) : (
               <div className="space-y-2">
                 {listings.map((l) => (
                   <div
                     key={l.id}
-                    className="flex items-center justify-between rounded-md border border-iron-filings bg-[#141414] p-4"
+                    className="flex items-center justify-between rounded-md border border-iron-filings bg-surface-raised p-4"
                   >
                     <div>
-                      <p className="font-jetbrains-mono text-[14px] !text-bone-vellum">{l.title}</p>
-                      <p className="font-jetbrains-mono text-[12px] text-drift-ash">
-                        {l.projectName} · {l.currency} {l.unitPrice}/credit · {l.quantityAvailable}/
-                        {l.quantityTotal} available · {l.sold} sold
+                      <p className="font-nb-international-pro text-[length:var(--text-body)] !text-bone-vellum">
+                        {l.title}
+                      </p>
+                      <p className="font-jetbrains-mono text-[12px] text-bone-vellum/70">
+                        {l.projectName} · {formatCurrency(l.unitPrice, l.currency)}/credit ·{' '}
+                        {formatNumber(l.quantityAvailable)}/{formatNumber(l.quantityTotal)} available
+                        · {formatNumber(l.sold)} sold
                       </p>
                     </div>
                     <span
@@ -123,18 +140,22 @@ export default async function SellerDashboardPage() {
               Sales ({sales.length})
             </h2>
             {sales.length === 0 ? (
-              <p className="font-jetbrains-mono text-[13px] text-drift-ash">No sales yet.</p>
+              <p className="font-nb-international-pro text-[length:var(--text-body)] text-bone-vellum/70">
+                No sales yet.
+              </p>
             ) : (
               <div className="space-y-2">
                 {sales.map((s) => (
                   <div
                     key={s.id}
-                    className="rounded-md border border-iron-filings bg-[#141414] p-4"
+                    className="rounded-md border border-iron-filings bg-surface-raised p-4"
                   >
-                    <p className="font-jetbrains-mono text-[14px] !text-bone-vellum">{s.listingTitle}</p>
-                    <p className="font-jetbrains-mono text-[12px] text-drift-ash">
-                      {s.projectName} · {s.quantity} credits · {s.currency} {s.totalAmount} ·{' '}
-                      {new Date(s.createdAt).toLocaleDateString()}
+                    <p className="font-nb-international-pro text-[length:var(--text-body)] !text-bone-vellum">
+                      {s.listingTitle}
+                    </p>
+                    <p className="font-jetbrains-mono text-[12px] text-bone-vellum/70">
+                      {s.projectName} · {formatNumber(s.quantity)} credits ·{' '}
+                      {formatCurrency(s.totalAmount, s.currency)} · {formatDate(s.createdAt)}
                     </p>
                   </div>
                 ))}

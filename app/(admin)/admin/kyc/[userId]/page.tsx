@@ -135,7 +135,7 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
     return (
       <>
         <AuthNav role="ADMIN" />
-        <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
+        <main id="main" className="min-h-screen bg-obsidian-loam main-offset">
           <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)] text-drift-ash">
             Loading…
           </div>
@@ -167,7 +167,7 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
   return (
     <>
       <AuthNav role="ADMIN" />
-      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <main id="main" className="min-h-screen bg-obsidian-loam main-offset">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
           {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 font-jetbrains-mono text-[13px] text-drift-ash">
@@ -187,7 +187,7 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
+              <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] !text-bone-vellum">
                 {profile.legalName ?? profile.user.email}
               </h1>
               <p
@@ -201,7 +201,7 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
 
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Left: Entity info + bank account */}
-            <div className="space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8">
+            <div className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8">
               <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                 Entity details
               </h2>
@@ -238,7 +238,7 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
             </div>
 
             {/* Middle: Documents */}
-            <div className="lg:col-span-1 space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8">
+            <div className="lg:col-span-1 space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8">
               <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                 Documents ({profile.kycDocuments.length})
               </h2>
@@ -292,13 +292,13 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
             </div>
 
             {/* Right: Decision panel */}
-            <div className="space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8">
+            <div className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8">
               <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                 Decision
               </h2>
 
               {actionSuccess && (
-                <p className="rounded-md border border-marsh-olive bg-[#141414] p-4 font-jetbrains-mono text-[13px] text-marsh-olive">
+                <p className="rounded-md border border-marsh-olive bg-surface-raised p-4 font-jetbrains-mono text-[13px] text-marsh-olive">
                   {actionSuccess}
                 </p>
               )}
