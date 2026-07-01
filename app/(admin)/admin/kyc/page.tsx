@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { AuthNav } from '@/components/nav/AuthNav';
+import { apiGet } from '@/lib/query/fetcher';
+import { qk } from '@/lib/query/keys';
 
 interface Application {
   userId: string;
@@ -13,34 +15,31 @@ interface Application {
   documentCount: number;
 }
 
-export default function AdminKycPage() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
+type AdminKycResponse = {
+  applications: Application[];
+};
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/admin/kyc');
-        if (!res.ok) throw new Error('Failed to load');
-        const data = await res.json();
-        setApplications(data.applications);
-      } catch {
-        // silently fail — admin can retry
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+const REFETCH_INTERVAL = 30_000;
+
+export default function AdminKycPage() {
+  const { data, isPending } = useQuery({
+    queryKey: qk.adminKyc,
+    queryFn: () => apiGet<AdminKycResponse>('/api/admin/kyc'),
+    refetchInterval: REFETCH_INTERVAL,
+  });
+
+  const applications = data?.applications ?? [];
 
   return (
     <>
       <AuthNav role="ADMIN" />
       <main id="main" className="min-h-screen bg-obsidian-loam main-offset">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
-          {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 font-jetbrains-mono text-[13px] text-drift-ash">
-            <Link href="/admin" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
+            <Link
+              href="/admin"
+              className="!text-lime-surveyor !no-underline hover:text-marsh-olive"
+            >
               Admin
             </Link>
             <span>/</span>
@@ -77,7 +76,7 @@ export default function AdminKycPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
+                {isPending && !data ? (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-drift-ash">
                       Loading…

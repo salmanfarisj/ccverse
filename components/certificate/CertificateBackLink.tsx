@@ -17,13 +17,7 @@ export async function getCertificateBackLink(): Promise<{ href: string; label: s
   return { href: getDashboardPath(session.role), label: '← Dashboard' };
 }
 
-export function CertificateBackLink({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
+export function CertificateBackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}

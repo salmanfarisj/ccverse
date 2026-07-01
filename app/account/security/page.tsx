@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useState, type FormEvent } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { AuthNav } from '@/components/nav/AuthNav';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { GhostButton } from '@/components/ui/GhostButton';
+import { apiSend } from '@/lib/query/fetcher';
 
 export default function AccountSecurityPage() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -13,9 +15,23 @@ export default function AccountSecurityPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  const changePasswordMutation = useMutation({
+    mutationFn: () => apiSend('/api/me/change-password', 'POST', { currentPassword, newPassword }),
+    onSuccess: () => {
+      setSuccess('Password changed successfully. You have been signed out.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setError('');
+    },
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : 'Failed to change password');
+      setSuccess('');
+    },
+  });
+
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -35,39 +51,21 @@ export default function AccountSecurityPage() {
       return;
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch('/api/me/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? 'Failed to change password');
-        return;
-      }
-
-      setSuccess('Password changed successfully. You have been signed out.');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    changePasswordMutation.mutate();
   }
+
+  const loading = changePasswordMutation.isPending;
 
   return (
     <>
       <AuthNav />
       <main id="main" className="min-h-screen bg-obsidian-loam main-offset">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
-          {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 font-jetbrains-mono text-[13px] text-drift-ash">
-            <Link href="/account" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
+            <Link
+              href="/account"
+              className="!text-lime-surveyor !no-underline hover:text-marsh-olive"
+            >
               Account
             </Link>
             <span>/</span>

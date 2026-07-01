@@ -27,6 +27,8 @@
     "@aws-sdk/client-sns": "^3.1070.0",
     "@aws-sdk/s3-request-presigner": "^3.1070.0",
     "@react-email/components": "^1.0.12",
+    "@tanstack/react-query": "^5.101.2",
+    "@tanstack/react-query-devtools": "^5.101.2",
     "argon2": "^0.41.1",
     "convex": "^1.41.0",
     "iron-session": "^8.0.4",

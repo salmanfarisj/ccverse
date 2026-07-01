@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthNav } from '@/components/nav/AuthNav';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { GhostButton } from '@/components/ui/GhostButton';
+import { apiGet, apiSend } from '@/lib/query/fetcher';
+import { qk } from '@/lib/query/keys';
 
 interface KycDocument {
   id: string;
@@ -48,90 +50,82 @@ interface SellerProfile {
   };
 }
 
-export default function KycReviewPage({ params }: { params: { userId: string } }) {
-  const router = useRouter();
-  const [profile, setProfile] = useState<SellerProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [docUrls, setDocUrls] = useState<Record<string, string>>({});
-  const [fetchingUrls, setFetchingUrls] = useState<Record<string, boolean>>({});
+type KycDetailResponse = {
+  profile: SellerProfile;
+};
 
-  // Reject form
-  const [rejecting, setRejecting] = useState(false);
+type DocUrlResponse = {
+  url: string;
+};
+
+export default function KycReviewPage({ params }: { params: { userId: string } }) {
+  const queryClient = useQueryClient();
+  const [docUrls, setDocUrls] = useState<Record<string, string>>({});
   const [rejectReason, setRejectReason] = useState('');
   const [rejectError, setRejectError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(`/api/admin/kyc/${params.userId}`);
-        if (!res.ok) throw new Error('Not found');
-        const data = await res.json();
-        setProfile(data.profile);
-      } catch {
-        router.push('/admin/kyc');
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [params.userId, router]);
+  const { data, isPending } = useQuery({
+    queryKey: qk.adminKycDetail(params.userId),
+    queryFn: () => apiGet<KycDetailResponse>(`/api/admin/kyc/${params.userId}`),
+  });
 
-  async function fetchDocUrl(docId: string) {
-    if (docUrls[docId]) return;
-    setFetchingUrls((prev) => ({ ...prev, [docId]: true }));
-    try {
-      const res = await fetch(`/api/admin/kyc/${params.userId}/documents/${docId}/url`);
-      if (!res.ok) throw new Error('Failed to get URL');
-      const data = await res.json();
-      setDocUrls((prev) => ({ ...prev, [docId]: data.url }));
-    } catch {
-      // silently fail
-    } finally {
-      setFetchingUrls((prev) => ({ ...prev, [docId]: false }));
-    }
-  }
+  const profile = data?.profile;
 
-  async function handleApprove() {
+  const approveMutation = useMutation({
+    mutationFn: () => apiSend(`/api/admin/kyc/${params.userId}/approve`, 'POST'),
+    onSuccess: async () => {
+      setActionSuccess('KYC approved. The seller has been notified.');
+      setRejectError('');
+      await queryClient.invalidateQueries({ queryKey: qk.adminKyc });
+      await queryClient.invalidateQueries({ queryKey: qk.adminKycDetail(params.userId) });
+    },
+    onError: (err) => {
+      setRejectError(err instanceof Error ? err.message : 'Approval failed');
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: () =>
+      apiSend(`/api/admin/kyc/${params.userId}/reject`, 'POST', { reason: rejectReason }),
+    onSuccess: async () => {
+      setActionSuccess('KYC rejected. The seller has been notified.');
+      setRejectError('');
+      setRejectReason('');
+      await queryClient.invalidateQueries({ queryKey: qk.adminKyc });
+      await queryClient.invalidateQueries({ queryKey: qk.adminKycDetail(params.userId) });
+    },
+    onError: (err) => {
+      setRejectError(err instanceof Error ? err.message : 'Rejection failed');
+    },
+  });
+
+  const docUrlMutation = useMutation({
+    mutationFn: (docId: string) =>
+      apiGet<DocUrlResponse>(`/api/admin/kyc/${params.userId}/documents/${docId}/url`),
+    onSuccess: (result, docId) => {
+      setDocUrls((prev) => ({ ...prev, [docId]: result.url }));
+    },
+  });
+
+  function handleApprove() {
     if (!confirm('Approve this KYC application?')) return;
     setActionSuccess('');
-    try {
-      const res = await fetch(`/api/admin/kyc/${params.userId}/approve`, { method: 'POST' });
-      if (!res.ok) throw new Error((await res.json()).error);
-      setActionSuccess('KYC approved. The seller has been notified.');
-      setProfile((p) => (p ? { ...p, kycStatus: 'APPROVED' } : p));
-    } catch (err) {
-      setRejectError((err as Error).message);
-    }
+    approveMutation.mutate();
   }
 
-  async function handleReject(e: FormEvent) {
+  function handleReject(e: FormEvent) {
     e.preventDefault();
     if (rejectReason.length < 10) {
       setRejectError('Rejection reason must be at least 10 characters');
       return;
     }
-    setRejecting(true);
     setRejectError('');
     setActionSuccess('');
-    try {
-      const res = await fetch(`/api/admin/kyc/${params.userId}/reject`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: rejectReason }),
-      });
-      if (!res.ok) throw new Error((await res.json()).error);
-      setActionSuccess('KYC rejected. The seller has been notified.');
-      setProfile((p) => (p ? { ...p, kycStatus: 'REJECTED' } : p));
-      setRejectReason('');
-    } catch (err) {
-      setRejectError((err as Error).message);
-    } finally {
-      setRejecting(false);
-    }
+    rejectMutation.mutate();
   }
 
-  if (loading) {
+  if (isPending) {
     return (
       <>
         <AuthNav role="ADMIN" />
@@ -169,7 +163,6 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
       <AuthNav role="ADMIN" />
       <main id="main" className="min-h-screen bg-obsidian-loam main-offset">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
-          {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 font-jetbrains-mono text-[13px] text-drift-ash">
             <Link href="/admin" className="!text-lime-surveyor !no-underline hover:text-lime/80">
               Admin
@@ -200,7 +193,6 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Left: Entity info + bank account */}
             <div className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8">
               <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                 Entity details
@@ -237,7 +229,6 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
               )}
             </div>
 
-            {/* Middle: Documents */}
             <div className="lg:col-span-1 space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8">
               <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                 Documents ({profile.kycDocuments.length})
@@ -266,14 +257,15 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
                         Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}
                       </p>
 
-                      {/* View document button */}
                       {!docUrls[doc.id] ? (
                         <button
-                          onClick={() => fetchDocUrl(doc.id)}
-                          disabled={fetchingUrls[doc.id]}
+                          onClick={() => docUrlMutation.mutate(doc.id)}
+                          disabled={docUrlMutation.isPending && docUrlMutation.variables === doc.id}
                           className="mt-2 font-jetbrains-mono text-[12px] uppercase tracking-[0.06em] text-lime-surveyor hover:text-lime/80 disabled:opacity-50"
                         >
-                          {fetchingUrls[doc.id] ? 'Loading…' : 'View document'}
+                          {docUrlMutation.isPending && docUrlMutation.variables === doc.id
+                            ? 'Loading…'
+                            : 'View document'}
                         </button>
                       ) : (
                         <a
@@ -291,7 +283,6 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
               )}
             </div>
 
-            {/* Right: Decision panel */}
             <div className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8">
               <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                 Decision
@@ -305,8 +296,12 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
 
               {profile.kycStatus === 'PENDING' ? (
                 <div className="space-y-6">
-                  <LimeButton onClick={handleApprove} className="w-full">
-                    Approve KYC
+                  <LimeButton
+                    onClick={handleApprove}
+                    className="w-full"
+                    disabled={approveMutation.isPending}
+                  >
+                    {approveMutation.isPending ? 'Approving…' : 'Approve KYC'}
                   </LimeButton>
 
                   <form onSubmit={handleReject} className="space-y-4">
@@ -336,8 +331,12 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
                         {rejectError}
                       </p>
                     )}
-                    <GhostButton type="submit" disabled={rejecting} className="w-full">
-                      {rejecting ? 'Rejecting…' : 'Reject application'}
+                    <GhostButton
+                      type="submit"
+                      disabled={rejectMutation.isPending}
+                      className="w-full"
+                    >
+                      {rejectMutation.isPending ? 'Rejecting…' : 'Reject application'}
                     </GhostButton>
                   </form>
                 </div>

@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
+import { apiSend } from '@/lib/query/fetcher';
 
 interface Props {
   params: { token: string };
@@ -16,9 +18,18 @@ export default function ResetPasswordPage({ params }: Props) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  const resetMutation = useMutation({
+    mutationFn: () => apiSend('/api/auth/reset-password', 'POST', { token, password }),
+    onSuccess: async () => {
+      await router.push('/login?reset=success');
+    },
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : 'Reset failed');
+    },
+  });
+
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
 
@@ -32,34 +43,14 @@ export default function ResetPasswordPage({ params }: Props) {
       return;
     }
 
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? 'Reset failed');
-        return;
-      }
-
-      router.push('/login?reset=success');
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    resetMutation.mutate();
   }
+
+  const loading = resetMutation.isPending;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam px-6">
       <div className="w-full max-w-md space-y-8">
-        {/* Brand */}
         <div className="text-center">
           <Link
             href="/"

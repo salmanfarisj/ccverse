@@ -12,8 +12,10 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { api } from '@/convex/_generated/api';
+import { isInvalidSessionUserIdError } from '@/lib/convex/errors';
 import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
+import { clearSession } from '@/lib/session';
 
 export async function GET(_req: NextRequest) {
   try {
@@ -35,6 +37,10 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ user: result.user });
   } catch (err) {
     if (err instanceof NextResponse) throw err;
+    if (isInvalidSessionUserIdError(err)) {
+      await clearSession();
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     console.error('GET /api/me error', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

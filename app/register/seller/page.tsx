@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { GhostButton } from '@/components/ui/GhostButton';
 import { useToast } from '@/components/ui/Toast';
+import { apiSend } from '@/lib/query/fetcher';
 
 type FormState = {
   email: string;
@@ -34,7 +36,27 @@ export default function SellerRegisterPage() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(INITIAL);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+
+  const registerMutation = useMutation({
+    mutationFn: () => apiSend('/api/auth/register/seller', 'POST', form),
+    onSuccess: () => {
+      toast('Seller account created', 'success');
+      router.push('/register/success');
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      setError(message);
+      toast(message, 'error');
+    },
+  });
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!validateStep(2)) return;
+    registerMutation.mutate();
+  }
+
+  const loading = registerMutation.isPending;
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -79,38 +101,6 @@ export default function SellerRegisterPage() {
     setStep((s) => Math.max(1, s - 1));
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!validateStep(2)) return;
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/auth/register/seller', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const message = data.error ?? 'Registration failed';
-        setError(message);
-        toast(message, 'error');
-        return;
-      }
-
-      toast('Seller account created', 'success');
-      router.push('/register/success');
-    } catch {
-      const message = 'Something went wrong. Please try again.';
-      setError(message);
-      toast(message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam px-6 py-12">
       <div className="w-full max-w-md space-y-8">
@@ -145,8 +135,7 @@ export default function SellerRegisterPage() {
           ))}
         </div>
         <p className="text-center font-jetbrains-mono text-[12px] text-bone-vellum/70">
-          Step {step} of 3 —{' '}
-          {step === 1 ? 'Account' : step === 2 ? 'Entity' : 'Review'}
+          Step {step} of 3 — {step === 1 ? 'Account' : step === 2 ? 'Entity' : 'Review'}
         </p>
 
         <form

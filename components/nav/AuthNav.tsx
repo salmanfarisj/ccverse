@@ -2,60 +2,44 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { NavLink } from '@/components/nav/NavLink';
 import { navSignOutClass } from '@/components/nav/navStyles';
 import { useToast } from '@/components/ui/Toast';
 import { getDashboardPath } from '@/lib/rbac/dashboard';
+import { apiGet, apiSend } from '@/lib/query/fetcher';
+import { qk } from '@/lib/query/keys';
 
 type AuthNavProps = {
   role?: string;
 };
 
+type MeResponse = {
+  user?: { role?: string };
+};
+
 export function AuthNav({ role: roleProp }: AuthNavProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [role, setRole] = useState(roleProp ?? '');
 
-  useEffect(() => {
-    if (roleProp) {
-      setRole(roleProp);
-      return;
-    }
+  const { data } = useQuery({
+    queryKey: qk.me,
+    queryFn: () => apiGet<MeResponse>('/api/me'),
+    enabled: !roleProp,
+    retry: false,
+  });
 
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch('/api/me');
-        if (!res.ok) return;
-        const data = (await res.json()) as { user?: { role?: string } };
-        if (!cancelled && data.user?.role) {
-          setRole(data.user.role);
-        }
-      } catch {
-        // Keep default dashboard path when profile is unavailable.
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [roleProp]);
-
+  const role = roleProp ?? data?.user?.role ?? '';
   const homeHref = getDashboardPath(role);
   const normalizedRole = role.toUpperCase();
 
-  async function handleLogout() {
-    setLoggingOut(true);
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+  const logoutMutation = useMutation({
+    mutationFn: () => apiSend('/api/auth/logout', 'POST'),
+    onSuccess: async () => {
       toast('Signed out successfully', 'success');
       await router.push('/login');
-    } finally {
-      setLoggingOut(false);
-    }
-  }
+    },
+  });
 
   return (
     <>
@@ -83,11 +67,11 @@ export function AuthNav({ role: roleProp }: AuthNavProps) {
             <NavLink href="/account">Account</NavLink>
             <button
               type="button"
-              disabled={loggingOut}
-              onClick={() => void handleLogout()}
+              disabled={logoutMutation.isPending}
+              onClick={() => logoutMutation.mutate()}
               className={navSignOutClass}
             >
-              {loggingOut ? 'Signing out…' : 'Sign out'}
+              {logoutMutation.isPending ? 'Signing out…' : 'Sign out'}
             </button>
           </nav>
         </div>

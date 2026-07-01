@@ -3,10 +3,16 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { useToast } from '@/components/ui/Toast';
 import { getDashboardPath } from '@/lib/rbac/dashboard';
+import { ApiError, apiSend } from '@/lib/query/fetcher';
+
+type LoginResponse = {
+  role: string;
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,13 +21,32 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [retryAfter, setRetryAfter] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handleLogin(e: FormEvent) {
+  const loginMutation = useMutation({
+    mutationFn: (credentials: { email: string; password: string }) =>
+      apiSend<LoginResponse>('/api/auth/login', 'POST', credentials),
+    onSuccess: async (data) => {
+      const destination = getDashboardPath(data.role);
+      toast('Signed in successfully', 'success');
+      await router.push(destination);
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 423) {
+        const payload = err.data as { retryAfter?: number; error?: string } | undefined;
+        setRetryAfter(payload?.retryAfter ?? 1800);
+        setError(payload?.error ?? 'Account is temporarily locked.');
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
+      toast(message, 'error');
+    },
+  });
+
+  function handleLogin(e: FormEvent) {
     e.preventDefault();
     setError('');
     setRetryAfter(null);
-    setLoading(true);
 
     const credentials =
       email.trim() && password
@@ -32,43 +57,13 @@ export default function LoginPage() {
 
     if (!credentials) {
       setError('Email and password are required');
-      setLoading(false);
       return;
     }
 
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      });
-
-      const data = await res.json();
-
-      if (res.status === 423) {
-        setRetryAfter(data.retryAfter ?? 1800);
-        setError(data.error ?? 'Account is temporarily locked.');
-        return;
-      }
-
-      if (!res.ok) {
-        const message = data.error ?? 'Login failed';
-        setError(message);
-        toast(message, 'error');
-        return;
-      }
-
-      const destination = getDashboardPath(data.role);
-      toast('Signed in successfully', 'success');
-      await router.push(destination);
-    } catch {
-      const message = 'Something went wrong. Please try again.';
-      setError(message);
-      toast(message, 'error');
-    } finally {
-      setLoading(false);
-    }
+    loginMutation.mutate(credentials);
   }
+
+  const loading = loginMutation.isPending;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam px-6">
@@ -141,7 +136,10 @@ export default function LoginPage() {
             Forgot password?
           </Link>
           {' · '}
-          <Link href="/register" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
+          <Link
+            href="/register"
+            className="!text-lime-surveyor !no-underline hover:text-marsh-olive"
+          >
             Create account
           </Link>
         </p>

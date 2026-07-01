@@ -23,78 +23,78 @@
 
 ### Progress
 
-| Metric         | Count  |
-| -------------- | ------ |
-| ✅ Done        | 0      |
-| 🟡 In progress | 0      |
-| 🔴 Blocked     | 0      |
-| ⏭ Skipped     | 0      |
-| ⬜ Pending     | 34     |
-| **Total**      | **34** |
+| Metric         | Count   |
+| -------------- | ------- |
+| ✅ Done        | 0       |
+| 🟡 In progress | 0       |
+| 🔴 Blocked     | 0       |
+| ⏭ Skipped     | 0       |
+| ⬜ Pending     | 34      |
+| **Total**      | **34**  |
 | **Completion** | **0 %** |
 
 ### By phase
 
-| Group   | Phase        | Focus                         | Total | ✅ | 🟡 | 🔴 | ⏭ | ⬜ |
-| ------- | ------------ | ----------------------------- | ----: | -: | -: | -: | -: | -: |
-| UX-A    | Phase A      | Quick wins (1–2 days)         |     6 |  0 |  0 |  0 |  0 |  6 |
-| UX-B    | Phase B      | Layout & components (3–5 d)   |     7 |  0 |  0 |  0 |  0 |  7 |
-| UX-C    | Phase C      | Polish (≈1 week)              |     6 |  0 |  0 |  0 |  0 |  6 |
-| UX-D    | Phase D      | Feedback & robustness         |     5 |  0 |  0 |  0 |  0 |  5 |
-| UX-A11Y | Accessibility | WCAG / keyboard / motion     |     3 |  0 |  0 |  0 |  0 |  3 |
-| UX-BUG  | Bugs         | Functional / copy bugs        |     7 |  0 |  0 |  0 |  0 |  7 |
+| Group   | Phase         | Focus                       | Total |  ✅ |  🟡 |  🔴 |  ⏭ |  ⬜ |
+| ------- | ------------- | --------------------------- | ----: | --: | --: | --: | --: | --: |
+| UX-A    | Phase A       | Quick wins (1–2 days)       |     6 |   0 |   0 |   0 |   0 |   6 |
+| UX-B    | Phase B       | Layout & components (3–5 d) |     7 |   0 |   0 |   0 |   0 |   7 |
+| UX-C    | Phase C       | Polish (≈1 week)            |     6 |   0 |   0 |   0 |   0 |   6 |
+| UX-D    | Phase D       | Feedback & robustness       |     5 |   0 |   0 |   0 |   0 |   5 |
+| UX-A11Y | Accessibility | WCAG / keyboard / motion    |     3 |   0 |   0 |   0 |   0 |   3 |
+| UX-BUG  | Bugs          | Functional / copy bugs      |     7 |   0 |   0 |   0 |   0 |   7 |
 
 ### Master task list
 
-| ID      | Title                                              | Status | Owner | PR  | Notes |
-| ------- | -------------------------------------------------- | :----: | ----- | --- | ----- |
-| UX-A-1  | Typography pass — NB for headings/body             |   ⬜   |       |     |       |
-| UX-A-2  | Fix listing detail stale “Log in as buyer” copy    |   ⬜   |       |     |       |
-| UX-A-3  | Login — single sign-in + role-based redirect       |   ⬜   |       |     |       |
-| UX-A-4  | Input placeholders & remove duplicate hints        |   ⬜   |       |     |       |
-| UX-A-5  | Demote Sign out; add active nav state              |   ⬜   |       |     |       |
-| UX-A-6  | Skeleton loaders for account / KYC                 |   ⬜   |       |     |       |
-| UX-B-1  | Rebuild marketplace listing cards                  |   ⬜   |       |     |       |
-| UX-B-2  | Unify empty states (single CTA)                    |   ⬜   |       |     |       |
-| UX-B-3  | Certificate page layout + Print button             |   ⬜   |       |     |       |
-| UX-B-4  | Registry stats row + serial table                  |   ⬜   |       |     |       |
-| UX-B-5  | Public nav — inline desktop links                  |   ⬜   |       |     |       |
-| UX-B-6  | Auth form buttons — no wrap, consistent components |   ⬜   |       |     |       |
-| UX-B-7  | Shared `PageHeader` component (tag + title + intro) |   ⬜   |       |     |       |
-| UX-C-1  | Seller register multi-step form                    |   ⬜   |       |     |       |
-| UX-C-2  | KYC approved success screen                          |   ⬜   |       |     |       |
-| UX-C-3  | Error semantic color (non-lime)                    |   ⬜   |       |     |       |
-| UX-C-4  | Surface tokens instead of `#141414`                |   ⬜   |       |     |       |
-| UX-C-5  | Mobile responsive audit (375 / 768)                  |   ⬜   |       |     |       |
-| UX-C-6  | Hide dev footer tag in production                    |   ⬜   |       |     |       |
-| UX-D-1  | Branded error / loading / not-found route boundaries |   ⬜   |       |     |       |
-| UX-D-2  | Toast notification system + action feedback          |   ⬜   |       |     |       |
-| UX-D-3  | Purchase confirmation + success UX                   |   ⬜   |       |     |       |
-| UX-D-4  | Shared currency / date / number formatting utility   |   ⬜   |       |     |       |
-| UX-D-5  | Favicon, per-page metadata & social/OG images        |   ⬜   |       |     |       |
-| UX-A11Y-1 | Focus-visible rings + keyboard navigation          |   ⬜   |       |     |       |
-| UX-A11Y-2 | Contrast audit for muted text (drift-ash small)    |   ⬜   |       |     |       |
-| UX-A11Y-3 | prefers-reduced-motion + route-change focus mgmt   |   ⬜   |       |     |       |
-| UX-BUG-1 | Marketplace card navigation click                  |   ⬜   |       |     |       |
-| UX-BUG-2 | Admin / auditor UI login path                      |   ⬜   |       |     |       |
-| UX-BUG-3 | Register success copy vs Phase 1 verify skip       |   ⬜   |       |     |       |
-| UX-BUG-4 | Fixed header `pt-[80px]` vs computed nav height    |   ⬜   |       |     |       |
-| UX-BUG-5 | Listing quantity input — use shared `Input`        |   ⬜   |       |     |       |
-| UX-BUG-6 | Listing buy button — use `LimeButton` not inline   |   ⬜   |       |     |       |
-| UX-BUG-7 | `SiteNav` transparent ternary is dead code         |   ⬜   |       |     |       |
+| ID        | Title                                                | Status | Owner | PR  | Notes |
+| --------- | ---------------------------------------------------- | :----: | ----- | --- | ----- |
+| UX-A-1    | Typography pass — NB for headings/body               |   ⬜   |       |     |       |
+| UX-A-2    | Fix listing detail stale “Log in as buyer” copy      |   ⬜   |       |     |       |
+| UX-A-3    | Login — single sign-in + role-based redirect         |   ⬜   |       |     |       |
+| UX-A-4    | Input placeholders & remove duplicate hints          |   ⬜   |       |     |       |
+| UX-A-5    | Demote Sign out; add active nav state                |   ⬜   |       |     |       |
+| UX-A-6    | Skeleton loaders for account / KYC                   |   ⬜   |       |     |       |
+| UX-B-1    | Rebuild marketplace listing cards                    |   ⬜   |       |     |       |
+| UX-B-2    | Unify empty states (single CTA)                      |   ⬜   |       |     |       |
+| UX-B-3    | Certificate page layout + Print button               |   ⬜   |       |     |       |
+| UX-B-4    | Registry stats row + serial table                    |   ⬜   |       |     |       |
+| UX-B-5    | Public nav — inline desktop links                    |   ⬜   |       |     |       |
+| UX-B-6    | Auth form buttons — no wrap, consistent components   |   ⬜   |       |     |       |
+| UX-B-7    | Shared `PageHeader` component (tag + title + intro)  |   ⬜   |       |     |       |
+| UX-C-1    | Seller register multi-step form                      |   ⬜   |       |     |       |
+| UX-C-2    | KYC approved success screen                          |   ⬜   |       |     |       |
+| UX-C-3    | Error semantic color (non-lime)                      |   ⬜   |       |     |       |
+| UX-C-4    | Surface tokens instead of `#141414`                  |   ⬜   |       |     |       |
+| UX-C-5    | Mobile responsive audit (375 / 768)                  |   ⬜   |       |     |       |
+| UX-C-6    | Hide dev footer tag in production                    |   ⬜   |       |     |       |
+| UX-D-1    | Branded error / loading / not-found route boundaries |   ⬜   |       |     |       |
+| UX-D-2    | Toast notification system + action feedback          |   ⬜   |       |     |       |
+| UX-D-3    | Purchase confirmation + success UX                   |   ⬜   |       |     |       |
+| UX-D-4    | Shared currency / date / number formatting utility   |   ⬜   |       |     |       |
+| UX-D-5    | Favicon, per-page metadata & social/OG images        |   ⬜   |       |     |       |
+| UX-A11Y-1 | Focus-visible rings + keyboard navigation            |   ⬜   |       |     |       |
+| UX-A11Y-2 | Contrast audit for muted text (drift-ash small)      |   ⬜   |       |     |       |
+| UX-A11Y-3 | prefers-reduced-motion + route-change focus mgmt     |   ⬜   |       |     |       |
+| UX-BUG-1  | Marketplace card navigation click                    |   ⬜   |       |     |       |
+| UX-BUG-2  | Admin / auditor UI login path                        |   ⬜   |       |     |       |
+| UX-BUG-3  | Register success copy vs Phase 1 verify skip         |   ⬜   |       |     |       |
+| UX-BUG-4  | Fixed header `pt-[80px]` vs computed nav height      |   ⬜   |       |     |       |
+| UX-BUG-5  | Listing quantity input — use shared `Input`          |   ⬜   |       |     |       |
+| UX-BUG-6  | Listing buy button — use `LimeButton` not inline     |   ⬜   |       |     |       |
+| UX-BUG-7  | `SiteNav` transparent ternary is dead code           |   ⬜   |       |     |       |
 
 ---
 
 ## Audit summary (context)
 
-| Area | Finding |
-| ---- | ------- |
-| Typography | JetBrains Mono used for headings/body everywhere; DESIGN.md specifies NB International for display/body |
+| Area       | Finding                                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| Typography | JetBrains Mono used for headings/body everywhere; DESIGN.md specifies NB International for display/body               |
 | Navigation | Public links hidden behind “Menu”; no active state; Sign out visually dominates; admin/auditor excluded from login UI |
-| Forms | Underline-only inputs, weak affordance; password placeholder missing on login; redundant 8-char hints on register |
-| States | Plain “Loading…” text; sparse empty states; duplicate CTAs on buyer dashboard |
-| Components | `LimeButton`/`GhostButton` exist but listing buy uses inline classes; hardcoded `bg-[#141414]` surfaces |
-| Bugs | Stale “Log in as buyer” when authenticated; marketplace card click unreliable in browser test |
+| Forms      | Underline-only inputs, weak affordance; password placeholder missing on login; redundant 8-char hints on register     |
+| States     | Plain “Loading…” text; sparse empty states; duplicate CTAs on buyer dashboard                                         |
+| Components | `LimeButton`/`GhostButton` exist but listing buy uses inline classes; hardcoded `bg-[#141414]` surfaces               |
+| Bugs       | Stale “Log in as buyer” when authenticated; marketplace card click unreliable in browser test                         |
 
 **Flows verified working:** register → login → marketplace → buy (demo) → certificate → buyer dashboard with purchase.
 

@@ -73,3 +73,14 @@ export async function getSessionSave(): Promise<() => Promise<void>> {
   const { save } = await getSession();
   return save;
 }
+
+/** Clear all session fields and persist the empty cookie (sign-out without audit). */
+export async function clearSession(): Promise<void> {
+  const { session, save } = await getSession();
+  session.userId = undefined;
+  session.role = undefined;
+  session.mfaPassed = undefined;
+  session.ip = undefined;
+  session.userAgent = undefined;
+  await save();
+}

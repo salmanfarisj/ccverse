@@ -3,13 +3,17 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AuthNav } from '@/components/nav/AuthNav';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { useToast } from '@/components/ui/Toast';
+import { apiSend } from '@/lib/query/fetcher';
+import { qk } from '@/lib/query/keys';
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [country, setCountry] = useState('');
@@ -18,43 +22,37 @@ export default function NewProjectPage() {
   const [vintageYear, setVintageYear] = useState(String(new Date().getFullYear()));
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  const createProjectMutation = useMutation({
+    mutationFn: () =>
+      apiSend('/api/seller/projects', 'POST', {
+        name,
+        country,
+        projectType,
+        methodology,
+        vintageYear: parseInt(vintageYear, 10),
+        description,
+      }),
+    onSuccess: async () => {
+      toast('Project created successfully', 'success');
+      await queryClient.invalidateQueries({ queryKey: qk.sellerProjects });
+      await queryClient.invalidateQueries({ queryKey: qk.sellerDashboard });
+      await router.push('/seller');
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Failed to create project';
+      setError(message);
+      toast(message, 'error');
+    },
+  });
+
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/seller/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          country,
-          projectType,
-          methodology,
-          vintageYear: parseInt(vintageYear, 10),
-          description,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        const message = data.error ?? 'Failed to create project';
-        setError(message);
-        toast(message, 'error');
-        return;
-      }
-
-      toast('Project created successfully', 'success');
-      await router.push('/seller');
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    createProjectMutation.mutate();
   }
+
+  const loading = createProjectMutation.isPending;
 
   return (
     <>

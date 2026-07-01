@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { DataTag } from '@/components/ui/DataTag';
 import { Input } from '@/components/ui/Input';
@@ -10,6 +11,8 @@ import { GhostButton } from '@/components/ui/GhostButton';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { formatCurrency, formatNumber } from '@/lib/format';
+import { apiGet, apiSend, isAuthError } from '@/lib/query/fetcher';
+import { qk } from '@/lib/query/keys';
 
 type ListingDetail = {
   id: string;
@@ -28,63 +31,78 @@ type ListingDetail = {
   status: string;
 };
 
-type ListingDetailClientProps = {
+type ListingResponse = {
   listing: ListingDetail;
+};
+
+type BuyResponse = {
+  certificateId: string;
+};
+
+type ListingDetailClientProps = {
+  listingId: string;
   isAuthenticated: boolean;
   userRole?: string;
 };
 
+const REFETCH_INTERVAL = 30_000;
+
 export function ListingDetailClient({
-  listing,
+  listingId,
   isAuthenticated,
   userRole,
 }: ListingDetailClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const { data, isPending } = useQuery({
+    queryKey: qk.listing(listingId),
+    queryFn: () => apiGet<ListingResponse>(`/api/marketplace/${listingId}`),
+    refetchInterval: REFETCH_INTERVAL,
+  });
+
+  const buyMutation = useMutation({
+    mutationFn: () => apiSend<BuyResponse>('/api/orders', 'POST', { listingId, quantity }),
+    onSuccess: async (result) => {
+      toast('Purchase complete — redirecting to certificate', 'success');
+      setConfirmOpen(false);
+      await queryClient.invalidateQueries({ queryKey: qk.listing(listingId) });
+      await queryClient.invalidateQueries({ queryKey: qk.marketplace });
+      await queryClient.invalidateQueries({ queryKey: qk.buyerOrders });
+      await router.push(`/certificate/${result.certificateId}`);
+    },
+    onError: (err) => {
+      if (isAuthError(err)) {
+        void router.push('/login');
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'Purchase failed';
+      setError(message);
+      toast(message, 'error');
+    },
+  });
+
+  if (isPending && !data) {
+    return <p className="font-jetbrains-mono text-[13px] text-drift-ash">Loading listing…</p>;
+  }
+
+  const listing = data?.listing;
+  if (!listing) {
+    return <p className="font-jetbrains-mono text-[13px] text-drift-ash">Listing not found.</p>;
+  }
 
   const total = listing.unitPrice * quantity;
   const role = (userRole ?? '').toUpperCase();
   const isBuyer = isAuthenticated && role === 'BUYER';
+  const loading = buyMutation.isPending;
 
-  async function handleBuy() {
+  function handleBuy() {
     setError('');
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId: listing.id, quantity }),
-      });
-
-      const data = await res.json();
-
-      if (res.status === 401 || res.status === 403) {
-        router.push('/login');
-        return;
-      }
-
-      if (!res.ok) {
-        const message = data.error ?? 'Purchase failed';
-        setError(message);
-        toast(message, 'error');
-        return;
-      }
-
-      toast('Purchase complete — redirecting to certificate', 'success');
-      setConfirmOpen(false);
-      await router.push(`/certificate/${data.certificateId}`);
-    } catch {
-      const message = 'Something went wrong. Please try again.';
-      setError(message);
-      toast(message, 'error');
-    } finally {
-      setLoading(false);
-    }
+    buyMutation.mutate();
   }
 
   function renderAuthNote() {

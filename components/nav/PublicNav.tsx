@@ -119,11 +119,7 @@ export function PublicNav({ transparent = false }: PublicNavProps) {
                     </Link>
                   </li>
                   <li>
-                    <Link
-                      href="/register"
-                      className={navItemClass}
-                      onClick={() => setOpen(false)}
-                    >
+                    <Link href="/register" className={navItemClass} onClick={() => setOpen(false)}>
                       Register
                     </Link>
                   </li>
@@ -137,11 +133,7 @@ export function PublicNav({ transparent = false }: PublicNavProps) {
                     </Link>
                   </li>
                   <li>
-                    <Link
-                      href="/registry"
-                      className={navItemClass}
-                      onClick={() => setOpen(false)}
-                    >
+                    <Link href="/registry" className={navItemClass} onClick={() => setOpen(false)}>
                       Registry
                     </Link>
                   </li>

@@ -2,7 +2,13 @@ import { query } from '../_generated/server';
 import { v } from 'convex/values';
 
 async function enrichListing(
-  ctx: { db: { get: (id: import('../_generated/dataModel').Id<'projects'>) => Promise<import('../_generated/dataModel').Doc<'projects'> | null> } },
+  ctx: {
+    db: {
+      get: (
+        id: import('../_generated/dataModel').Id<'projects'>,
+      ) => Promise<import('../_generated/dataModel').Doc<'projects'> | null>;
+    };
+  },
   listing: import('../_generated/dataModel').Doc<'listings'>,
 ) {
   const project = await ctx.db.get(listing.projectId);

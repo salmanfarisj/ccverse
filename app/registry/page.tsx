@@ -1,11 +1,10 @@
-import Link from 'next/link';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { SiteNav } from '@/components/nav/SiteNav';
 import { Footer } from '@/components/landing/Footer';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { RegistryTable } from '@/components/registry/RegistryTable';
-import { getConvexClient } from '@/lib/convex/client';
-import { api } from '@/convex/_generated/api';
-import { formatNumber } from '@/lib/format';
+import { apiGet } from '@/lib/query/fetcher';
+import { qk } from '@/lib/query/keys';
+import { getQueryClient } from '@/lib/query/queryClient';
+import { RegistryClient } from './RegistryClient';
 
 export const metadata = {
   title: 'Public Registry',
@@ -14,63 +13,21 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-const STATE_COLORS: Record<string, string> = {
-  AVAILABLE: 'text-lime-surveyor',
-  HELD: 'text-marsh-olive',
-  RETIRED: 'text-drift-ash',
-};
-
 export default async function RegistryPage() {
-  const convex = getConvexClient();
-  const entries = await convex.query(api.registry.queries.listRegistry, {});
+  const queryClient = getQueryClient();
 
-  const counts = {
-    AVAILABLE: entries.filter((e) => e.state === 'AVAILABLE').length,
-    HELD: entries.filter((e) => e.state === 'HELD').length,
-    RETIRED: entries.filter((e) => e.state === 'RETIRED').length,
-  };
+  await queryClient.prefetchQuery({
+    queryKey: qk.registry,
+    queryFn: () => apiGet('/api/registry'),
+  });
 
   return (
     <>
       <SiteNav />
       <main id="main" className="min-h-screen bg-obsidian-loam main-offset" tabIndex={-1}>
-        <div className="mx-auto max-w-6xl space-y-8 px-6 py-12">
-          <div>
-            <Link
-              href="/"
-              className="font-jetbrains-mono text-[13px] !text-bone-vellum/70 !no-underline hover:!text-lime-surveyor"
-            >
-              ← Home
-            </Link>
-            <div className="mt-4">
-              <PageHeader
-                eyebrow="PUBLIC REGISTRY"
-                title="CC Verse Registry"
-                description="One registry entry per carbon credit serial. States: Available → Held → Retired."
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 md:flex md:flex-row">
-            {(['AVAILABLE', 'HELD', 'RETIRED'] as const).map((state) => (
-              <div
-                key={state}
-                className="flex-1 rounded-md border border-iron-filings bg-surface-raised px-5 py-4"
-              >
-                <p
-                  className={`font-jetbrains-mono text-[length:var(--text-subheading)] font-bold leading-none ${STATE_COLORS[state]}`}
-                >
-                  {formatNumber(counts[state])}
-                </p>
-                <p className="mt-1 font-jetbrains-mono text-[11px] uppercase tracking-[0.06em] text-drift-ash">
-                  {state}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <RegistryTable entries={entries} />
-        </div>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <RegistryClient />
+        </HydrationBoundary>
       </main>
       <Footer />
     </>

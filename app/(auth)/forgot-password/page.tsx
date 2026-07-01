@@ -2,46 +2,38 @@
 
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { useToast } from '@/components/ui/Toast';
+import { apiSend } from '@/lib/query/fetcher';
 
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const message = data.error ?? 'Request failed';
-        setError(message);
-        toast(message, 'error');
-        return;
-      }
-
+  const forgotMutation = useMutation({
+    mutationFn: () => apiSend('/api/auth/forgot-password', 'POST', { email }),
+    onSuccess: () => {
       toast('If an account exists, a reset link was sent', 'success');
       setSuccess(true);
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Request failed';
+      setError(message);
+      toast(message, 'error');
+    },
+  });
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError('');
+    forgotMutation.mutate();
   }
+
+  const loading = forgotMutation.isPending;
 
   if (success) {
     return (
@@ -68,7 +60,6 @@ export default function ForgotPasswordPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam px-6">
       <div className="w-full max-w-md space-y-8">
-        {/* Brand */}
         <div className="text-center">
           <Link
             href="/"

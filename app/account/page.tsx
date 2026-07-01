@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthNav } from '@/components/nav/AuthNav';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
@@ -11,6 +12,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { AccountSkeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate, formatDateTime } from '@/lib/format';
+import { apiGet, apiSend, isAuthError } from '@/lib/query/fetcher';
+import { qk } from '@/lib/query/keys';
 
 interface UserProfile {
   id: string;
@@ -39,77 +42,93 @@ interface UserProfile {
   } | null;
 }
 
+type MeResponse = {
+  user: UserProfile;
+};
+
+type PatchMeResponse = {
+  kycStatus?: string;
+};
+
 export default function AccountPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // Edit state
   const [editing, setEditing] = useState(false);
   const [legalName, setLegalName] = useState('');
   const [country, setCountry] = useState('');
-  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
+  const { data, isPending, isError, error } = useQuery({
+    queryKey: qk.me,
+    queryFn: () => apiGet<MeResponse>('/api/me'),
+  });
+
+  const profile = data?.user;
+
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/me');
-        if (!res.ok) throw new Error('Not authorized');
-        const data = await res.json();
-        setProfile(data.user);
-        setLegalName(data.user.buyerProfile?.legalName ?? data.user.sellerProfile?.legalName ?? '');
-        setCountry(data.user.buyerProfile?.country ?? data.user.sellerProfile?.country ?? '');
-      } catch {
-        router.push('/login');
-      } finally {
-        setLoading(false);
-      }
+    if (profile) {
+      setLegalName(profile.buyerProfile?.legalName ?? profile.sellerProfile?.legalName ?? '');
+      setCountry(profile.buyerProfile?.country ?? profile.sellerProfile?.country ?? '');
     }
-    load();
-  }, [router]);
+  }, [profile]);
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setMessage('');
-    try {
-      const res = await fetch('/api/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ legalName, country }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+  useEffect(() => {
+    if (isError && isAuthError(error)) {
+      void router.push('/login');
+    }
+  }, [isError, error, router]);
 
-      // Refresh profile to get updated kycStatus
-      const refreshed = await fetch('/api/me');
-      const refreshedData = await refreshed.json();
-      setProfile(refreshedData.user);
-
+  const saveMutation = useMutation({
+    mutationFn: () => apiSend<PatchMeResponse>('/api/me', 'PATCH', { legalName, country }),
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: qk.me });
       setMessage(
         'Profile updated' +
-          (data.kycStatus === 'EXPIRED' ? ' — KYC status set to expired due to name change.' : ''),
+          (result.kycStatus === 'EXPIRED'
+            ? ' — KYC status set to expired due to name change.'
+            : ''),
       );
       toast('Profile updated', 'success');
       setEditing(false);
-    } catch (err) {
-      const msg = (err as Error).message;
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : 'Failed to save';
       setMessage(msg);
       toast(msg, 'error');
-    } finally {
-      setSaving(false);
-    }
+    },
+  });
+
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setMessage('');
+    saveMutation.mutate();
   }
 
-  if (loading) {
+  if (isPending) {
     return (
       <>
         <AuthNav />
         <main id="main" className="min-h-screen bg-obsidian-loam main-offset" tabIndex={-1}>
           <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
             <AccountSkeleton />
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (isError) {
+    return (
+      <>
+        <AuthNav />
+        <main id="main" className="min-h-screen bg-obsidian-loam main-offset" tabIndex={-1}>
+          <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
+            <PageHeader eyebrow="ACCOUNT" title="Account" />
+            <p className="mt-6 font-jetbrains-mono text-[13px] text-error" role="alert">
+              {error instanceof Error ? error.message : 'Failed to load account'}
+            </p>
           </div>
         </main>
       </>
@@ -135,7 +154,6 @@ export default function AccountPage() {
           <PageHeader eyebrow="ACCOUNT" title="Account" />
 
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Profile form */}
             <div className="lg:col-span-2 rounded-md border border-iron-filings bg-surface-raised p-8">
               <div className="flex items-center justify-between">
                 <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
@@ -181,8 +199,8 @@ export default function AccountPage() {
                   )}
 
                   <div className="flex gap-4">
-                    <LimeButton type="submit" disabled={saving}>
-                      {saving ? 'Saving…' : 'Save'}
+                    <LimeButton type="submit" disabled={saveMutation.isPending}>
+                      {saveMutation.isPending ? 'Saving…' : 'Save'}
                     </LimeButton>
                     <GhostButton
                       type="button"
@@ -221,9 +239,7 @@ export default function AccountPage() {
               )}
             </div>
 
-            {/* Sidebar */}
             <div className="space-y-6">
-              {/* KYC status (sellers) */}
               {profile.role === 'SELLER' && profile.sellerProfile && (
                 <div className="rounded-md border border-iron-filings bg-surface-raised p-8">
                   <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
@@ -250,7 +266,6 @@ export default function AccountPage() {
                 </div>
               )}
 
-              {/* Quick links */}
               <div className="rounded-md border border-iron-filings bg-surface-raised p-8">
                 <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                   Security
@@ -265,21 +280,14 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              {/* Account info */}
               <div className="rounded-md border border-iron-filings bg-surface-raised p-8">
                 <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                   Account info
                 </h2>
                 <div className="mt-4 space-y-3">
-                  <ProfileRow
-                    label="Member since"
-                    value={formatDate(profile.createdAt)}
-                  />
+                  <ProfileRow label="Member since" value={formatDate(profile.createdAt)} />
                   {profile.lastLoginAt && (
-                    <ProfileRow
-                      label="Last login"
-                      value={formatDateTime(profile.lastLoginAt)}
-                    />
+                    <ProfileRow label="Last login" value={formatDateTime(profile.lastLoginAt)} />
                   )}
                   <ProfileRow label="Email verified" value={profile.emailVerified ? 'Yes' : 'No'} />
                 </div>

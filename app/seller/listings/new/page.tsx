@@ -3,10 +3,13 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthNav } from '@/components/nav/AuthNav';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { useToast } from '@/components/ui/Toast';
+import { apiGet, apiSend } from '@/lib/query/fetcher';
+import { qk } from '@/lib/query/keys';
 
 type Project = {
   id: string;
@@ -14,69 +17,67 @@ type Project = {
   ccverseProjectId: string;
 };
 
+type ProjectsResponse = {
+  projects: Project[];
+};
+
 function NewListingForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const preselectedProject = searchParams.get('projectId') ?? '';
 
-  const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState(preselectedProject);
   const [title, setTitle] = useState('');
   const [quantity, setQuantity] = useState('10');
   const [unitPrice, setUnitPrice] = useState('25');
   const [currency, setCurrency] = useState<'USD' | 'INR'>('USD');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+
+  const { data, isPending, isError } = useQuery({
+    queryKey: qk.sellerProjects,
+    queryFn: () => apiGet<ProjectsResponse>('/api/seller/projects'),
+  });
+
+  const projects = data?.projects;
 
   useEffect(() => {
-    async function loadProjects() {
-      const res = await fetch('/api/seller/projects');
-      if (res.ok) {
-        const data = await res.json();
-        setProjects(data.projects ?? []);
-        if (!projectId && data.projects?.length === 1) {
-          setProjectId(data.projects[0].id);
-        }
-      }
+    if (!projectId && projects?.length === 1) {
+      const first = projects[0];
+      if (first) setProjectId(first.id);
     }
-    void loadProjects();
-  }, [projectId]);
+  }, [projects, projectId]);
 
-  async function handleSubmit(e: FormEvent) {
+  const createListingMutation = useMutation({
+    mutationFn: () =>
+      apiSend('/api/seller/listings', 'POST', {
+        projectId,
+        title,
+        quantity: parseInt(quantity, 10),
+        unitPrice: parseFloat(unitPrice),
+        currency,
+      }),
+    onSuccess: async () => {
+      toast('Listing created successfully', 'success');
+      await queryClient.invalidateQueries({ queryKey: qk.sellerDashboard });
+      await queryClient.invalidateQueries({ queryKey: qk.marketplace });
+      await router.push('/seller');
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Failed to create listing';
+      setError(message);
+      toast(message, 'error');
+    },
+  });
+
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/seller/listings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          title,
-          quantity: parseInt(quantity, 10),
-          unitPrice: parseFloat(unitPrice),
-          currency,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        const message = data.error ?? 'Failed to create listing';
-        setError(message);
-        toast(message, 'error');
-        return;
-      }
-
-      toast('Listing created successfully', 'success');
-      await router.push('/seller');
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    createListingMutation.mutate();
   }
+
+  const loading = createListingMutation.isPending;
 
   return (
     <form
@@ -84,7 +85,13 @@ function NewListingForm() {
       className="space-y-6 rounded-md border border-iron-filings bg-surface-raised p-8"
       noValidate
     >
-      {projects.length === 0 ? (
+      {isPending && !projects ? (
+        <p className="font-jetbrains-mono text-[13px] text-drift-ash">Loading projects…</p>
+      ) : isError ? (
+        <p className="font-jetbrains-mono text-[13px] text-error" role="alert">
+          Failed to load projects.
+        </p>
+      ) : projects && projects.length === 0 ? (
         <p className="font-jetbrains-mono text-[13px] text-drift-ash">
           No projects yet.{' '}
           <Link href="/seller/projects/new" className="!text-lime-surveyor !no-underline">
@@ -92,7 +99,7 @@ function NewListingForm() {
           </Link>
           .
         </p>
-      ) : (
+      ) : projects ? (
         <>
           <div className="flex flex-col gap-[var(--spacing-7)]">
             <label
@@ -159,7 +166,7 @@ function NewListingForm() {
             </select>
           </div>
         </>
-      )}
+      ) : null}
 
       {error && (
         <p className="font-jetbrains-mono text-[13px] text-error" role="alert">
@@ -167,7 +174,7 @@ function NewListingForm() {
         </p>
       )}
 
-      {projects.length > 0 && (
+      {projects && projects.length > 0 && (
         <LimeButton type="submit" disabled={loading || !projectId}>
           {loading ? 'Creating...' : 'Create listing'}
         </LimeButton>
@@ -197,7 +204,9 @@ export default function NewListingPage() {
             </p>
           </div>
 
-          <Suspense fallback={<p className="font-jetbrains-mono text-[13px] text-drift-ash">Loading...</p>}>
+          <Suspense
+            fallback={<p className="font-jetbrains-mono text-[13px] text-drift-ash">Loading...</p>}
+          >
             <NewListingForm />
           </Suspense>
         </div>

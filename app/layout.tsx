@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { RouteFocusManager } from '@/components/nav/RouteFocusManager';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 import { ToastProvider } from '@/components/ui/Toast';
 import { getEnv } from '@/lib/env';
 import './globals.css';
@@ -29,10 +30,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <ToastProvider>
-          <RouteFocusManager />
-          {children}
-        </ToastProvider>
+        <QueryProvider>
+          <ToastProvider>
+            <RouteFocusManager />
+            {children}
+          </ToastProvider>
+        </QueryProvider>
       </body>
     </html>
   );

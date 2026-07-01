@@ -6,7 +6,10 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { api } from '@/convex/_generated/api';
 import { DataTag } from '@/components/ui/DataTag';
-import { CertificateBackLink, getCertificateBackLink } from '@/components/certificate/CertificateBackLink';
+import {
+  CertificateBackLink,
+  getCertificateBackLink,
+} from '@/components/certificate/CertificateBackLink';
 import { PrintButton } from './PrintButton';
 import { formatCurrency, formatDate, formatNumber } from '@/lib/format';
 
@@ -124,8 +127,8 @@ export default async function CertificatePage({ params }: PageProps) {
 
             <div className="mt-10 border-t border-iron-filings pt-6 print:border-gray-300">
               <p className="font-jetbrains-mono text-[11px] text-drift-ash text-center print:text-gray-500">
-                This certificate confirms permanent retirement of the listed carbon credits on the CC
-                Verse public registry. Demo certificate — not cryptographically signed.
+                This certificate confirms permanent retirement of the listed carbon credits on the
+                CC Verse public registry. Demo certificate — not cryptographically signed.
               </p>
             </div>
           </article>

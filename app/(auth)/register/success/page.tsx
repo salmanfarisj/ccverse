@@ -24,7 +24,8 @@ export default function RegisterSuccessPage() {
               Account created
             </h1>
             <p className="font-nb-international-pro text-[length:var(--text-body)] leading-[var(--leading-body)] text-bone-vellum/80">
-              Your account is ready. You can sign in now to access the marketplace and your dashboard.
+              Your account is ready. You can sign in now to access the marketplace and your
+              dashboard.
             </p>
             <LimeButton href="/login" className="mt-4">
               Sign in

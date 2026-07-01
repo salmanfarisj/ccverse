@@ -16,11 +16,7 @@ export default async function AdminPage() {
       <AuthNav role={session.role} />
       <main id="main" className="min-h-screen bg-obsidian-loam main-offset" tabIndex={-1}>
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
-          <PageHeader
-            eyebrow="ADMIN"
-            title="Admin"
-            description="KYC review and compliance."
-          />
+          <PageHeader eyebrow="ADMIN" title="Admin" description="KYC review and compliance." />
 
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
             <AdminCard
@@ -52,7 +48,9 @@ function AdminCard({
       <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] !text-lime-surveyor">
         {title}
       </h2>
-      <p className="mt-2 font-nb-international-pro text-[14px] text-bone-vellum/70">{description}</p>
+      <p className="mt-2 font-nb-international-pro text-[14px] text-bone-vellum/70">
+        {description}
+      </p>
     </Link>
   );
 }

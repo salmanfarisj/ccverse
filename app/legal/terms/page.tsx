@@ -12,8 +12,8 @@ export default function TermsPage() {
         general availability.
       </p>
       <p>
-        By using CC Verse you agree to purchase and retire credits only through the platform registry,
-        and not to misrepresent project verification status.
+        By using CC Verse you agree to purchase and retire credits only through the platform
+        registry, and not to misrepresent project verification status.
       </p>
     </LegalPage>
   );

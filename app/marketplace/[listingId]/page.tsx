@@ -1,12 +1,16 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { SiteNav } from '@/components/nav/SiteNav';
 import { Footer } from '@/components/landing/Footer';
 import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { api } from '@/convex/_generated/api';
 import { getSessionData } from '@/lib/session';
+import { apiGet } from '@/lib/query/fetcher';
+import { qk } from '@/lib/query/keys';
+import { getQueryClient } from '@/lib/query/queryClient';
 import { ListingDetailClient } from './ListingDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +44,12 @@ export default async function ListingDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: qk.listing(params.listingId),
+    queryFn: () => apiGet(`/api/marketplace/${params.listingId}`),
+  });
+
   return (
     <>
       <SiteNav />
@@ -52,11 +62,13 @@ export default async function ListingDetailPage({ params }: PageProps) {
             ← Back to marketplace
           </Link>
           <div className="mt-6">
-            <ListingDetailClient
-              listing={result.listing}
-              isAuthenticated={Boolean(session.userId)}
-              userRole={session.role}
-            />
+            <HydrationBoundary state={dehydrate(queryClient)}>
+              <ListingDetailClient
+                listingId={params.listingId}
+                isAuthenticated={Boolean(session.userId)}
+                userRole={session.role}
+              />
+            </HydrationBoundary>
           </div>
         </div>
       </main>
