@@ -1,4 +1,7 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { Stagger, StaggerItem } from '@/components/motion';
 
 /**
  * Hero — DESIGN.md §"Hero Headline".
@@ -41,35 +44,46 @@ export function Hero({
       className={`relative isolate min-h-[100dvh] w-full overflow-hidden ${surface}`}
       aria-label="Introduction"
     >
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1200px] flex-col justify-end px-[var(--spacing-18)] pb-[var(--spacing-86)] pt-[var(--spacing-119)]">
-        {eyebrow ? <div className="mb-[var(--spacing-18)]">{eyebrow}</div> : null}
-        <h1
-          className="max-w-[14ch] font-nb-international-pro text-bone-vellum"
-          style={{
-            fontSize: 'var(--text-display)',
-            lineHeight: 'var(--leading-display)',
-            letterSpacing: 'var(--tracking-display)',
-            fontWeight: 'var(--font-weight-regular)',
-          }}
-        >
-          {headline}
-        </h1>
-        {subhead ? (
-          <p
-            className="mt-[var(--spacing-29)] max-w-[44ch] text-bone-vellum"
+      <Stagger
+        onMount
+        className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1200px] flex-col justify-end px-[var(--spacing-18)] pb-[var(--spacing-86)] pt-[var(--spacing-119)]"
+      >
+        {eyebrow ? (
+          <StaggerItem className="mb-[var(--spacing-18)]">{eyebrow}</StaggerItem>
+        ) : null}
+        <StaggerItem>
+          <h1
+            className="max-w-[14ch] font-nb-international-pro text-bone-vellum"
             style={{
-              fontSize: 'var(--text-body)',
-              lineHeight: 'var(--leading-body)',
+              fontSize: 'var(--text-display)',
+              lineHeight: 'var(--leading-display)',
+              letterSpacing: 'var(--tracking-display)',
+              fontWeight: 'var(--font-weight-regular)',
             }}
           >
-            {subhead}
-          </p>
+            {headline}
+          </h1>
+        </StaggerItem>
+        {subhead ? (
+          <StaggerItem>
+            <p
+              className="mt-[var(--spacing-29)] max-w-[44ch] text-bone-vellum"
+              style={{
+                fontSize: 'var(--text-body)',
+                lineHeight: 'var(--leading-body)',
+              }}
+            >
+              {subhead}
+            </p>
+          </StaggerItem>
         ) : null}
-        <div className="mt-[var(--spacing-29)] flex flex-wrap items-center gap-[var(--spacing-14)]">
-          {primary}
-          {secondary}
-        </div>
-      </div>
+        <StaggerItem>
+          <div className="mt-[var(--spacing-29)] flex flex-wrap items-center gap-[var(--spacing-14)]">
+            {primary}
+            {secondary}
+          </div>
+        </StaggerItem>
+      </Stagger>
     </section>
   );
 }

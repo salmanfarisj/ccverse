@@ -5,6 +5,12 @@ import { Footer } from '@/components/landing/Footer';
 import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { api } from '@/convex/_generated/api';
+import {
+  CertificateField,
+  CertificateHeader,
+  CertificateReveal,
+  CertificateSerial,
+} from '@/components/certificate/CertificateReveal';
 import { DataTag } from '@/components/ui/DataTag';
 import {
   CertificateBackLink,
@@ -61,8 +67,8 @@ export default async function CertificatePage({ params }: PageProps) {
             <PrintButton />
           </div>
 
-          <article className="rounded-md border-2 border-lime-surveyor bg-surface-raised p-10 print:border-black print:bg-white print:text-black">
-            <div className="text-center space-y-4">
+          <CertificateReveal>
+            <CertificateHeader>
               <DataTag variant="solid">CC VERSE</DataTag>
               <h1 className="font-nb-international-pro text-[length:var(--text-subheading)] leading-[var(--leading-subheading)] text-bone-vellum print:text-black">
                 Certificate of Ownership
@@ -70,43 +76,26 @@ export default async function CertificatePage({ params }: PageProps) {
               <p className="font-jetbrains-mono text-[13px] text-bone-vellum/70 print:text-gray-600">
                 Carbon Credit Retirement Certificate
               </p>
-            </div>
+            </CertificateHeader>
 
             <div className="my-8 border-t border-iron-filings print:border-gray-300" />
 
             <dl className="space-y-4 font-jetbrains-mono text-[14px]">
-              <div className="flex justify-between gap-4">
-                <dt className="text-drift-ash print:text-gray-600">Certificate No.</dt>
-                <dd className="text-lime-surveyor font-bold print:text-black">{cert.certNo}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-drift-ash print:text-gray-600">Issued to</dt>
-                <dd className="font-nb-international-pro text-bone-vellum print:text-black">
-                  {cert.buyerEmail}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-drift-ash print:text-gray-600">Project</dt>
-                <dd className="font-nb-international-pro text-bone-vellum print:text-black">
-                  {cert.projectName}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-drift-ash print:text-gray-600">Quantity retired</dt>
-                <dd className="text-bone-vellum print:text-black">
-                  {formatNumber(cert.quantity)} tCO₂e
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-drift-ash print:text-gray-600">Total paid</dt>
-                <dd className="text-bone-vellum print:text-black">
-                  {formatCurrency(cert.totalAmount, cert.currency)}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-drift-ash print:text-gray-600">Issue date</dt>
-                <dd className="text-bone-vellum print:text-black">{issuedDate}</dd>
-              </div>
+              {[
+                { label: 'Certificate No.', value: cert.certNo, valueClass: 'text-lime-surveyor font-bold print:text-black' },
+                { label: 'Issued to', value: cert.buyerEmail, valueClass: 'font-nb-international-pro text-bone-vellum print:text-black' },
+                { label: 'Project', value: cert.projectName, valueClass: 'font-nb-international-pro text-bone-vellum print:text-black' },
+                { label: 'Quantity retired', value: `${formatNumber(cert.quantity)} tCO₂e`, valueClass: 'text-bone-vellum print:text-black' },
+                { label: 'Total paid', value: formatCurrency(cert.totalAmount, cert.currency), valueClass: 'text-bone-vellum print:text-black' },
+                { label: 'Issue date', value: issuedDate, valueClass: 'text-bone-vellum print:text-black' },
+              ].map((field, index) => (
+                <CertificateField key={field.label} index={index}>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-drift-ash print:text-gray-600">{field.label}</dt>
+                    <dd className={field.valueClass}>{field.value}</dd>
+                  </div>
+                </CertificateField>
+              ))}
             </dl>
 
             <div className="mt-8">
@@ -114,13 +103,10 @@ export default async function CertificatePage({ params }: PageProps) {
                 Registry serials (retired)
               </p>
               <ul className="mt-2 space-y-1">
-                {cert.serials.map((serial) => (
-                  <li
-                    key={serial}
-                    className="font-jetbrains-mono text-[13px] text-lime-surveyor print:text-black"
-                  >
+                {cert.serials.map((serial, index) => (
+                  <CertificateSerial key={serial} index={index}>
                     {serial}
-                  </li>
+                  </CertificateSerial>
                 ))}
               </ul>
             </div>
@@ -131,7 +117,7 @@ export default async function CertificatePage({ params }: PageProps) {
                 CC Verse public registry. Demo certificate — not cryptographically signed.
               </p>
             </div>
-          </article>
+          </CertificateReveal>
         </div>
       </main>
       <div className="print:hidden">

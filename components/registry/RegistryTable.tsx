@@ -1,7 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { AnimatePresence, m } from 'motion/react';
 import { formatNumber } from '@/lib/format';
+import { useReducedMotion } from '@/lib/motion/useReducedMotion';
 
 type RegistryEntry = {
   id: string;
@@ -22,6 +24,7 @@ const PAGE_SIZE = 25;
 
 export function RegistryTable({ entries }: { entries: RegistryEntry[] }) {
   const [page, setPage] = useState(0);
+  const reduced = useReducedMotion();
 
   const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
   const pageEntries = useMemo(
@@ -57,28 +60,39 @@ export function RegistryTable({ entries }: { entries: RegistryEntry[] }) {
               </th>
             </tr>
           </thead>
-          <tbody>
-            {pageEntries.map((entry) => (
-              <tr
-                key={entry.id}
-                className="border-b border-iron-filings/50 hover:bg-surface-raised/50"
-              >
-                <td className="px-4 py-3 text-lime-surveyor">{entry.cvcSerial}</td>
-                <td className={`px-4 py-3 ${STATE_COLORS[entry.state] ?? 'text-drift-ash'}`}>
-                  {entry.state}
-                </td>
-                <td className="px-4 py-3 text-bone-vellum">
-                  {entry.projectName}
-                  {entry.ccverseProjectId ? (
-                    <span className="ml-1 text-drift-ash">({entry.ccverseProjectId})</span>
-                  ) : null}
-                </td>
-                <td className="hidden px-4 py-3 text-bone-vellum/70 sm:table-cell">
-                  {entry.ownerEmail ?? '—'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
+          <AnimatePresence mode="wait">
+            <m.tbody
+              key={page}
+              initial={{ opacity: reduced ? 1 : 0, y: reduced ? 0 : 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: reduced ? 1 : 0, y: reduced ? 0 : -8 }}
+              transition={{ duration: reduced ? 0 : 0.2 }}
+            >
+              {pageEntries.map((entry, index) => (
+                <m.tr
+                  key={entry.id}
+                  className="border-b border-iron-filings/50 hover:bg-surface-raised/50"
+                  initial={{ opacity: reduced ? 1 : 0, y: reduced ? 0 : 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: reduced ? 0 : 0.2, delay: reduced ? 0 : index * 0.03 }}
+                >
+                  <td className="px-4 py-3 text-lime-surveyor">{entry.cvcSerial}</td>
+                  <td className={`px-4 py-3 ${STATE_COLORS[entry.state] ?? 'text-drift-ash'}`}>
+                    {entry.state}
+                  </td>
+                  <td className="px-4 py-3 text-bone-vellum">
+                    {entry.projectName}
+                    {entry.ccverseProjectId ? (
+                      <span className="ml-1 text-drift-ash">({entry.ccverseProjectId})</span>
+                    ) : null}
+                  </td>
+                  <td className="hidden px-4 py-3 text-bone-vellum/70 sm:table-cell">
+                    {entry.ownerEmail ?? '—'}
+                  </td>
+                </m.tr>
+              ))}
+            </m.tbody>
+          </AnimatePresence>
         </table>
       </div>
 

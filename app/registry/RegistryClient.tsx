@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { RegistryTable } from '@/components/registry/RegistryTable';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PageSkeleton } from '@/components/ui/Skeleton';
 import { apiGet } from '@/lib/query/fetcher';
 import { qk } from '@/lib/query/keys';
 import { formatNumber } from '@/lib/format';
@@ -47,7 +48,7 @@ export function RegistryClient() {
   if (isPending && !data) {
     return (
       <div className="mx-auto max-w-6xl space-y-8 px-6 py-12">
-        <p className="font-jetbrains-mono text-[13px] text-drift-ash">Loading registry…</p>
+        <PageSkeleton />
       </div>
     );
   }

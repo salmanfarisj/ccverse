@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Footer } from '@/components/landing/Footer';
 import { FullBleedImage } from '@/components/landing/FullBleedImage';
 import { Hero } from '@/components/landing/Hero';
+import { FadeIn, Stagger, StaggerItem } from '@/components/motion';
 import { SiteNav } from '@/components/nav/SiteNav';
 import { DataTag } from '@/components/ui/DataTag';
 import { GhostButton } from '@/components/ui/GhostButton';
@@ -41,7 +42,7 @@ export default function HomePage() {
         />
 
         <Section id="mission" ariaLabel="Mission">
-          <div className="max-w-[68ch]">
+          <FadeIn className="max-w-[68ch]">
             <p className="font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">
               The mission
             </p>
@@ -77,13 +78,13 @@ export default function HomePage() {
               Every listing is bound to a project. Every order is bound to a buyer. Every retirement
               is bound to a date. Nothing is overwritten, nothing is silent, and nothing disappears.
             </p>
-          </div>
+          </FadeIn>
         </Section>
 
         <FullBleedImage aria-hidden="true" />
 
         <Section id="how-it-works" ariaLabel="How it works">
-          <div className="grid grid-cols-1 gap-[var(--spacing-59)] md:grid-cols-3">
+          <Stagger className="grid grid-cols-1 gap-[var(--spacing-59)] md:grid-cols-3">
             {[
               {
                 tag: '01 · REGISTER',
@@ -101,7 +102,8 @@ export default function HomePage() {
                 body: 'A retired credit cannot be re-listed. The certificate of retirement is signed, downloadable, and includes the proof a regulator or counterparty needs to accept it.',
               },
             ].map((block) => (
-              <article key={block.tag}>
+              <StaggerItem key={block.tag}>
+              <article>
                 <DataTag variant="solid">{block.tag}</DataTag>
                 <h3
                   className="mt-[var(--spacing-18)] text-bone-vellum"
@@ -123,12 +125,13 @@ export default function HomePage() {
                   {block.body}
                 </p>
               </article>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </Section>
 
         <Section id="registry" ariaLabel="Registry">
-          <div className="max-w-[68ch]">
+          <FadeIn className="max-w-[68ch]">
             <DataTag variant="solid">LIVE</DataTag>
             <h2
               className="mt-[var(--spacing-18)] text-bone-vellum"
@@ -155,7 +158,7 @@ export default function HomePage() {
               <LimeButton href="/marketplace">Browse marketplace</LimeButton>
               <GhostButton href="/registry">View registry</GhostButton>
             </div>
-          </div>
+          </FadeIn>
         </Section>
       </main>
       <Footer />

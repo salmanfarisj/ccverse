@@ -9,6 +9,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { AnimatePresence, m } from 'motion/react';
+import { toastVariants } from '@/lib/motion/variants';
+import { useReducedMotion } from '@/lib/motion/useReducedMotion';
 
 type ToastVariant = 'success' | 'error' | 'info';
 
@@ -48,15 +51,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         aria-live="polite"
         aria-relevant="additions"
       >
-        {toasts.map((item) => (
-          <ToastCard key={item.id} item={item} onDismiss={() => dismiss(item.id)} />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {toasts.map((item) => (
+            <ToastCard key={item.id} item={item} onDismiss={() => dismiss(item.id)} />
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );
 }
 
 function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: () => void }) {
+  const reduced = useReducedMotion();
+
   useEffect(() => {
     const timer = window.setTimeout(onDismiss, AUTO_DISMISS_MS);
     return () => window.clearTimeout(timer);
@@ -70,9 +77,14 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: () => void
         : 'border-iron-filings text-bone-vellum';
 
   return (
-    <div
+    <m.div
+      layout
       role={item.variant === 'error' ? 'alert' : 'status'}
-      className={`pointer-events-auto rounded-md border bg-surface-raised px-[var(--spacing-18)] py-[var(--spacing-14)] font-jetbrains-mono text-[13px] motion-safe:animate-[toast-in_200ms_ease-out] ${variantClass}`}
+      className={`pointer-events-auto rounded-md border bg-surface-raised px-[var(--spacing-18)] py-[var(--spacing-14)] font-jetbrains-mono text-[13px] ${variantClass}`}
+      variants={toastVariants(reduced)}
+      initial="hidden"
+      animate="show"
+      exit="exit"
     >
       <div className="flex items-start justify-between gap-3">
         <span>{item.message}</span>
@@ -85,7 +97,7 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: () => void
           ✕
         </button>
       </div>
-    </div>
+    </m.div>
   );
 }
 

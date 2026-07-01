@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { AnimatePresence, m } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { navItemClass } from '@/components/nav/navStyles';
 import { GhostButton } from '@/components/ui/GhostButton';
+import { menuVariants } from '@/lib/motion/variants';
+import { useReducedMotion } from '@/lib/motion/useReducedMotion';
 
 type PublicNavProps = {
   transparent?: boolean;
@@ -11,6 +14,7 @@ type PublicNavProps = {
 
 export function PublicNav({ transparent = false }: PublicNavProps) {
   const [open, setOpen] = useState(false);
+  const reduced = useReducedMotion();
   const menuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const firstMenuItemRef = useRef<HTMLAnchorElement>(null);
@@ -98,14 +102,20 @@ export function PublicNav({ transparent = false }: PublicNavProps) {
               <span>Menu</span>
               <span
                 aria-hidden="true"
-                className="block h-[4px] w-[4px] rounded-full bg-bone-vellum"
+                className={`block h-[4px] w-[4px] rounded-full bg-bone-vellum ${open && !reduced ? 'animate-pulse' : ''}`}
               />
             </button>
 
-            {open && (
-              <nav
+            <AnimatePresence>
+              {open ? (
+              <m.nav
+                key="mobile-menu"
                 aria-label="Site menu"
                 className="absolute right-0 top-[calc(100%+var(--spacing-7))] min-w-[200px] border border-iron-filings bg-obsidian-loam p-[var(--spacing-14)]"
+                variants={menuVariants(reduced)}
+                initial="hidden"
+                animate="show"
+                exit="exit"
               >
                 <ul className="flex flex-col gap-[var(--spacing-14)]">
                   <li>
@@ -138,8 +148,9 @@ export function PublicNav({ transparent = false }: PublicNavProps) {
                     </Link>
                   </li>
                 </ul>
-              </nav>
-            )}
+              </m.nav>
+              ) : null}
+            </AnimatePresence>
           </div>
         </div>
       </header>
