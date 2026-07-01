@@ -24,6 +24,11 @@ import { ConvexHttpClient } from 'convex/browser';
 let cachedClient: ConvexHttpClient | undefined;
 let cachedUrl: string | undefined;
 
+/** Next.js patches global fetch to cache by default; Convex queries must be fresh. */
+function convexFetch(resource: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  return fetch(resource, { ...init, cache: 'no-store' });
+}
+
 function resolveConvexUrl(): string {
   const fromPublic = process.env['NEXT_PUBLIC_CONVEX_URL'];
   const fromServer = process.env['CONVEX_DEPLOYMENT_URL'];
@@ -46,7 +51,10 @@ export function getConvexClient(): ConvexHttpClient {
   if (cachedClient && cachedUrl === url) {
     return cachedClient;
   }
-  cachedClient = new ConvexHttpClient(url);
+  cachedClient = new ConvexHttpClient(url, {
+    skipConvexDeploymentUrlCheck: url.includes('127.0.0.1') || url.includes('localhost'),
+    fetch: convexFetch,
+  });
   cachedUrl = url;
   return cachedClient;
 }

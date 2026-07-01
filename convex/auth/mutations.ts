@@ -158,8 +158,9 @@ export const createSellerMutation = internalMutation({
       userId,
       legalName,
       country,
-      kycStatus: 'NOT_STARTED',
+      kycStatus: 'APPROVED',
       kycMethod: 'manual',
+      kycReviewedAt: now,
       createdAt: now,
       updatedAt: now,
     });

@@ -7,13 +7,12 @@ import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
 import { requireKycApproved } from '@/lib/rbac/seller';
 
-const createProjectSchema = z.object({
-  name: z.string().min(1),
-  country: z.string().min(1),
-  projectType: z.string().min(1),
-  methodology: z.string().min(1),
-  vintageYear: z.number().int().min(2000).max(2100),
-  description: z.string().min(1),
+const createListingSchema = z.object({
+  projectId: z.string().min(1),
+  title: z.string().min(1),
+  quantity: z.number().int().min(1),
+  unitPrice: z.number().positive(),
+  currency: z.enum(['USD', 'INR']),
 });
 
 export async function GET(_req: NextRequest) {
@@ -21,14 +20,14 @@ export async function GET(_req: NextRequest) {
     const session = await requireRole(['SELLER']);
     const convex = getConvexClient();
 
-    const projects = await convex.query(api.projects.queries.listMyProjects, {
+    const listings = await convex.query(api.listings.queries.listMyListings, {
       sellerId: session.userId as Id<'users'>,
     });
 
-    return NextResponse.json({ projects });
+    return NextResponse.json({ listings });
   } catch (err) {
     if (err instanceof NextResponse) throw err;
-    console.error('GET /api/seller/projects error', err);
+    console.error('GET /api/seller/listings error', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -39,25 +38,33 @@ export async function POST(req: NextRequest) {
     await requireKycApproved(session);
 
     const body = await req.json();
-    const parsed = createProjectSchema.safeParse(body);
+    const parsed = createListingSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.message }, { status: 400 });
     }
 
     const convex = getConvexClient();
-    const result = await convex.mutation(api.projects.mutations.createProject, {
+    const result = await convex.mutation(api.listings.mutations.createListing, {
       sellerId: session.userId as Id<'users'>,
-      ...parsed.data,
+      projectId: parsed.data.projectId as Id<'projects'>,
+      title: parsed.data.title,
+      quantity: parsed.data.quantity,
+      unitPrice: parsed.data.unitPrice,
+      currency: parsed.data.currency,
     });
 
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
     return NextResponse.json({
-      message: 'Project created',
-      projectId: result.projectId,
-      ccverseProjectId: result.ccverseProjectId,
+      message: 'Listing created',
+      listingId: result.listingId,
+      serials: result.serials,
     });
   } catch (err) {
     if (err instanceof NextResponse) throw err;
-    console.error('POST /api/seller/projects error', err);
+    console.error('POST /api/seller/listings error', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

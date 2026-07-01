@@ -202,23 +202,54 @@ export default defineSchema({
   }).index('by_userId', ['userId']),
 
   projects: defineTable({
+    sellerId: v.id('users'),
+    name: v.string(),
+    country: v.string(),
+    projectType: v.string(),
+    methodology: v.string(),
+    vintageYear: v.number(),
+    description: v.string(),
+    ccverseProjectId: v.string(),
     status: ProjectStatus,
     createdAt: v.float64(),
-  }),
+  })
+    .index('by_sellerId', ['sellerId'])
+    .index('by_ccverseProjectId', ['ccverseProjectId']),
 
   projectRegistrations: defineTable({
     createdAt: v.float64(),
   }),
 
   listings: defineTable({
+    sellerId: v.id('users'),
+    projectId: v.id('projects'),
+    title: v.string(),
+    quantityTotal: v.number(),
+    quantityAvailable: v.number(),
+    unitPrice: v.number(),
+    currency: v.string(),
     status: ListingStatus,
     createdAt: v.float64(),
-  }),
+  })
+    .index('by_sellerId', ['sellerId'])
+    .index('by_status', ['status'])
+    .index('by_projectId', ['projectId']),
 
   orders: defineTable({
+    buyerId: v.id('users'),
+    listingId: v.id('listings'),
+    sellerId: v.id('users'),
+    quantity: v.number(),
+    unitPrice: v.number(),
+    currency: v.string(),
+    totalAmount: v.number(),
+    serials: v.array(v.string()),
     status: OrderStatus,
+    certificateId: v.optional(v.id('certificates')),
     createdAt: v.float64(),
-  }),
+  })
+    .index('by_buyerId', ['buyerId'])
+    .index('by_sellerId', ['sellerId']),
 
   payments: defineTable({
     status: PaymentStatus,
@@ -226,9 +257,18 @@ export default defineSchema({
   }),
 
   certificates: defineTable({
+    orderId: v.id('orders'),
+    buyerId: v.id('users'),
+    serials: v.array(v.string()),
+    projectName: v.string(),
+    quantity: v.number(),
+    issuedAt: v.float64(),
+    certNo: v.string(),
     status: CertificateStatus,
     createdAt: v.float64(),
-  }),
+  })
+    .index('by_orderId', ['orderId'])
+    .index('by_buyerId', ['buyerId']),
 
   auditDecisions: defineTable({
     status: AuditDecisionStatus,
@@ -243,10 +283,15 @@ export default defineSchema({
   registryEntries: defineTable({
     state: RegistryState,
     cvcSerial: v.string(),
+    listingId: v.optional(v.id('listings')),
+    projectId: v.optional(v.id('projects')),
+    heldByOrderId: v.optional(v.id('orders')),
+    ownerBuyerId: v.optional(v.id('users')),
     createdAt: v.float64(),
   })
     .index('by_cvcSerial', ['cvcSerial'])
-    .index('by_state', ['state']),
+    .index('by_state', ['state'])
+    .index('by_listingId', ['listingId']),
 
   cvcBatches: defineTable({
     createdAt: v.float64(),
@@ -275,7 +320,7 @@ export default defineSchema({
     key: v.string(),
     value: v.string(),
     updatedAt: v.float64(),
-  }),
+  }).index('by_key', ['key']),
 
   failedJobs: defineTable({
     jobType: v.string(),

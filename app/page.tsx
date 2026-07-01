@@ -37,7 +37,7 @@ export default function HomePage() {
           }
           subhead="A marketplace where every credit is signed at issuance, tracked on a public registry, and retired with cryptographic proof of ownership."
           primary={<LimeButton href="#how-it-works">How it works</LimeButton>}
-          secondary={<GhostButton href="#registry">View registry</GhostButton>}
+          secondary={<GhostButton href="/registry">View registry</GhostButton>}
         />
 
         <Section id="mission" ariaLabel="Mission">
@@ -129,7 +129,7 @@ export default function HomePage() {
 
         <Section id="registry" ariaLabel="Registry">
           <div className="max-w-[68ch]">
-            <DataTag variant="solid">COMING SOON</DataTag>
+            <DataTag variant="solid">LIVE</DataTag>
             <h2
               className="mt-[var(--spacing-18)] text-bone-vellum"
               style={{
@@ -139,7 +139,7 @@ export default function HomePage() {
                 fontWeight: 'var(--font-weight-regular)',
               }}
             >
-              The public registry opens with Phase 2.
+              The public registry is live.
             </h2>
             <p
               className="mt-[var(--spacing-29)] text-bone-vellum"
@@ -148,9 +148,13 @@ export default function HomePage() {
                 lineHeight: 'var(--leading-body)',
               }}
             >
-              The buyer flow, project console, and auditor console land in Phases 1–5. This page is
-              the first piece of the product — the rest is being built.
+              Every carbon credit serial is tracked on the CC Verse registry. Browse active listings
+              on the marketplace, purchase credits, and verify retirements in real time.
             </p>
+            <div className="mt-[var(--spacing-29)] flex flex-wrap gap-4">
+              <LimeButton href="/marketplace">Browse marketplace</LimeButton>
+              <GhostButton href="/registry">View registry</GhostButton>
+            </div>
           </div>
         </Section>
       </main>
