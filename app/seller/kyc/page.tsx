@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, type FormEvent } from 'react';
+import { AuthNav } from '@/components/nav/AuthNav';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
 import { GhostButton } from '@/components/ui/GhostButton';
@@ -182,7 +183,7 @@ export default function SellerKycPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam">
+      <main id="main" className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam">
         <p className="font-jetbrains-mono text-[13px] text-drift-ash">Loading…</p>
       </main>
     );
@@ -194,7 +195,9 @@ export default function SellerKycPage() {
   const kycLocked = kycStatus === 'PENDING' || kycStatus === 'APPROVED';
 
   return (
-    <main className="flex min-h-screen flex-col bg-obsidian-loam px-6 pt-[80px]">
+    <>
+      <AuthNav role="SELLER" />
+      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam px-6 pt-[80px]">
       <div className="mx-auto w-full max-w-2xl space-y-8 py-12">
         {/* Header */}
         <div className="text-center">
@@ -213,8 +216,8 @@ export default function SellerKycPage() {
               kycStatus === 'APPROVED'
                 ? 'border-lime-surveyor bg-lime-surveyor/10 text-lime-surveyor'
                 : kycStatus === 'REJECTED'
-                  ? 'border-red-500 bg-red-500/10 text-red-400'
-                  : 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
+                  ? 'border-iron-filings bg-[#141414] text-drift-ash'
+                  : 'border-marsh-olive bg-marsh-olive/10 text-marsh-olive'
             }`}
           >
             KYC Status: {kycStatus}
@@ -262,7 +265,7 @@ export default function SellerKycPage() {
                 Step 1 — Entity Details
               </h2>
               {currentStep > 1 && kyc?.entity.legalName && (
-                <span className="font-jetbrains-mono text-[11px] text-lime/60">✓ Saved</span>
+                <span className="font-jetbrains-mono text-[11px] text-drift-ash">✓ Saved</span>
               )}
             </div>
 
@@ -328,7 +331,7 @@ export default function SellerKycPage() {
                 Step 2 — KYC Documents
               </h2>
               {currentStep > 2 && (kyc?.documents.length ?? 0) > 0 && (
-                <span className="font-jetbrains-mono text-[11px] text-lime/60">
+                <span className="font-jetbrains-mono text-[11px] text-drift-ash">
                   {kyc?.documents.length} uploaded
                 </span>
               )}
@@ -414,7 +417,7 @@ export default function SellerKycPage() {
                 Step 3 — Bank Account
               </h2>
               {currentStep > 3 && kyc?.bankAccount && (
-                <span className="font-jetbrains-mono text-[11px] text-lime/60">✓ Saved</span>
+                <span className="font-jetbrains-mono text-[11px] text-drift-ash">✓ Saved</span>
               )}
             </div>
 
@@ -543,5 +546,6 @@ export default function SellerKycPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

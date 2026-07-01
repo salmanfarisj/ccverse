@@ -5,6 +5,20 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
+import { GhostButton } from '@/components/ui/GhostButton';
+
+const DEMO_ACCOUNTS = {
+  buyer: {
+    email: 'buyer@ccverse.local',
+    password: 'Test@12345678',
+  },
+  seller: {
+    email: 'seller@ccverse.local',
+    password: 'Test@12345678',
+  },
+} as const;
+
+type LoginRole = keyof typeof DEMO_ACCOUNTS;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,24 +27,27 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [retryAfter, setRetryAfter] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeRole, setActiveRole] = useState<LoginRole | null>(null);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function loginAs(role: LoginRole) {
     setError('');
     setRetryAfter(null);
+    setActiveRole(role);
     setLoading(true);
+
+    const credentials =
+      email.trim() && password ? { email: email.trim(), password } : DEMO_ACCOUNTS[role];
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(credentials),
       });
 
       const data = await res.json();
 
       if (res.status === 423) {
-        // Locked out
         setRetryAfter(data.retryAfter ?? 1800);
         setError(data.error ?? 'Account is temporarily locked.');
         return;
@@ -41,28 +58,32 @@ export default function LoginPage() {
         return;
       }
 
-      // Redirect based on role
-      const role = (data.role ?? '').toLowerCase();
-      let destination = '/buyer';
-      if (role === 'admin' || role === 'auditor') {
-        destination = '/admin';
-      } else if (role === 'seller') {
-        destination = '/seller';
+      const loggedInRole = (data.role ?? '').toLowerCase();
+      if (loggedInRole !== role) {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        setError(`This account is registered as a ${loggedInRole || 'different role'}, not a ${role}.`);
+        return;
       }
 
+      const destination = role === 'seller' ? '/seller' : '/buyer';
       await router.push(destination);
     } catch (err) {
       console.error('Login error', err);
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
+      setActiveRole(null);
     }
+  }
+
+  function handleSubmit(e: FormEvent, role: LoginRole) {
+    e.preventDefault();
+    void loginAs(role);
   }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam px-6">
       <div className="w-full max-w-md space-y-8">
-        {/* Brand */}
         <div className="text-center">
           <Link
             href="/"
@@ -75,7 +96,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Lockout notice */}
         {retryAfter !== null && (
           <div className="rounded-md border border-lime-surveyor bg-[#141414] p-4">
             <p className="font-jetbrains-mono text-[13px] text-lime-surveyor">
@@ -88,18 +108,16 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Form */}
         <form
-          onSubmit={handleSubmit}
           className="space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8"
           noValidate
+          onSubmit={(e) => e.preventDefault()}
         >
           <Input
             label="Email address"
             type="email"
             name="email"
             autoComplete="email"
-            required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
@@ -110,7 +128,6 @@ export default function LoginPage() {
             type="password"
             name="password"
             autoComplete="current-password"
-            required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -121,21 +138,35 @@ export default function LoginPage() {
             </p>
           )}
 
-          <LimeButton type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in'}
-          </LimeButton>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <LimeButton
+              type="button"
+              className="w-full"
+              disabled={loading}
+              onClick={(e) => void handleSubmit(e, 'buyer')}
+            >
+              {loading && activeRole === 'buyer' ? 'Signing in…' : 'Sign in as buyer'}
+            </LimeButton>
+            <GhostButton
+              type="button"
+              className="w-full"
+              disabled={loading}
+              onClick={(e) => void handleSubmit(e, 'seller')}
+            >
+              {loading && activeRole === 'seller' ? 'Signing in…' : 'Sign in as seller'}
+            </GhostButton>
+          </div>
         </form>
 
-        {/* Footer links */}
         <p className="text-center font-jetbrains-mono text-[13px] text-drift-ash">
           <Link
             href="/forgot-password"
-            className="!text-lime-surveyor !no-underline hover:text-lime/80"
+            className="!text-lime-surveyor !no-underline hover:text-marsh-olive"
           >
             Forgot password?
           </Link>
           {' · '}
-          <Link href="/register" className="!text-lime-surveyor !no-underline hover:text-lime/80">
+          <Link href="/register" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
             Create account
           </Link>
         </p>

@@ -174,8 +174,8 @@ function NewListingForm() {
 export default function NewListingPage() {
   return (
     <>
-      <AuthNav />
-      <main className="flex min-h-screen flex-col bg-obsidian-loam pt-[80px]">
+      <AuthNav role="SELLER" />
+      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam pt-[80px]">
         <div className="mx-auto w-full max-w-xl space-y-8 px-6 py-12">
           <div>
             <Link

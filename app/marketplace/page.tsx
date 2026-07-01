@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
-import { TopNav } from '@/components/landing/TopNav';
+import { SiteNav } from '@/components/nav/SiteNav';
 import { Footer } from '@/components/landing/Footer';
 import { DataTag } from '@/components/ui/DataTag';
 import { getConvexClient } from '@/lib/convex/client';
@@ -20,8 +20,8 @@ export default async function MarketplacePage() {
 
   return (
     <>
-      <TopNav />
-      <main className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <SiteNav />
+      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
         <div className="mx-auto max-w-6xl space-y-8 px-6 py-12">
           <div>
             <DataTag variant="outline">MARKETPLACE</DataTag>

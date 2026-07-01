@@ -4,6 +4,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { api } from '@/convex/_generated/api';
 import { AuthNav } from '@/components/nav/AuthNav';
+import { GhostButton } from '@/components/ui/GhostButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +18,8 @@ export default async function BuyerPage() {
 
   return (
     <>
-      <AuthNav />
-      <main className="flex min-h-screen flex-col bg-obsidian-loam pt-[80px]">
+      <AuthNav role={session.role} />
+      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam pt-[80px]">
         <div className="mx-auto w-full max-w-4xl space-y-8 px-6 py-12">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -29,12 +30,9 @@ export default async function BuyerPage() {
                 Credits you have purchased and retired on the registry.
               </p>
             </div>
-            <Link
-              href="/marketplace"
-              className="shrink-0 rounded border border-lime-surveyor px-4 py-2 font-jetbrains-mono text-[13px] !text-lime-surveyor !no-underline hover:bg-lime-surveyor/10"
-            >
+            <GhostButton href="/marketplace" className="shrink-0">
               Browse marketplace
-            </Link>
+            </GhostButton>
           </div>
 
           {orders.length === 0 ? (

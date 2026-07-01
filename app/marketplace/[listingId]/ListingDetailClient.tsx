@@ -144,7 +144,7 @@ export function ListingDetailClient({ listing }: { listing: ListingDetail }) {
                 type="button"
                 onClick={() => void handleBuy()}
                 disabled={loading}
-                className="w-full rounded bg-lime-surveyor px-6 py-3 font-jetbrains-mono text-[14px] font-semibold text-obsidian-loam hover:bg-lime/90 disabled:opacity-50"
+                className="w-full rounded bg-lime-surveyor px-6 py-3 font-jetbrains-mono text-[14px] font-semibold text-obsidian-loam hover:bg-marsh-olive disabled:opacity-50"
               >
                 {loading ? 'Processing...' : 'Buy (demo pay)'}
               </button>

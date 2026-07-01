@@ -3,14 +3,14 @@ import { requireRole } from '@/lib/rbac';
 import { AuthNav } from '@/components/nav/AuthNav';
 
 export default async function AdminPage() {
-  await requireRole(['ADMIN']);
+  const session = await requireRole(['ADMIN']);
 
   return (
     <>
-      <AuthNav />
-      <main className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <AuthNav role={session.role} />
+      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
-          <h1 className="font-mono text-4xl font-bold tracking-tight !text-lime-surveyor">Admin</h1>
+          <h1 className="font-jetbrains-mono text-4xl font-bold tracking-tight !text-lime-surveyor">Admin</h1>
           <p className="mt-2 font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">
             KYC review and compliance
           </p>

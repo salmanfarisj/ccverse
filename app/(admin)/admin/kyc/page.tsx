@@ -35,19 +35,19 @@ export default function AdminKycPage() {
 
   return (
     <>
-      <AuthNav />
-      <main className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <AuthNav role="ADMIN" />
+      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
           {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 font-jetbrains-mono text-[13px] text-drift-ash">
-            <Link href="/admin" className="!text-lime-surveyor !no-underline hover:text-lime/80">
+            <Link href="/admin" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
               Admin
             </Link>
             <span>/</span>
             <span className="text-bone-vellum">KYC Queue</span>
           </div>
 
-          <h1 className="font-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
+          <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
             KYC Queue
           </h1>
           <p className="mt-2 font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">
@@ -113,7 +113,7 @@ export default function AdminKycPage() {
                       <td className="py-3">
                         <Link
                           href={`/admin/kyc/${app.userId}`}
-                          className="font-jetbrains-mono text-[12px] uppercase tracking-[0.06em] text-lime-surveyor hover:text-lime/80 !no-underline"
+                          className="font-jetbrains-mono text-[12px] uppercase tracking-[0.06em] text-lime-surveyor hover:text-marsh-olive !no-underline"
                         >
                           Review →
                         </Link>

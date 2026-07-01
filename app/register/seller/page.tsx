@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
+import { GhostButton } from '@/components/ui/GhostButton';
 
 export default function SellerRegisterPage() {
   const router = useRouter();
@@ -163,16 +164,25 @@ export default function SellerRegisterPage() {
             </p>
           )}
 
-          <LimeButton type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating account…' : 'Register seller account'}
-          </LimeButton>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <LimeButton type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Creating account…' : 'Register as seller'}
+            </LimeButton>
+            <GhostButton
+              type="button"
+              className="w-full"
+              disabled={loading}
+              onClick={() => router.push('/register')}
+            >
+              Register as buyer
+            </GhostButton>
+          </div>
         </form>
 
-        {/* Footer */}
         <p className="text-center font-jetbrains-mono text-[13px] text-drift-ash">
-          Register as a buyer?{' '}
-          <Link href="/register" className="!text-lime-surveyor !no-underline hover:text-lime/80">
-            Create buyer account
+          Already have an account?{' '}
+          <Link href="/login" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
+            Sign in
           </Link>
         </p>
       </div>

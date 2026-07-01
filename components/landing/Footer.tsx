@@ -53,7 +53,7 @@ export function Footer() {
                     {item.href ? (
                       <a
                         href={item.href}
-                        className="font-jetbrains-mono text-[13px] text-bone-vellum no-underline hover:text-lime-surveyor"
+                        className="font-jetbrains-mono text-[13px] text-bone-vellum !no-underline hover:text-lime-surveyor"
                       >
                         {item.label}
                       </a>

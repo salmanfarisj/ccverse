@@ -1,11 +1,11 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { TopNav } from '@/components/landing/TopNav';
+import { SiteNav } from '@/components/nav/SiteNav';
 import { Footer } from '@/components/landing/Footer';
 import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { api } from '@/convex/_generated/api';
 import { DataTag } from '@/components/ui/DataTag';
+import { CertificateBackLink, getCertificateBackLink } from '@/components/certificate/CertificateBackLink';
 import { PrintButton } from './PrintButton';
 
 export const dynamic = 'force-dynamic';
@@ -14,9 +14,12 @@ type PageProps = { params: { certId: string } };
 
 export default async function CertificatePage({ params }: PageProps) {
   const convex = getConvexClient();
-  const result = await convex.query(api.orders.queries.getCertificate, {
-    certId: params.certId as Id<'certificates'>,
-  });
+  const [result, backLink] = await Promise.all([
+    convex.query(api.orders.queries.getCertificate, {
+      certId: params.certId as Id<'certificates'>,
+    }),
+    getCertificateBackLink(),
+  ]);
 
   if (!result.found) {
     notFound();
@@ -31,16 +34,11 @@ export default async function CertificatePage({ params }: PageProps) {
 
   return (
     <>
-      <TopNav />
-      <main className="min-h-screen bg-obsidian-loam pt-[80px] print:bg-white print:pt-0">
+      <SiteNav />
+      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px] print:bg-white print:pt-0">
         <div className="mx-auto max-w-3xl px-6 py-12 print:py-8">
           <div className="print:hidden mb-6 flex gap-4">
-            <Link
-              href="/buyer"
-              className="font-jetbrains-mono text-[13px] !text-drift-ash !no-underline hover:!text-lime-surveyor"
-            >
-              ← My purchases
-            </Link>
+            <CertificateBackLink href={backLink.href} label={backLink.label} />
             <PrintButton />
           </div>
 

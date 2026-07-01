@@ -2,21 +2,31 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { LimeButton } from '@/components/ui/LimeButton';
+import { GhostButton } from '@/components/ui/GhostButton';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<'buyer' | 'seller' | null>(null);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function registerAsBuyer() {
     setError('');
-    setLoading(true);
+
+    if (!email.trim()) {
+      setError('Email is required');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setLoading('buyer');
 
     try {
       const res = await fetch('/api/auth/register/buyer', {
@@ -36,14 +46,17 @@ export default function RegisterPage() {
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
+  }
+
+  function goToSellerRegister() {
+    router.push('/register/seller');
   }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-obsidian-loam px-6">
       <div className="w-full max-w-md space-y-8">
-        {/* Brand */}
         <div className="text-center">
           <Link
             href="/"
@@ -52,15 +65,14 @@ export default function RegisterPage() {
             CC Verse
           </Link>
           <p className="mt-2 font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">
-            Create your buyer account
+            Create your account
           </p>
         </div>
 
-        {/* Form */}
         <form
-          onSubmit={handleSubmit}
           className="space-y-6 rounded-md border border-iron-filings bg-[#141414] p-8"
           noValidate
+          onSubmit={(e) => e.preventDefault()}
         >
           <Input
             label="Email address"
@@ -92,15 +104,29 @@ export default function RegisterPage() {
             </p>
           )}
 
-          <LimeButton type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating account…' : 'Create account'}
-          </LimeButton>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <LimeButton
+              type="button"
+              className="w-full"
+              disabled={loading !== null}
+              onClick={() => void registerAsBuyer()}
+            >
+              {loading === 'buyer' ? 'Creating account…' : 'Register as buyer'}
+            </LimeButton>
+            <GhostButton
+              type="button"
+              className="w-full"
+              disabled={loading !== null}
+              onClick={goToSellerRegister}
+            >
+              {loading === 'seller' ? 'Loading…' : 'Register as seller'}
+            </GhostButton>
+          </div>
         </form>
 
-        {/* Footer */}
         <p className="text-center font-jetbrains-mono text-[13px] text-drift-ash">
           Already have an account?{' '}
-          <Link href="/login" className="!text-lime-surveyor !no-underline hover:text-lime/80">
+          <Link href="/login" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
             Sign in
           </Link>
         </p>

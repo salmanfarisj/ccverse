@@ -52,7 +52,7 @@ export default async function VerifyEmailPage({ params }: Props) {
               <p className="font-jetbrains-mono text-[14px] text-drift-ash">{message}</p>
               <Link
                 href="/login"
-                className="inline-block font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] !text-lime-surveyor !no-underline hover:text-lime/80"
+                className="inline-block font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] !text-lime-surveyor !no-underline hover:text-marsh-olive"
               >
                 Sign in to continue →
               </Link>
@@ -66,7 +66,7 @@ export default async function VerifyEmailPage({ params }: Props) {
               <p className="font-jetbrains-mono text-[14px] text-drift-ash">{message}</p>
               <Link
                 href="/register"
-                className="inline-block font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] !text-lime-surveyor !no-underline hover:text-lime/80"
+                className="inline-block font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] !text-lime-surveyor !no-underline hover:text-marsh-olive"
               >
                 Create a new account →
               </Link>

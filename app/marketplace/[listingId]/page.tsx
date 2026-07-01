@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { TopNav } from '@/components/landing/TopNav';
+import { SiteNav } from '@/components/nav/SiteNav';
 import { Footer } from '@/components/landing/Footer';
 import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
@@ -23,12 +23,12 @@ export default async function ListingDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <TopNav />
-      <main className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <SiteNav />
+      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
         <div className="mx-auto max-w-4xl px-6 py-12">
           <Link
             href="/marketplace"
-            className="font-jetbrains-mono text-[13px] !text-drift-ash !no-underline hover:!text-lime-surveyor"
+            className="inline-flex font-jetbrains-mono text-[13px] !text-drift-ash !no-underline hover:!text-lime-surveyor"
           >
             ← Back to marketplace
           </Link>

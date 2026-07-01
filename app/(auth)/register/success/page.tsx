@@ -29,7 +29,7 @@ export default function RegisterSuccessPage() {
             </p>
             <Link
               href="/login"
-              className="inline-block font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] !text-lime-surveyor !no-underline hover:text-lime/80"
+              className="inline-block font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] !text-lime-surveyor !no-underline hover:text-marsh-olive"
             >
               ← Back to sign in
             </Link>

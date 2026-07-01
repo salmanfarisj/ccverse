@@ -63,18 +63,18 @@ export default function AccountSecurityPage() {
   return (
     <>
       <AuthNav />
-      <main className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
           {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 font-jetbrains-mono text-[13px] text-drift-ash">
-            <Link href="/account" className="!text-lime-surveyor !no-underline hover:text-lime/80">
+            <Link href="/account" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
               Account
             </Link>
             <span>/</span>
             <span className="text-bone-vellum">Security</span>
           </div>
 
-          <h1 className="font-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
+          <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
             Change password
           </h1>
 

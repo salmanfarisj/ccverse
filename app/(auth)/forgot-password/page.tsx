@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
           </p>
           <Link
             href="/login"
-            className="font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] !text-lime-surveyor !no-underline hover:text-lime/80"
+            className="font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] !text-lime-surveyor !no-underline hover:text-marsh-olive"
           >
             ← Back to sign in
           </Link>
@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
 
         <p className="text-center font-jetbrains-mono text-[13px] text-drift-ash">
           Remember your password?{' '}
-          <Link href="/login" className="!text-lime-surveyor !no-underline hover:text-lime/80">
+          <Link href="/login" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
             Sign in
           </Link>
         </p>

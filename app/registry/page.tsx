@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { TopNav } from '@/components/landing/TopNav';
+import { SiteNav } from '@/components/nav/SiteNav';
 import { Footer } from '@/components/landing/Footer';
 import { DataTag } from '@/components/ui/DataTag';
 import { getConvexClient } from '@/lib/convex/client';
@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 const STATE_COLORS: Record<string, string> = {
   AVAILABLE: 'text-lime-surveyor',
-  HELD: 'text-yellow-400',
+  HELD: 'text-marsh-olive',
   RETIRED: 'text-drift-ash',
 };
 
@@ -30,8 +30,8 @@ export default async function RegistryPage() {
 
   return (
     <>
-      <TopNav />
-      <main className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <SiteNav />
+      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
         <div className="mx-auto max-w-6xl space-y-8 px-6 py-12">
           <div>
             <Link

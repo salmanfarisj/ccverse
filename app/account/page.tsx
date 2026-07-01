@@ -99,7 +99,7 @@ export default function AccountPage() {
     return (
       <>
         <AuthNav />
-        <main className="min-h-screen bg-obsidian-loam pt-[80px]">
+        <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
           <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)] text-drift-ash">
             Loading…
           </div>
@@ -121,10 +121,10 @@ export default function AccountPage() {
 
   return (
     <>
-      <AuthNav />
-      <main className="min-h-screen bg-obsidian-loam pt-[80px]">
+      <AuthNav role={profile.role} />
+      <main id="main" className="min-h-screen bg-obsidian-loam pt-[80px]">
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
-          <h1 className="font-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
+          <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
             Account
           </h1>
 
@@ -138,7 +138,7 @@ export default function AccountPage() {
                 {!editing && (
                   <button
                     onClick={() => setEditing(true)}
-                    className="font-jetbrains-mono text-[12px] uppercase tracking-[0.06em] text-lime-surveyor hover:text-lime/80"
+                    className="font-jetbrains-mono text-[12px] uppercase tracking-[0.06em] text-lime-surveyor hover:text-marsh-olive"
                   >
                     Edit
                   </button>

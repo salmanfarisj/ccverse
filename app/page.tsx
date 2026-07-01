@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Footer } from '@/components/landing/Footer';
 import { FullBleedImage } from '@/components/landing/FullBleedImage';
 import { Hero } from '@/components/landing/Hero';
-import { TopNav } from '@/components/landing/TopNav';
+import { SiteNav } from '@/components/nav/SiteNav';
 import { DataTag } from '@/components/ui/DataTag';
 import { GhostButton } from '@/components/ui/GhostButton';
 import { LimeButton } from '@/components/ui/LimeButton';
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
-      <TopNav />
+      <SiteNav transparent />
       <main id="main">
         <Hero
           eyebrow={<DataTag variant="outline">CC VERSE · MARKETPLACE</DataTag>}

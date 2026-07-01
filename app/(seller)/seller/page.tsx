@@ -1,9 +1,11 @@
+import Link from 'next/link';
 import { requireRole } from '@/lib/rbac';
 import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { api } from '@/convex/_generated/api';
 import { AuthNav } from '@/components/nav/AuthNav';
-import Link from 'next/link';
+import { LimeButton } from '@/components/ui/LimeButton';
+import { GhostButton } from '@/components/ui/GhostButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,8 +26,8 @@ export default async function SellerDashboardPage() {
 
   return (
     <>
-      <AuthNav />
-      <main className="flex min-h-screen flex-col bg-obsidian-loam pt-[80px]">
+      <AuthNav role={session.role} />
+      <main id="main" className="flex min-h-screen flex-col bg-obsidian-loam pt-[80px]">
         <div className="mx-auto w-full max-w-4xl space-y-8 px-6 py-12">
           <div>
             <h1 className="font-jetbrains-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
@@ -36,22 +38,17 @@ export default async function SellerDashboardPage() {
                 ? 'Your account is verified. Manage projects, listings, and sales.'
                 : 'Complete KYC to start listing credits.'}
             </p>
+            {!isApproved && (
+              <div className="mt-4">
+                <LimeButton href="/seller/kyc">Complete KYC verification</LimeButton>
+              </div>
+            )}
           </div>
 
           {isApproved && (
             <div className="flex flex-wrap gap-3">
-              <Link
-                href="/seller/projects/new"
-                className="rounded bg-lime-surveyor px-4 py-2 font-jetbrains-mono text-[13px] font-semibold !text-obsidian-loam no-underline hover:bg-lime/90"
-              >
-                New Project
-              </Link>
-              <Link
-                href="/seller/listings/new"
-                className="rounded border border-lime-surveyor px-4 py-2 font-jetbrains-mono text-[13px] !text-lime-surveyor no-underline hover:bg-lime-surveyor/10"
-              >
-                New Listing
-              </Link>
+              <LimeButton href="/seller/projects/new">New Project</LimeButton>
+              <GhostButton href="/seller/listings/new">New Listing</GhostButton>
             </div>
           )}
 

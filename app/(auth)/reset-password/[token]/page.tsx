@@ -114,7 +114,7 @@ export default function ResetPasswordPage({ params }: Props) {
         </form>
 
         <p className="text-center font-jetbrains-mono text-[13px] text-drift-ash">
-          <Link href="/login" className="!text-lime-surveyor !no-underline hover:text-lime/80">
+          <Link href="/login" className="!text-lime-surveyor !no-underline hover:text-marsh-olive">
             ← Back to sign in
           </Link>
         </p>
