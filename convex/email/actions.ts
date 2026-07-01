@@ -1,4 +1,4 @@
-"use node";
+'use node';
 
 /**
  * Email actions — AWS SES v2 Node actions.
@@ -13,22 +13,22 @@
  * `api.email.actions.sendKyc*EmailAction`.
  */
 
-import { action } from "../_generated/server";
-import { v } from "convex/values";
-import { api, internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
-import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
+import { action } from '../_generated/server';
+import { v } from 'convex/values';
+import { api, internal } from '../_generated/api';
+import type { Id } from '../_generated/dataModel';
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 
 // ---------------------------------------------------------------------------
 // Env reading (Node runtime — process.env is available)
 // ---------------------------------------------------------------------------
 
 function getSesRegion(): string {
-  return process.env.SES_REGION ?? "us-east-1";
+  return process.env.SES_REGION ?? 'us-east-1';
 }
 
 function getSesSenderDomain(): string {
-  return process.env.SES_SENDER_DOMAIN ?? "example.com";
+  return process.env.SES_SENDER_DOMAIN ?? 'example.com';
 }
 
 function getSesConfigurationSet(): string | undefined {
@@ -36,11 +36,11 @@ function getSesConfigurationSet(): string | undefined {
 }
 
 function getSesAccessKeyId(): string {
-  return process.env.SES_ACCESS_KEY_ID ?? "";
+  return process.env.SES_ACCESS_KEY_ID ?? '';
 }
 
 function getSesSecretAccessKey(): string {
-  return process.env.SES_SECRET_ACCESS_KEY ?? "";
+  return process.env.SES_SECRET_ACCESS_KEY ?? '';
 }
 
 /** True when SES credentials are not configured (dev mode). */
@@ -73,7 +73,7 @@ export const sendEmailAction = action({
 
     // Dev mode: log and return a fake ID — do not call SES.
     if (devMode) {
-      console.warn("[email] Dev mode — email not sent", {
+      console.warn('[email] Dev mode — email not sent', {
         to: toAddresses,
         subject: args.subject,
         tags: args.tags,
@@ -98,32 +98,37 @@ export const sendEmailAction = action({
         Simple: {
           Subject: {
             Data: args.subject,
-            Charset: "UTF-8",
+            Charset: 'UTF-8',
           },
           Body: {
             Html: {
               Data: args.html,
-              Charset: "UTF-8",
+              Charset: 'UTF-8',
             },
             Text: {
               Data: args.text,
-              Charset: "UTF-8",
+              Charset: 'UTF-8',
             },
           },
         },
       },
       ConfigurationSetName: configurationSet,
-      EmailTags: (args.tags ?? []).map((tag) => ({ Name: "template", Value: tag })),
+      EmailTags: (args.tags ?? []).map((tag) => ({ Name: 'template', Value: tag })),
     });
 
     try {
       const result = await client.send(command);
-      const messageId = result.MessageId ?? "unknown";
-      console.info("[email] Sent", { messageId, to: toAddresses, subject: args.subject, tags: args.tags });
+      const messageId = result.MessageId ?? 'unknown';
+      console.info('[email] Sent', {
+        messageId,
+        to: toAddresses,
+        subject: args.subject,
+        tags: args.tags,
+      });
       return { success: true, messageId, error: null };
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
-      console.error("[email] Send failed", { error, to: toAddresses, subject: args.subject });
+      console.error('[email] Send failed', { error, to: toAddresses, subject: args.subject });
       return { success: false, messageId: null, error };
     }
   },
@@ -139,7 +144,7 @@ type KycEmailResult =
 
 export const sendKycSubmittedEmailAction = action({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     legalName: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<KycEmailResult> => {
@@ -148,7 +153,7 @@ export const sendKycSubmittedEmailAction = action({
       userId: args.userId,
     });
     if (!user?.email) {
-      return { success: false, messageId: null, error: "User not found or has no email" };
+      return { success: false, messageId: null, error: 'User not found or has no email' };
     }
 
     const html = `<!DOCTYPE html>
@@ -171,7 +176,7 @@ export const sendKycSubmittedEmailAction = action({
           <tr>
             <td style="background:#141414;border-radius:8px;padding:40px;">
               <h2 style="margin:0 0 16px 0;font-size:20px;font-weight:600;color:#f5f5f5;">KYC application received</h2>
-              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.6;color:#a3a3a3;">Hello ${args.legalName ?? user.legalName ?? "Seller"},</p>
+              <p style="margin:0 0 24px 0;font-size:16px;line-height:1.6;color:#a3a3a3;">Hello ${args.legalName ?? user.legalName ?? 'Seller'},</p>
               <p style="margin:0 0 24px 0;font-size:16px;line-height:1.6;color:#a3a3a3;">We have received your KYC application and it is now under review by our compliance team. You will receive an email once a decision has been made.</p>
               <p style="margin:0 0 24px 0;font-size:16px;line-height:1.6;color:#a3a3a3;">Typically, KYC reviews are completed within 2–3 business days. If you have any questions, please contact our support team.</p>
               <p style="margin:32px 0 0 0;font-size:14px;line-height:1.6;color:#a3a3a3;">You can monitor your KYC status at any time by visiting your seller dashboard.</p>
@@ -192,7 +197,7 @@ export const sendKycSubmittedEmailAction = action({
 
     const text = `KYC application received — CC Verse
 
-Hello ${args.legalName ?? user.legalName ?? "Seller"},
+Hello ${args.legalName ?? user.legalName ?? 'Seller'},
 
 We have received your KYC application and it is now under review by our compliance team.
 You will receive an email once a decision has been made.
@@ -208,17 +213,17 @@ This email was sent to ${user.email}`;
 
     return ctx.runAction(api.email.actions.sendEmailAction, {
       to: user.email,
-      subject: "KYC application received — CC Verse",
+      subject: 'KYC application received — CC Verse',
       html,
       text,
-      tags: ["kyc-submitted"],
+      tags: ['kyc-submitted'],
     });
   },
 });
 
 export const sendKycApprovedEmailAction = action({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     legalName: v.string(),
     loginUrl: v.string(),
   },
@@ -227,7 +232,7 @@ export const sendKycApprovedEmailAction = action({
       userId: args.userId,
     });
     if (!user?.email) {
-      return { success: false, messageId: null, error: "User not found or has no email" };
+      return { success: false, messageId: null, error: 'User not found or has no email' };
     }
 
     const html = `<!DOCTYPE html>
@@ -285,17 +290,17 @@ This email was sent to ${user.email}`;
 
     return ctx.runAction(api.email.actions.sendEmailAction, {
       to: user.email,
-      subject: "KYC Application Approved — CC Verse",
+      subject: 'KYC Application Approved — CC Verse',
       html,
       text,
-      tags: ["kyc-approved"],
+      tags: ['kyc-approved'],
     });
   },
 });
 
 export const sendKycRejectedEmailAction = action({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     legalName: v.string(),
     reason: v.string(),
     supportUrl: v.string(),
@@ -305,7 +310,7 @@ export const sendKycRejectedEmailAction = action({
       userId: args.userId,
     });
     if (!user?.email) {
-      return { success: false, messageId: null, error: "User not found or has no email" };
+      return { success: false, messageId: null, error: 'User not found or has no email' };
     }
 
     const html = `<!DOCTYPE html>
@@ -364,10 +369,10 @@ This email was sent to ${user.email}`;
 
     return ctx.runAction(api.email.actions.sendEmailAction, {
       to: user.email,
-      subject: "KYC Application Not Approved — CC Verse",
+      subject: 'KYC Application Not Approved — CC Verse',
       html,
       text,
-      tags: ["kyc-rejected"],
+      tags: ['kyc-rejected'],
     });
   },
 });

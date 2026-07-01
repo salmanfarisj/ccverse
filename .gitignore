@@ -30,6 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# convex
+convex/_generated/
+.convex/
+.convexrc
+.agents/
+
 # misc
 .DS_Store
 *.pem

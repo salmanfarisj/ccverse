@@ -54,16 +54,8 @@ export default function AccountPage() {
         if (!res.ok) throw new Error('Not authorized');
         const data = await res.json();
         setProfile(data.user);
-        setLegalName(
-          data.user.buyerProfile?.legalName ??
-          data.user.sellerProfile?.legalName ??
-          ''
-        );
-        setCountry(
-          data.user.buyerProfile?.country ??
-          data.user.sellerProfile?.country ??
-          ''
-        );
+        setLegalName(data.user.buyerProfile?.legalName ?? data.user.sellerProfile?.legalName ?? '');
+        setCountry(data.user.buyerProfile?.country ?? data.user.sellerProfile?.country ?? '');
       } catch {
         router.push('/login');
       } finally {
@@ -91,7 +83,10 @@ export default function AccountPage() {
       const refreshedData = await refreshed.json();
       setProfile(refreshedData.user);
 
-      setMessage('Profile updated' + (data.kycStatus === 'EXPIRED' ? ' — KYC status set to expired due to name change.' : ''));
+      setMessage(
+        'Profile updated' +
+          (data.kycStatus === 'EXPIRED' ? ' — KYC status set to expired due to name change.' : ''),
+      );
       setEditing(false);
     } catch (err) {
       setMessage((err as Error).message);
@@ -197,10 +192,7 @@ export default function AccountPage() {
               ) : (
                 <div className="mt-6 space-y-4">
                   <ProfileRow label="Email" value={profile.email} />
-                  <ProfileRow
-                    label="Role"
-                    value={profile.role}
-                  />
+                  <ProfileRow label="Role" value={profile.role} />
                   <ProfileRow
                     label="Status"
                     value={profile.status}
@@ -209,24 +201,15 @@ export default function AccountPage() {
                   <ProfileRow
                     label="Legal name"
                     value={
-                      profile.buyerProfile?.legalName ??
-                      profile.sellerProfile?.legalName ??
-                      '—'
+                      profile.buyerProfile?.legalName ?? profile.sellerProfile?.legalName ?? '—'
                     }
                   />
                   <ProfileRow
                     label="Country"
-                    value={
-                      profile.buyerProfile?.country ??
-                      profile.sellerProfile?.country ??
-                      '—'
-                    }
+                    value={profile.buyerProfile?.country ?? profile.sellerProfile?.country ?? '—'}
                   />
                   {profile.buyerProfile && (
-                    <ProfileRow
-                      label="Currency"
-                      value={profile.buyerProfile.defaultCurrency}
-                    />
+                    <ProfileRow label="Currency" value={profile.buyerProfile.defaultCurrency} />
                   )}
                 </div>
               )}
@@ -240,7 +223,9 @@ export default function AccountPage() {
                   <h2 className="font-jetbrains-mono text-[14px] uppercase tracking-[0.06em] text-lime-surveyor">
                     KYC Status
                   </h2>
-                  <p className={`mt-2 font-jetbrains-mono text-[13px] ${kycStatusColor[profile.sellerProfile.kycStatus]}`}>
+                  <p
+                    className={`mt-2 font-jetbrains-mono text-[13px] ${kycStatusColor[profile.sellerProfile.kycStatus]}`}
+                  >
                     {profile.sellerProfile.kycStatus.replace('_', ' ')}
                   </p>
                   {profile.sellerProfile.kycStatus !== 'APPROVED' && (
@@ -290,10 +275,7 @@ export default function AccountPage() {
                       value={new Date(profile.lastLoginAt).toLocaleString()}
                     />
                   )}
-                  <ProfileRow
-                    label="Email verified"
-                    value={profile.emailVerified ? 'Yes' : 'No'}
-                  />
+                  <ProfileRow label="Email verified" value={profile.emailVerified ? 'Yes' : 'No'} />
                 </div>
               </div>
             </div>

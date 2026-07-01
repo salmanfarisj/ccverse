@@ -12,6 +12,7 @@
 CC Verse migrates its entire backend (database, auth, RBAC, storage, email, background jobs, scheduling) from Next.js API routes + Prisma + PostgreSQL to Convex. The Next.js frontend remains, but all server-side business logic moves to Convex functions. Payment gateway webhooks stay on Next.js routes as external HTTP endpoints cannot call Convex directly.
 
 **Key decisions:**
+
 - Convex Auth (JWT/WebSocket-native) replaces `iron-session` cookie sessions
 - Convex built-in file storage OR Node.js actions calling your existing S3 buckets (TBD per bucket — see Phase 2)
 - Convex `scheduler` + `cronJobs` replaces the `jobs/` in-process runner
@@ -20,6 +21,7 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
 - Playwright tests rewritten from scratch (not migrated) — see §6
 
 **What is NOT migrated:**
+
 - Frontend React components (`app/` pages, `components/`)
 - Next.js configuration (`next.config.mjs`, `tsconfig.json`, `tailwind.config.*`)
 - Design system (`styles/`, `DESIGN.md`)
@@ -31,13 +33,13 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
 
 ## Phase Structure
 
-| Phase | Name | Focus | Prerequisite |
-|-------|------|-------|--------------|
-| 1 | Foundation | Convex project setup, schema, auth, RBAC, TOTP MFA | None |
-| 2 | Data Layer | Storage, email, audit log migrations | Phase 1 |
-| 3 | Business Logic | Registry service, KYC flows, project/listing/order/certificate mutations | Phase 2 |
-| 4 | Jobs & Scheduling | Background jobs, cron, payout scheduling | Phase 3 |
-| 5 | Cutover & Cleanup | Payment webhook migration, old code removal, E2E test rewrite | Phase 4 |
+| Phase | Name              | Focus                                                                    | Prerequisite |
+| ----- | ----------------- | ------------------------------------------------------------------------ | ------------ |
+| 1     | Foundation        | Convex project setup, schema, auth, RBAC, TOTP MFA                       | None         |
+| 2     | Data Layer        | Storage, email, audit log migrations                                     | Phase 1      |
+| 3     | Business Logic    | Registry service, KYC flows, project/listing/order/certificate mutations | Phase 2      |
+| 4     | Jobs & Scheduling | Background jobs, cron, payout scheduling                                 | Phase 3      |
+| 5     | Cutover & Cleanup | Payment webhook migration, old code removal, E2E test rewrite            | Phase 4      |
 
 **Estimated total: 4–5 weeks**
 
@@ -95,7 +97,10 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
 
 - [ ] Create `convex/lib/rbac.ts` helper:
   ```ts
-  export async function requireRole(ctx: QueryCtx | MutationCtx, allowed: Role[]): Promise<Id<"users">>
+  export async function requireRole(
+    ctx: QueryCtx | MutationCtx,
+    allowed: Role[],
+  ): Promise<Id<'users'>>;
   ```
   - Reads `ctx.auth.getUserIdentity()` → throws `Error("Unauthorized")` if null
   - Fetches user from `users` table → throws `Error("Forbidden")` if role not in allowed list
@@ -144,15 +149,15 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P1-1 Convex project setup | ⬜ | | | |
-| P1-2 Schema migration | ⬜ | | | |
-| P1-3 Convex Auth setup | ⬜ | | | Risk: Convex Auth Next.js beta |
-| P1-4 RBAC in Convex | ⬜ | | | |
-| P1-5 TOTP MFA | ⬜ | | | |
-| P1-6 Env vars | ⬜ | | | |
-| P1-7 CI update | ⬜ | | | |
+| Task                      | Status | Owner | PR  | Notes                          |
+| ------------------------- | ------ | ----- | --- | ------------------------------ |
+| P1-1 Convex project setup | ⬜     |       |     |                                |
+| P1-2 Schema migration     | ⬜     |       |     |                                |
+| P1-3 Convex Auth setup    | ⬜     |       |     | Risk: Convex Auth Next.js beta |
+| P1-4 RBAC in Convex       | ⬜     |       |     |                                |
+| P1-5 TOTP MFA             | ⬜     |       |     |                                |
+| P1-6 Env vars             | ⬜     |       |     |                                |
+| P1-7 CI update            | ⬜     |       |     |                                |
 
 ---
 
@@ -184,8 +189,8 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
 
 - [ ] Create `convex/email/actions.ts` with `"use node";` directive:
   ```ts
-  "use node";
-  import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
+  'use node';
+  import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
   ```
 - [ ] Port `SesDriver.send()` logic: reads `SES_SENDER_DOMAIN`, `SES_CONFIGURATION_SET` from Convex env vars
 - [ ] Create `sendEmail` internal action wrapping the SES call
@@ -208,7 +213,7 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
       payload: v.optional(v.any()),
     },
     handler: async (ctx, args) => {
-      await ctx.db.insert("auditLogs", { ...args, timestamp: Date.now() });
+      await ctx.db.insert('auditLogs', { ...args, timestamp: Date.now() });
     },
   });
   ```
@@ -238,12 +243,12 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P2-1 File storage | ⬜ | | | Decision: Convex storage vs S3 Node action |
-| P2-2 Email (SES) | ⬜ | | | |
-| P2-3 Audit log | ⬜ | | | |
-| P2-4 Remove Prisma | ⬜ | | | |
+| Task               | Status | Owner | PR  | Notes                                      |
+| ------------------ | ------ | ----- | --- | ------------------------------------------ |
+| P2-1 File storage  | ⬜     |       |     | Decision: Convex storage vs S3 Node action |
+| P2-2 Email (SES)   | ⬜     |       |     |                                            |
+| P2-3 Audit log     | ⬜     |       |     |                                            |
+| P2-4 Remove Prisma | ⬜     |       |     |                                            |
 
 ---
 
@@ -325,14 +330,14 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P3-1 Auth routes → Convex | ⬜ | | | |
-| P3-2 Seller KYC → Convex | ⬜ | | | |
-| P3-3 Admin KYC → Convex | ⬜ | | | |
-| P3-4 Registry service | ⬜ | | | Critical: OCC verification |
-| P3-5 SES webhook handling | ⬜ | | | |
-| P3-6 Cleanup old routes | ⬜ | | | |
+| Task                      | Status | Owner | PR  | Notes                      |
+| ------------------------- | ------ | ----- | --- | -------------------------- |
+| P3-1 Auth routes → Convex | ⬜     |       |     |                            |
+| P3-2 Seller KYC → Convex  | ⬜     |       |     |                            |
+| P3-3 Admin KYC → Convex   | ⬜     |       |     |                            |
+| P3-4 Registry service     | ⬜     |       |     | Critical: OCC verification |
+| P3-5 SES webhook handling | ⬜     |       |     |                            |
+| P3-6 Cleanup old routes   | ⬜     |       |     |                            |
 
 ---
 
@@ -358,9 +363,9 @@ For each job type registered in `jobs/registry.ts`, create a Convex internal act
 
 - [ ] Create `convex/crons.ts` using `cronJobs()` from `convex/server`:
   ```ts
-  crons.daily("audit-export", { hourUTC: 2, minuteUTC: 0 }, internal.audit.export, {});
-  crons.daily("payout-process", { hourUTC: 3, minuteUTC: 0 }, internal.payouts.processBatch, {});
-  crons.monthly("kyc-expiry-check", { day: 1, hourUTC: 1 }, internal.kyc.checkExpiry, {});
+  crons.daily('audit-export', { hourUTC: 2, minuteUTC: 0 }, internal.audit.export, {});
+  crons.daily('payout-process', { hourUTC: 3, minuteUTC: 0 }, internal.payouts.processBatch, {});
+  crons.monthly('kyc-expiry-check', { day: 1, hourUTC: 1 }, internal.kyc.checkExpiry, {});
   ```
 - [ ] Remove `jobs/` directory (runner, scheduler, enqueue, registry, types, retry, logger)
 - [ ] Remove `lib/jobs/` exports (none exist — `jobs/` is already at repo root)
@@ -392,12 +397,12 @@ For each job type registered in `jobs/registry.ts`, create a Convex internal act
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P4-1 Migrate job handlers | ⬜ | | | |
-| P4-2 Cron jobs | ⬜ | | | |
-| P4-3 One-time scheduled actions | ⬜ | | | |
-| P4-4 Remove jobs/ directory | ⬜ | | | |
+| Task                            | Status | Owner | PR  | Notes |
+| ------------------------------- | ------ | ----- | --- | ----- |
+| P4-1 Migrate job handlers       | ⬜     |       |     |       |
+| P4-2 Cron jobs                  | ⬜     |       |     |       |
+| P4-3 One-time scheduled actions | ⬜     |       |     |       |
+| P4-4 Remove jobs/ directory     | ⬜     |       |     |       |
 
 ---
 
@@ -412,12 +417,15 @@ For each job type registered in `jobs/registry.ts`, create a Convex internal act
 - [ ] Keep `app/api/webhooks/razorpay/route.ts` (create if doesn't exist):
   ```ts
   // Verifies Razorpay signature, then calls Convex mutation
-  import { internal } from "convex/_generated/api";
-  const result = await fetch(`https://${process.env.CONVEX_DEPLOYMENT}.convex.site/api/mutations/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: "internal.payments.handleRazorpayWebhook", args: { event } }),
-  });
+  import { internal } from 'convex/_generated/api';
+  const result = await fetch(
+    `https://${process.env.CONVEX_DEPLOYMENT}.convex.site/api/mutations/`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'internal.payments.handleRazorpayWebhook', args: { event } }),
+    },
+  );
   ```
 - [ ] Keep `app/api/webhooks/stripe/route.ts` similarly
 - [ ] Create `convex/payments/webhookHandlers.ts`:
@@ -471,13 +479,13 @@ For each job type registered in `jobs/registry.ts`, create a Convex internal act
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P5-1 Payment webhooks | ⬜ | | | Next.js routes stay |
-| P5-2 Final old-code removal | ⬜ | | | |
-| P5-3 Env var cleanup | ⬜ | | | |
-| P5-4 E2E test rewrite | ⬜ | | | Full rewrite |
-| P5-5 Production verification | ⬜ | | | |
+| Task                         | Status | Owner | PR  | Notes               |
+| ---------------------------- | ------ | ----- | --- | ------------------- |
+| P5-1 Payment webhooks        | ⬜     |       |     | Next.js routes stay |
+| P5-2 Final old-code removal  | ⬜     |       |     |                     |
+| P5-3 Env var cleanup         | ⬜     |       |     |                     |
+| P5-4 E2E test rewrite        | ⬜     |       |     | Full rewrite        |
+| P5-5 Production verification | ⬜     |       |     |                     |
 
 ---
 
@@ -485,56 +493,58 @@ For each job type registered in `jobs/registry.ts`, create a Convex internal act
 
 ### Summary
 
-| Phase | Name | Tasks | Done | In Progress | Pending |
-|-------|------|-------|------|-------------|---------|
-| 1 | Foundation | 7 | 0 | 0 | 7 |
-| 2 | Data Layer | 4 | 0 | 0 | 4 |
-| 3 | Business Logic | 6 | 0 | 0 | 6 |
-| 4 | Jobs & Scheduling | 4 | 0 | 0 | 4 |
-| 5 | Cutover & Cleanup | 5 | 0 | 0 | 5 |
-| **Total** | | **26** | **0** | **0** | **26** |
+| Phase     | Name              | Tasks  | Done  | In Progress | Pending |
+| --------- | ----------------- | ------ | ----- | ----------- | ------- |
+| 1         | Foundation        | 7      | 0     | 0           | 7       |
+| 2         | Data Layer        | 4      | 0     | 0           | 4       |
+| 3         | Business Logic    | 6      | 0     | 0           | 6       |
+| 4         | Jobs & Scheduling | 4      | 0     | 0           | 4       |
+| 5         | Cutover & Cleanup | 5      | 0     | 0           | 5       |
+| **Total** |                   | **26** | **0** | **0**       | **26**  |
 
 ### All Tasks
 
-| ID | Task | Phase | Status | Owner | PR | Notes |
-|----|------|-------|--------|-------|----|-------|
-| P1-1 | Convex project setup | 1 | ⬜ | | | |
-| P1-2 | Schema migration | 1 | ⬜ | | | |
-| P1-3 | Convex Auth setup | 1 | ⬜ | | | Risk: Convex Auth Next.js beta |
-| P1-4 | RBAC in Convex | 1 | ⬜ | | | |
-| P1-5 | TOTP MFA | 1 | ⬜ | | | |
-| P1-6 | Env vars | 1 | ⬜ | | | |
-| P1-7 | CI update | 1 | ⬜ | | | |
-| P2-1 | File storage | 2 | ⬜ | | | Decision: Convex storage vs S3 Node action |
-| P2-2 | Email (SES) | 2 | ⬜ | | | |
-| P2-3 | Audit log | 2 | ⬜ | | | |
-| P2-4 | Remove Prisma | 2 | ⬜ | | | |
-| P3-1 | Auth routes → Convex | 3 | ⬜ | | | |
-| P3-2 | Seller KYC → Convex | 3 | ⬜ | | | |
-| P3-3 | Admin KYC → Convex | 3 | ⬜ | | | |
-| P3-4 | Registry service | 3 | ⬜ | | | Critical: OCC verification |
-| P3-5 | SES webhook handling | 3 | ⬜ | | | |
-| P3-6 | Cleanup old routes | 3 | ⬜ | | | |
-| P4-1 | Migrate job handlers | 4 | ⬜ | | | |
-| P4-2 | Cron jobs | 4 | ⬜ | | | |
-| P4-3 | One-time scheduled actions | 4 | ⬜ | | | |
-| P4-4 | Remove jobs/ directory | 4 | ⬜ | | | |
-| P5-1 | Payment webhooks | 5 | ⬜ | | | Next.js routes stay |
-| P5-2 | Final old-code removal | 5 | ⬜ | | | |
-| P5-3 | Env var cleanup | 5 | ⬜ | | | |
-| P5-4 | E2E test rewrite | 5 | ⬜ | | | Full rewrite |
-| P5-5 | Production verification | 5 | ⬜ | | | |
+| ID   | Task                       | Phase | Status | Owner | PR  | Notes                                      |
+| ---- | -------------------------- | ----- | ------ | ----- | --- | ------------------------------------------ |
+| P1-1 | Convex project setup       | 1     | ⬜     |       |     |                                            |
+| P1-2 | Schema migration           | 1     | ⬜     |       |     |                                            |
+| P1-3 | Convex Auth setup          | 1     | ⬜     |       |     | Risk: Convex Auth Next.js beta             |
+| P1-4 | RBAC in Convex             | 1     | ⬜     |       |     |                                            |
+| P1-5 | TOTP MFA                   | 1     | ⬜     |       |     |                                            |
+| P1-6 | Env vars                   | 1     | ⬜     |       |     |                                            |
+| P1-7 | CI update                  | 1     | ⬜     |       |     |                                            |
+| P2-1 | File storage               | 2     | ⬜     |       |     | Decision: Convex storage vs S3 Node action |
+| P2-2 | Email (SES)                | 2     | ⬜     |       |     |                                            |
+| P2-3 | Audit log                  | 2     | ⬜     |       |     |                                            |
+| P2-4 | Remove Prisma              | 2     | ⬜     |       |     |                                            |
+| P3-1 | Auth routes → Convex       | 3     | ⬜     |       |     |                                            |
+| P3-2 | Seller KYC → Convex        | 3     | ⬜     |       |     |                                            |
+| P3-3 | Admin KYC → Convex         | 3     | ⬜     |       |     |                                            |
+| P3-4 | Registry service           | 3     | ⬜     |       |     | Critical: OCC verification                 |
+| P3-5 | SES webhook handling       | 3     | ⬜     |       |     |                                            |
+| P3-6 | Cleanup old routes         | 3     | ⬜     |       |     |                                            |
+| P4-1 | Migrate job handlers       | 4     | ⬜     |       |     |                                            |
+| P4-2 | Cron jobs                  | 4     | ⬜     |       |     |                                            |
+| P4-3 | One-time scheduled actions | 4     | ⬜     |       |     |                                            |
+| P4-4 | Remove jobs/ directory     | 4     | ⬜     |       |     |                                            |
+| P5-1 | Payment webhooks           | 5     | ⬜     |       |     | Next.js routes stay                        |
+| P5-2 | Final old-code removal     | 5     | ⬜     |       |     |                                            |
+| P5-3 | Env var cleanup            | 5     | ⬜     |       |     |                                            |
+| P5-4 | E2E test rewrite           | 5     | ⬜     |       |     | Full rewrite                               |
+| P5-5 | Production verification    | 5     | ⬜     |       |     |                                            |
 
 ---
 
 ## Files to Delete (by phase)
 
 ### Phase 1
+
 - `lib/session/index.ts`
 - `lib/rbac/index.ts`
 - `lib/rbac/seller.ts` (if exists)
 
 ### Phase 2
+
 - `lib/storage/index.ts`
 - `lib/storage/s3.ts`
 - `lib/storage/driver.ts`
@@ -544,6 +554,7 @@ For each job type registered in `jobs/registry.ts`, create a Convex internal act
 - `lib/audit/index.ts`
 
 ### Phase 3
+
 - `app/api/auth/` (all routes)
 - `app/api/seller/kyc/` (all routes)
 - `app/api/admin/kyc/` (all routes)
@@ -551,6 +562,7 @@ For each job type registered in `jobs/registry.ts`, create a Convex internal act
 - `app/api/me/` (all routes)
 
 ### Phase 4
+
 - `jobs/enqueue.ts`
 - `jobs/runner.ts`
 - `jobs/index.ts`
@@ -561,6 +573,7 @@ For each job type registered in `jobs/registry.ts`, create a Convex internal act
 - `jobs/logger.ts`
 
 ### Phase 5
+
 - `prisma/schema.prisma`
 - `prisma/migrations/` (directory)
 - `prisma/seed.ts`
@@ -570,11 +583,11 @@ For each job type registered in `jobs/registry.ts`, create a Convex internal act
 
 ## Risk Register
 
-| Risk | Phase | Likelihood | Impact | Mitigation |
-|------|-------|------------|--------|------------|
-| Convex Auth Next.js support not stable by migration time | 1 | Medium | High | Fall back to custom JWT in httpOnly cookie — same security properties |
-| TOTP MFA implementation complexity | 1 | Low | Medium | `otplib` works in Node actions; only ~40 lines of code |
-| Payment webhook dual-write during cutover | 5 | Low | High | Phased cutover: webhooks write to Next.js route first, then call Convex |
-| OCC retry storms under high concurrency on registry | 3 | Low | High | Convex caps mutation runtime at 1s; test with 10 concurrent allocateToSeller calls |
-| Convex file storage insufficient for certificate S3 lifecycle | 2 | Low | Low | Use Node action → your existing S3 bucket for certificates |
-| Self-hosting needed for data residency | 1 | Low | Medium | Open-source Convex backend supports PostgreSQL backend — can self-host |
+| Risk                                                          | Phase | Likelihood | Impact | Mitigation                                                                         |
+| ------------------------------------------------------------- | ----- | ---------- | ------ | ---------------------------------------------------------------------------------- |
+| Convex Auth Next.js support not stable by migration time      | 1     | Medium     | High   | Fall back to custom JWT in httpOnly cookie — same security properties              |
+| TOTP MFA implementation complexity                            | 1     | Low        | Medium | `otplib` works in Node actions; only ~40 lines of code                             |
+| Payment webhook dual-write during cutover                     | 5     | Low        | High   | Phased cutover: webhooks write to Next.js route first, then call Convex            |
+| OCC retry storms under high concurrency on registry           | 3     | Low        | High   | Convex caps mutation runtime at 1s; test with 10 concurrent allocateToSeller calls |
+| Convex file storage insufficient for certificate S3 lifecycle | 2     | Low        | Low    | Use Node action → your existing S3 bucket for certificates                         |
+| Self-hosting needed for data residency                        | 1     | Low        | Medium | Open-source Convex backend supports PostgreSQL backend — can self-host             |

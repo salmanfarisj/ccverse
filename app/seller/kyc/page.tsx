@@ -213,8 +213,8 @@ export default function SellerKycPage() {
               kycStatus === 'APPROVED'
                 ? 'border-lime-surveyor bg-lime-surveyor/10 text-lime-surveyor'
                 : kycStatus === 'REJECTED'
-                ? 'border-red-500 bg-red-500/10 text-red-400'
-                : 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
+                  ? 'border-red-500 bg-red-500/10 text-red-400'
+                  : 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
             }`}
           >
             KYC Status: {kycStatus}
@@ -239,7 +239,9 @@ export default function SellerKycPage() {
                   {currentStep > step ? '✓' : step}
                 </div>
                 {step < 4 && (
-                  <div className={`h-px w-8 ${currentStep > step ? 'bg-lime-surveyor' : 'bg-iron-filings'}`} />
+                  <div
+                    className={`h-px w-8 ${currentStep > step ? 'bg-lime-surveyor' : 'bg-iron-filings'}`}
+                  />
                 )}
               </div>
             ))}
@@ -293,7 +295,9 @@ export default function SellerKycPage() {
                   label="Authorized signatory name"
                   name="authorizedSignatoryName"
                   value={entity.authorizedSignatoryName}
-                  onChange={(e) => setEntity((p) => ({ ...p, authorizedSignatoryName: e.target.value }))}
+                  onChange={(e) =>
+                    setEntity((p) => ({ ...p, authorizedSignatoryName: e.target.value }))
+                  }
                   disabled={kycLocked}
                 />
                 <Input
@@ -301,7 +305,9 @@ export default function SellerKycPage() {
                   name="authorizedSignatoryEmail"
                   type="email"
                   value={entity.authorizedSignatoryEmail}
-                  onChange={(e) => setEntity((p) => ({ ...p, authorizedSignatoryEmail: e.target.value }))}
+                  onChange={(e) =>
+                    setEntity((p) => ({ ...p, authorizedSignatoryEmail: e.target.value }))
+                  }
                   disabled={kycLocked}
                 />
               </div>
@@ -332,7 +338,10 @@ export default function SellerKycPage() {
             {kyc?.documents && kyc.documents.length > 0 && (
               <div className="space-y-2">
                 {kyc.documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between rounded border border-iron-filings px-3 py-2">
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between rounded border border-iron-filings px-3 py-2"
+                  >
                     <div>
                       <p className="font-jetbrains-mono text-[13px] text-lime-surveyor">
                         {DOCUMENT_TYPE_LABELS[doc.documentType] ?? doc.documentType}
@@ -343,10 +352,15 @@ export default function SellerKycPage() {
                         </p>
                       )}
                     </div>
-                    <span className={`font-jetbrains-mono text-[11px] ${
-                      doc.reviewStatus === 'APPROVED' ? 'text-lime-surveyor' :
-                      doc.reviewStatus === 'REJECTED' ? 'text-red-400' : 'text-yellow-400'
-                    }`}>
+                    <span
+                      className={`font-jetbrains-mono text-[11px] ${
+                        doc.reviewStatus === 'APPROVED'
+                          ? 'text-lime-surveyor'
+                          : doc.reviewStatus === 'REJECTED'
+                            ? 'text-red-400'
+                            : 'text-yellow-400'
+                      }`}
+                    >
                       {doc.reviewStatus}
                     </span>
                   </div>
@@ -357,7 +371,14 @@ export default function SellerKycPage() {
             {/* Upload form */}
             {!kycLocked && (
               <div className="space-y-3">
-                {['PAN', 'GSTIN', 'PASSPORT', 'UTILITY_BILL', 'BANK_STATEMENT', 'INCORPORATION_CERT'].map((type) => (
+                {[
+                  'PAN',
+                  'GSTIN',
+                  'PASSPORT',
+                  'UTILITY_BILL',
+                  'BANK_STATEMENT',
+                  'INCORPORATION_CERT',
+                ].map((type) => (
                   <div key={type} className="flex items-center gap-3">
                     <span className="w-40 font-jetbrains-mono text-[12px] text-drift-ash">
                       {DOCUMENT_TYPE_LABELS[type]}
@@ -404,12 +425,13 @@ export default function SellerKycPage() {
                     {kyc.bankAccount.accountHolder} — {kyc.bankAccount.bankName}
                   </p>
                   <p className="font-jetbrains-mono text-[12px] text-drift-ash">
-                    Account ending in {kyc.bankAccount.accountNoLast4} · {kyc.bankAccount.routingOrIfsc}
+                    Account ending in {kyc.bankAccount.accountNoLast4} ·{' '}
+                    {kyc.bankAccount.routingOrIfsc}
                   </p>
                 </div>
                 {!kycLocked && (
                   <button
-                    onClick={() => setKyc((p) => p ? { ...p, bankAccount: null } : p)}
+                    onClick={() => setKyc((p) => (p ? { ...p, bankAccount: null } : p))}
                     className="font-jetbrains-mono text-[12px] text-drift-ash underline hover:text-lime-surveyor"
                   >
                     Replace bank account
@@ -423,7 +445,9 @@ export default function SellerKycPage() {
                     label="Account holder name"
                     name="accountHolder"
                     value={bankAccount.accountHolder}
-                    onChange={(e) => setBankAccount((p) => ({ ...p, accountHolder: e.target.value }))}
+                    onChange={(e) =>
+                      setBankAccount((p) => ({ ...p, accountHolder: e.target.value }))
+                    }
                     disabled={kycLocked}
                   />
                   <Input
@@ -441,14 +465,18 @@ export default function SellerKycPage() {
                     maxLength={4}
                     pattern="[0-9]{4}"
                     value={bankAccount.accountNoLast4}
-                    onChange={(e) => setBankAccount((p) => ({ ...p, accountNoLast4: e.target.value }))}
+                    onChange={(e) =>
+                      setBankAccount((p) => ({ ...p, accountNoLast4: e.target.value }))
+                    }
                     disabled={kycLocked}
                   />
                   <Input
                     label="Routing number / IFSC"
                     name="routingOrIfsc"
                     value={bankAccount.routingOrIfsc}
-                    onChange={(e) => setBankAccount((p) => ({ ...p, routingOrIfsc: e.target.value }))}
+                    onChange={(e) =>
+                      setBankAccount((p) => ({ ...p, routingOrIfsc: e.target.value }))
+                    }
                     disabled={kycLocked}
                   />
                 </div>
@@ -481,7 +509,9 @@ export default function SellerKycPage() {
               <div className="flex justify-between border-b border-iron-filings pb-2">
                 <span>Bank account</span>
                 <span className="text-lime-surveyor">
-                  {kyc?.bankAccount ? `${kyc.bankAccount.bankName} ··${kyc.bankAccount.accountNoLast4}` : 'Not provided'}
+                  {kyc?.bankAccount
+                    ? `${kyc.bankAccount.bankName} ··${kyc.bankAccount.accountNoLast4}`
+                    : 'Not provided'}
                 </span>
               </div>
             </div>
@@ -502,7 +532,11 @@ export default function SellerKycPage() {
         <div className="flex justify-between">
           <GhostButton onClick={() => router.push('/seller')}>← Back to dashboard</GhostButton>
           {currentStep < 4 && !kycLocked && (
-            <GhostButton onClick={() => {/* just view */}}>
+            <GhostButton
+              onClick={() => {
+                /* just view */
+              }}
+            >
               Step {currentStep} of 4
             </GhostButton>
           )}

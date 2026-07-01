@@ -17,8 +17,8 @@
  *   timestamp (float64 ms since epoch), payload (JSON string, default "{}")
  */
 
-import { internalMutation } from "../_generated/server";
-import { v } from "convex/values";
+import { internalMutation } from '../_generated/server';
+import { v } from 'convex/values';
 
 export const writeAuditEvent = internalMutation({
   args: {
@@ -31,7 +31,7 @@ export const writeAuditEvent = internalMutation({
     payload: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("auditLogs", {
+    await ctx.db.insert('auditLogs', {
       actorId: args.actorId,
       actorRole: args.actorRole,
       action: args.action,
@@ -39,7 +39,7 @@ export const writeAuditEvent = internalMutation({
       targetId: args.targetId,
       ip: args.ip,
       timestamp: Date.now(),
-      payload: args.payload ?? "{}",
+      payload: args.payload ?? '{}',
     });
     return { success: true };
   },

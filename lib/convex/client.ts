@@ -16,21 +16,21 @@
  * network path while the browser uses the public deployment URL.
  *
  * Reset: `resetConvexClientForTesting()` clears the memoized client so
- * Vitest tests can mutate env vars and re-initialize.
+ * tests can mutate env vars and re-initialize.
  */
 
-import { ConvexHttpClient } from "convex/browser";
+import { ConvexHttpClient } from 'convex/browser';
 
 let cachedClient: ConvexHttpClient | undefined;
 let cachedUrl: string | undefined;
 
 function resolveConvexUrl(): string {
-  const fromPublic = process.env["NEXT_PUBLIC_CONVEX_URL"];
-  const fromServer = process.env["CONVEX_DEPLOYMENT_URL"];
+  const fromPublic = process.env['NEXT_PUBLIC_CONVEX_URL'];
+  const fromServer = process.env['CONVEX_DEPLOYMENT_URL'];
   const url = fromPublic || fromServer;
   if (!url) {
     throw new Error(
-      "Convex URL is not configured. Set NEXT_PUBLIC_CONVEX_URL (or CONVEX_DEPLOYMENT_URL) in your environment.",
+      'Convex URL is not configured. Set NEXT_PUBLIC_CONVEX_URL (or CONVEX_DEPLOYMENT_URL) in your environment.',
     );
   }
   return url;

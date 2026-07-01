@@ -19,7 +19,9 @@ export async function POST(_req: NextRequest) {
 
     // Phase 2: full project creation logic
     return NextResponse.json(
-      { error: 'Project creation is not yet implemented. Full registration flows land in Phase 2.' },
+      {
+        error: 'Project creation is not yet implemented. Full registration flows land in Phase 2.',
+      },
       { status: 501 },
     );
   } catch (err) {

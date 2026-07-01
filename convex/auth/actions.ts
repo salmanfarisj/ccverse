@@ -1,14 +1,14 @@
-"use node";
+'use node';
 
-import { action } from "../_generated/server";
-import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
-import { api, internal } from "../_generated/api";
+import { action } from '../_generated/server';
+import { v } from 'convex/values';
+import type { Id } from '../_generated/dataModel';
+import { api, internal } from '../_generated/api';
 
 async function hashPassword(plain: string): Promise<string> {
-  const { hash } = await import("argon2");
+  const { hash } = await import('argon2');
   if (!plain || plain.length < 8) {
-    throw new Error("Password must be at least 8 characters");
+    throw new Error('Password must be at least 8 characters');
   }
   return hash(plain, {
     memoryCost: 64 * 1024,
@@ -19,7 +19,7 @@ async function hashPassword(plain: string): Promise<string> {
 }
 
 async function verifyPassword(plain: string, hashed: string): Promise<boolean> {
-  const { verify } = await import("argon2");
+  const { verify } = await import('argon2');
   try {
     return await verify(hashed, plain);
   } catch {
@@ -33,25 +33,23 @@ type LoginResult =
       success: true;
       error: null;
       user: {
-        id: Id<"users">;
+        id: Id<'users'>;
         email: string;
-        role: "BUYER" | "SELLER" | "AUDITOR" | "ADMIN";
-        status: "ACTIVE" | "SUSPENDED" | "BANNED" | "PENDING_VERIFICATION";
+        role: 'BUYER' | 'SELLER' | 'AUDITOR' | 'ADMIN';
+        status: 'ACTIVE' | 'SUSPENDED' | 'BANNED' | 'PENDING_VERIFICATION';
         mfaEnabled: boolean;
       };
     };
 
 type RegisterResult = {
   success: boolean;
-  user:
-    | {
-        id: Id<"users">;
-        email: string;
-        role: "BUYER" | "SELLER";
-        status: "PENDING_VERIFICATION";
-        mfaEnabled: boolean;
-      }
-    | null;
+  user: {
+    id: Id<'users'>;
+    email: string;
+    role: 'BUYER' | 'SELLER';
+    status: 'ACTIVE';
+    mfaEnabled: boolean;
+  } | null;
 };
 
 export const loginAction = action({
@@ -67,19 +65,18 @@ export const loginAction = action({
     });
 
     if (!result.success || !result.user) {
-      return { success: false, error: result.error || "Invalid credentials", user: null };
+      return { success: false, error: result.error || 'Invalid credentials', user: null };
     }
 
     if (result.user.lockedUntil && result.user.lockedUntil > Date.now()) {
-      return { success: false, error: "Account locked", user: null };
+      return { success: false, error: 'Account locked', user: null };
     }
 
     const passwordValid = await verifyPassword(args.password, result.user.passwordHash);
 
     if (!passwordValid) {
       const failedLoginCount = result.user.failedLoginCount + 1;
-      const lockUntil =
-        failedLoginCount >= 5 ? Date.now() + 15 * 60 * 1000 : undefined;
+      const lockUntil = failedLoginCount >= 5 ? Date.now() + 15 * 60 * 1000 : undefined;
 
       await ctx.runMutation(internal.auth.mutations.loginUpdateMutation, {
         userId: result.user.id,
@@ -87,7 +84,7 @@ export const loginAction = action({
         lockUntil,
       });
 
-      return { success: false, error: "Invalid credentials", user: null };
+      return { success: false, error: 'Invalid credentials', user: null };
     }
 
     await ctx.runMutation(internal.auth.mutations.loginSuccessMutation, {
@@ -132,8 +129,8 @@ export const registerBuyerAction = action({
         ? {
             id: result.userId,
             email: normalizedEmail,
-            role: "BUYER",
-            status: "PENDING_VERIFICATION",
+            role: 'BUYER',
+            status: 'ACTIVE',
             mfaEnabled: false,
           }
         : null,
@@ -165,8 +162,8 @@ export const registerSellerAction = action({
         ? {
             id: result.userId,
             email: normalizedEmail,
-            role: "SELLER",
-            status: "PENDING_VERIFICATION",
+            role: 'SELLER',
+            status: 'ACTIVE',
             mfaEnabled: false,
           }
         : null,
@@ -175,7 +172,7 @@ export const registerSellerAction = action({
 });
 
 type ResetPasswordResult =
-  | { success: true; error: null; userId: Id<"users"> }
+  | { success: true; error: null; userId: Id<'users'> }
   | { success: false; error: string; userId: null };
 
 /**
@@ -202,9 +199,7 @@ export const resetPasswordAction = action({
   },
 });
 
-type ChangePasswordResult =
-  | { success: true; error: null }
-  | { success: false; error: string };
+type ChangePasswordResult = { success: true; error: null } | { success: false; error: string };
 
 /**
  * changePasswordAction — Node action for the logged-in
@@ -218,22 +213,21 @@ type ChangePasswordResult =
  */
 export const changePasswordAction = action({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     currentPassword: v.string(),
     newPassword: v.string(),
   },
   handler: async (ctx, args): Promise<ChangePasswordResult> => {
-    const auth = await ctx.runQuery(
-      api.users.queries.findUserAuthDataByIdQuery,
-      { userId: args.userId },
-    );
+    const auth = await ctx.runQuery(api.users.queries.findUserAuthDataByIdQuery, {
+      userId: args.userId,
+    });
     if (!auth.passwordHash) {
-      return { success: false, error: "User not found or has no password set" };
+      return { success: false, error: 'User not found or has no password set' };
     }
 
     const currentValid = await verifyPassword(args.currentPassword, auth.passwordHash);
     if (!currentValid) {
-      return { success: false, error: "Current password is incorrect" };
+      return { success: false, error: 'Current password is incorrect' };
     }
 
     const newPasswordHash = await hashPassword(args.newPassword);

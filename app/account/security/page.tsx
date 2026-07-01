@@ -121,7 +121,10 @@ export default function AccountSecurityPage() {
             )}
 
             {success && (
-              <p className="rounded-md border border-marsh-olive bg-[#141414] p-4 font-jetbrains-mono text-[13px] text-marsh-olive" role="status">
+              <p
+                className="rounded-md border border-marsh-olive bg-[#141414] p-4 font-jetbrains-mono text-[13px] text-marsh-olive"
+                role="status"
+              >
                 {success}
               </p>
             )}

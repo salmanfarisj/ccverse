@@ -1,29 +1,29 @@
 /**
  * POST /api/auth/register/buyer
  *
- * Public buyer self-registration. Creates a User (status=pending_verification,
- * role=buyer), a BuyerProfile, an EmailVerificationToken (24h TTL), and sends
- * the verification email.
+ * Public buyer self-registration via Convex `auth.actions.registerBuyerAction`.
+ * Creates a User (role=BUYER, status=PENDING_VERIFICATION) and a
+ * matching BuyerProfile in Convex.
  *
- * Audit events: auth.register
+ * TODO(phase-2): email verification — after registerBuyerAction returns
+ * success, this route should call a Convex action that creates an
+ * EmailVerificationToken and (in Phase 2) sends the verification email
+ * via SES. For Phase 1 the user is created without an email challenge
+ * so the happy-path login flow can be exercised end-to-end.
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/db';
-import { hashPassword } from '@/lib/auth/hashing';
-import { writeAuditEvent } from '@/lib/audit';
-import { SesDriver } from '@/lib/email/ses';
-import { getEnv } from '@/lib/env';
-import { renderVerifyEmailHtml, renderVerifyEmailText } from '@/lib/email/templates/verify-email';
+import { api } from '@/convex/_generated/api';
+import { getConvexClient } from '@/lib/convex/client';
 
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
+  legalName: z.string().min(1).optional(),
+  country: z.string().min(2).max(2).optional(),
 });
-
-const EMAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,74 +33,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.message }, { status: 400 });
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, legalName, country } = parsed.data;
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined;
 
-    // Check for duplicate email
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 });
-    }
-
-    const passwordHash = await hashPassword(password);
-
-    // Create user + buyer profile in a transaction
-    const user = await prisma.$transaction(async (tx) => {
-      const u = await tx.user.create({
-        data: {
-          email,
-          passwordHash,
-          role: 'BUYER',
-          status: 'PENDING_VERIFICATION',
-          emailVerified: false,
-        },
-      });
-
-      await tx.buyerProfile.create({
-        data: {
-          userId: u.id,
-          kycStatus: 'NOT_REQUIRED',
-          kycMethod: 'NONE',
-          defaultCurrency: 'USD',
-        },
-      });
-
-      return u;
+    const convex = getConvexClient();
+    const result = await convex.action(api.auth.actions.registerBuyerAction, {
+      email,
+      password,
+      legalName,
+      country,
     });
 
-    // Generate email verification token
-    const token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + EMAIL_TTL_MS);
-
-    await prisma.emailVerificationToken.create({
-      data: { token, userId: user.id, expiresAt },
-    });
-
-    // Send verification email — non-fatal; user is already created in the transaction.
-    try {
-      const env = getEnv();
-      const verifyUrl = `${env.APP_ORIGIN}/verify-email/${token}`;
-      const ses = new SesDriver();
-      await ses.send({
-        to: email,
-        subject: 'Verify your CC Verse account',
-        html: renderVerifyEmailHtml({ email, verifyUrl }),
-        text: renderVerifyEmailText({ email, verifyUrl }),
-        tags: ['auth', 'verify-email'],
-      });
-    } catch (emailErr) {
-      console.error('buyer register: email send failed', emailErr);
+    if (!result.success || !result.user) {
+      return NextResponse.json(
+        { error: 'An account with this email already exists' },
+        { status: 409 },
+      );
     }
 
-    // Audit event
-    await writeAuditEvent({
-      actorId: user.id,
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
+      actorId: result.user.id,
       actorRole: 'buyer',
       action: 'auth.register',
       targetType: 'user',
-      targetId: user.id,
+      targetId: result.user.id,
       ip,
-      payload: { email, role: 'buyer' },
+      payload: JSON.stringify({ email, role: 'buyer' }),
     });
 
     return NextResponse.json(

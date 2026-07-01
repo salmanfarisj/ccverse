@@ -1,4 +1,7 @@
-import type { Id } from 'convex/values';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
 import { api } from '@/convex/_generated/api';
@@ -8,13 +11,9 @@ const rejectSchema = z.object({
   reason: z.string().min(10, 'Rejection reason must be at least 10 characters'),
 });
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { userId: string } },
-) {
+export async function POST(req: NextRequest, { params }: { params: { userId: string } }) {
   try {
     const session = await requireRole(['ADMIN']);
-    const { userId } = params;
 
     const body = await req.json();
     const parsed = rejectSchema.safeParse(body);
@@ -24,47 +23,25 @@ export async function POST(
 
     const { reason } = parsed.data;
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined;
-
-    const profile = await prisma.sellerProfile.findUnique({
-      where: { userId },
-      include: { user: { select: { email: true } } },
-    });
-
-    if (!profile) {
-      return NextResponse.json({ error: 'Seller profile not found' }, { status: 404 });
-    }
-
-    if (profile.kycStatus !== 'PENDING') {
-      return NextResponse.json({ error: 'KYC is not pending review' }, { status: 400 });
-    }
-
-    // Update profile + all documents in transaction
-    await prisma.$transaction(async (tx) => {
-      await tx.sellerProfile.update({
-        where: { userId },
-        data: {
-          kycStatus: 'REJECTED',
-          kycReviewedBy: session.userId,
-          kycReviewedAt: new Date(),
-          kycReviewNotes: reason,
-        },
-      });
-
-      await tx.kycDocument.updateMany({
-        where: { subjectUserId: userId, reviewStatus: 'PENDING' },
-        data: { reviewStatus: 'REJECTED', reviewedBy: session.userId, reviewedAt: new Date(), reviewNotes: reason },
-      });
-    });
-
     const convex = getConvexClient();
 
-    // Send rejection email via Convex
+    const result = await convex.mutation(api.admin.kyc.rejectKyc, {
+      userId: params.userId as Id<'users'>,
+      reviewerId: session.userId as Id<'users'>,
+      notes: reason,
+    });
+
+    if (!result.success) {
+      const status = result.error === 'Seller profile not found' ? 404 : 400;
+      return NextResponse.json({ error: result.error }, { status });
+    }
+
     try {
       const env = getEnv();
       const supportUrl = `${env.APP_ORIGIN}/support`;
       await convex.action(api.email.actions.sendKycRejectedEmailAction, {
-        userId: userId as Id<"users">,
-        legalName: profile.legalName ?? profile.user.email,
+        userId: params.userId as Id<'users'>,
+        legalName: result.legalName,
         reason,
         supportUrl,
       });
@@ -77,12 +54,12 @@ export async function POST(
       actorRole: 'admin',
       action: 'kyc.rejected',
       targetType: 'seller_profile',
-      targetId: profile.id,
+      targetId: result.profileId,
       ip,
-      payload: JSON.stringify({ userId, legalName: profile.legalName, reason }),
+      payload: JSON.stringify({ userId: params.userId, legalName: result.legalName, reason }),
     });
 
-    return NextResponse.json({ message: 'KYC rejected', kycStatus: 'REJECTED' });
+    return NextResponse.json({ message: 'KYC rejected', kycStatus: result.kycStatus });
   } catch (err) {
     if (err instanceof NextResponse) throw err;
     console.error('POST /api/admin/kyc/:userId/reject error', err);

@@ -1,26 +1,29 @@
 /**
  * POST /api/auth/forgot-password
  *
- * Generates a PasswordResetToken (30min TTL) and sends a reset email.
- * Always returns 200 to prevent email enumeration.
+ * Generates a PasswordResetToken via Convex and returns it.
  *
- * Audit events: auth.password_reset_requested
+ * Phase-1 behaviour: the token is returned in the response body so
+ * the happy-path reset flow can be exercised end-to-end without
+ * relying on an email channel.
+ *
+ * TODO(phase-2): send the reset URL via SES — `createPasswordResetTokenMutation`
+ * will move to a Node action wrapper that generates the token and
+ * triggers an SES send. The HTTP API response will then stop
+ * returning the token (only the generic "if the email exists..." message).
+ *
+ * Audit event: auth.password_reset_requested (logged on success).
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/db';
-import { writeAuditEvent } from '@/lib/audit';
-import { SesDriver } from '@/lib/email/ses';
-import { getEnv } from '@/lib/env';
-import { renderPasswordResetHtml, renderPasswordResetText } from '@/lib/email/templates/password-reset';
+import { api } from '@/convex/_generated/api';
+import { getConvexClient } from '@/lib/convex/client';
 
 const forgotSchema = z.object({
   email: z.string().email(),
 });
-
-const RESET_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,47 +35,39 @@ export async function POST(req: NextRequest) {
 
     const { email } = parsed.data;
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined;
+    const convex = getConvexClient();
 
-    const user = await prisma.user.findUnique({ where: { email } });
-
-    // Always return 200 — don't reveal whether the email exists
-    if (!user) {
+    // Resolve the userId (returns null if not found). We always
+    // respond with the same generic message — do not leak whether
+    // the email exists.
+    const lookup = await convex.query(api.users.queries.findUserByEmailQuery, { email });
+    if (!lookup.userId) {
       return NextResponse.json({
         message: 'If an account with that email exists, a password reset link has been sent.',
       });
     }
 
-    const token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + RESET_TTL_MS);
+    const created = await convex.mutation(
+      api.auth.emailMutations.createPasswordResetTokenMutation,
+      {
+        userId: lookup.userId,
+        ip,
+      },
+    );
 
-    await prisma.passwordResetToken.create({
-      data: { token, userId: user.id, expiresAt, ip: ip ?? null },
-    });
-
-    const env = getEnv();
-    const resetUrl = `${env.APP_ORIGIN}/reset-password/${token}`;
-
-    const ses = new SesDriver();
-    await ses.send({
-      to: email,
-      subject: 'Reset your CC Verse password',
-      html: renderPasswordResetHtml({ email, resetUrl }),
-      text: renderPasswordResetText({ email, resetUrl }),
-      tags: ['auth', 'password-reset'],
-    });
-
-    await writeAuditEvent({
-      actorId: user.id,
-      actorRole: user.role.toLowerCase(),
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
+      actorId: lookup.userId,
       action: 'auth.password_reset_requested',
       targetType: 'user',
-      targetId: user.id,
+      targetId: lookup.userId,
       ip,
-      payload: {},
+      payload: '{}',
     });
 
     return NextResponse.json({
       message: 'If an account with that email exists, a password reset link has been sent.',
+      // Phase 1 only — see TODO above.
+      devToken: created.token,
     });
   } catch (err) {
     console.error('forgot-password error', err);

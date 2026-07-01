@@ -14,6 +14,7 @@
 CC Verse migrates its entire backend (database, auth, RBAC, storage, email, background jobs, scheduling) from Next.js API routes + Prisma + PostgreSQL to Convex. The Next.js frontend remains, but all server-side business logic moves to Convex functions. Payment gateway webhooks stay on Next.js routes as external HTTP endpoints cannot call Convex directly.
 
 **Key decisions:**
+
 - Convex Auth (JWT/WebSocket-native) replaces `iron-session` cookie sessions
 - Convex `scheduler` + `cronJobs` replaces the `jobs/` in-process runner
 - Payment webhooks (Razorpay/Stripe) remain Next.js route handlers that call Convex mutations via HTTP — **these routes do not exist yet and must be created**
@@ -22,6 +23,7 @@ CC Verse migrates its entire backend (database, auth, RBAC, storage, email, back
 - Playwright tests rewritten from scratch — see §5
 
 **What is NOT migrated:**
+
 - Frontend React components (`app/` pages, `components/`)
 - Next.js configuration (`next.config.mjs`, `tsconfig.json`, `tailwind.config.*`)
 - Design system (`styles/`, `DESIGN.md`)
@@ -41,29 +43,30 @@ The Convex MCP server exposes structured tools that allow AI agents to query and
 
 **Setup — per editor:**
 
-| Editor | Setup Command / Link |
-|--------|---------------------|
-| Claude Code | See [Using Claude Code](https://docs.convex.dev/ai/using-claude-code#setup-the-convex-mcp-server) — add to your MCP servers config |
-| Codex | See [Using Codex](https://docs.convex.dev/ai/using-codex.md#setup-the-convex-mcp-server) |
-| Cursor | `npx -y convex@latest mcp start` or use the [quick link](https://cursor.com/en/install-mcp?name=convex&config=eyJjb21tYW5kIjoibnB4IC15IGNvbnZleEBsYXRlc3QgbWNwIHN0YXJ0In0%3D) |
-| VS Code (Copilot) | See [Using GitHub Copilot](https://docs.convex.dev/ai/using-github-copilot#setup-the-convex-mcp-server) |
-| Generic / CI | `npx -y convex@latest mcp start --project-dir /path/to/ccverse` |
+| Editor            | Setup Command / Link                                                                                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code       | See [Using Claude Code](https://docs.convex.dev/ai/using-claude-code#setup-the-convex-mcp-server) — add to your MCP servers config                                            |
+| Codex             | See [Using Codex](https://docs.convex.dev/ai/using-codex.md#setup-the-convex-mcp-server)                                                                                      |
+| Cursor            | `npx -y convex@latest mcp start` or use the [quick link](https://cursor.com/en/install-mcp?name=convex&config=eyJjb21tYW5kIjoibnB4IC15IGNvbnZleEBsYXRlc3QgbWNwIHN0YXJ0In0%3D) |
+| VS Code (Copilot) | See [Using GitHub Copilot](https://docs.convex.dev/ai/using-github-copilot#setup-the-convex-mcp-server)                                                                       |
+| Generic / CI      | `npx -y convex@latest mcp start --project-dir /path/to/ccverse`                                                                                                               |
 
 **MCP tools available:**
 
-| Tool | Purpose |
-|------|---------|
-| `status` | List deployments (dev/prod/preview) |
-| `tables` | List all tables + schemas (declared + inferred) |
-| `data` | Paginate through documents in a table |
-| `runOneoffQuery` | Execute read-only JavaScript queries against deployment |
-| `functionSpec` | Inspect all deployed functions (types, visibility, interfaces) |
-| `run` | Execute deployed Convex functions with provided arguments |
-| `logs` | Fetch recent function execution logs (structured, like `npx convex logs`) |
-| `insights` | Health insights: OCC conflicts, resource limit issues (72h window) |
-| `envList` / `envGet` / `envSet` / `envRemove` | Manage deployment environment variables |
+| Tool                                          | Purpose                                                                   |
+| --------------------------------------------- | ------------------------------------------------------------------------- |
+| `status`                                      | List deployments (dev/prod/preview)                                       |
+| `tables`                                      | List all tables + schemas (declared + inferred)                           |
+| `data`                                        | Paginate through documents in a table                                     |
+| `runOneoffQuery`                              | Execute read-only JavaScript queries against deployment                   |
+| `functionSpec`                                | Inspect all deployed functions (types, visibility, interfaces)            |
+| `run`                                         | Execute deployed Convex functions with provided arguments                 |
+| `logs`                                        | Fetch recent function execution logs (structured, like `npx convex logs`) |
+| `insights`                                    | Health insights: OCC conflicts, resource limit issues (72h window)        |
+| `envList` / `envGet` / `envSet` / `envRemove` | Manage deployment environment variables                                   |
 
 **Key MCP configuration flags:**
+
 - `--prod` — connect to production deployment (requires `--dangerously-enable-production-deployments`)
 - `--preview-name <name>` — connect to a named preview deployment
 - `--deployment-name <name>` — connect to a specific deployment by name
@@ -71,6 +74,7 @@ The Convex MCP server exposes structured tools that allow AI agents to query and
 - `--disable-tools data,run,envSet` — disable specific tools to restrict permissions
 
 **When to use MCP tools in this migration:**
+
 - **P1-1:** Use `status` to verify `npx convex dev` is connected; use `tables` to confirm schema after codegen
 - **P1-2 / P3:** Use `runOneoffQuery` to inspect live data during schema migration
 - **P3-4 (Registry):** Use `run` + `logs` to test OCC behavior; use `insights` to catch OCC conflicts
@@ -82,6 +86,7 @@ The Convex MCP server exposes structured tools that allow AI agents to query and
 [Agent Skills](https://agentskills.io) are portable packages of instructions that teach AI agents specialized workflows. Convex provides ready-made skills covering the full lifecycle.
 
 **Installation:**
+
 ```bash
 # Add all skills at once
 npx skills add get-convex/agent-skills --all
@@ -94,22 +99,22 @@ Skills are installed into `.agents/skills/` and auto-picked up by Cursor, Claude
 
 **Available skills:**
 
-| Skill | When to Use | Phase |
-|-------|-------------|-------|
-| `/convex-quickstart` | Bootstrap new Convex project | P1-1 |
-| `/convex-setup-auth` | Configure auth (login, register, sessions) | P1-3 |
-| `/convex-migration-helper` | Plan and run data migrations | P2, P3 |
-| `/convex-create-component` | Create a new Convex component (queries/mutations/actions) | P2–P3 |
-| `/convex-performance-audit` | Audit queries and mutations for performance | P4–P5 |
+| Skill                       | When to Use                                               | Phase  |
+| --------------------------- | --------------------------------------------------------- | ------ |
+| `/convex-quickstart`        | Bootstrap new Convex project                              | P1-1   |
+| `/convex-setup-auth`        | Configure auth (login, register, sessions)                | P1-3   |
+| `/convex-migration-helper`  | Plan and run data migrations                              | P2, P3 |
+| `/convex-create-component`  | Create a new Convex component (queries/mutations/actions) | P2–P3  |
+| `/convex-performance-audit` | Audit queries and mutations for performance               | P4–P5  |
 
 **Manual invocation:**
 
-| Tool | Invocation |
-|------|-----------|
-| Cursor | `/skill-name` |
+| Tool              | Invocation    |
+| ----------------- | ------------- |
+| Cursor            | `/skill-name` |
 | VS Code (Copilot) | `/skill-name` |
-| Claude Code | `/skill-name` |
-| Codex | `$skill-name` |
+| Claude Code       | `/skill-name` |
+| Codex             | `$skill-name` |
 
 ### §0 Checklist
 
@@ -122,13 +127,13 @@ Skills are installed into `.agents/skills/` and auto-picked up by Cursor, Claude
 
 ## Phase Structure
 
-| Phase | Name | Focus | Prerequisite |
-|-------|------|-------|--------------|
-| 1 | Foundation | Convex project setup, schema (21 tables), auth, RBAC, TOTP MFA | None |
-| 2 | Data Layer | Storage, email, audit log migrations | Phase 1 |
-| 3 | Business Logic | Registry service, KYC flows, project/listing/order/certificate mutations + Prisma removal | Phase 2 |
-| 4 | Jobs & Scheduling | Cron infrastructure, audit export job (not migrated — built), jobs/ directory removal | Phase 3 |
-| 5 | Cutover & Cleanup | Payment webhook creation, old code removal, E2E test rewrite | Phase 4 |
+| Phase | Name              | Focus                                                                                     | Prerequisite |
+| ----- | ----------------- | ----------------------------------------------------------------------------------------- | ------------ |
+| 1     | Foundation        | Convex project setup, schema (21 tables), auth, RBAC, TOTP MFA                            | None         |
+| 2     | Data Layer        | Storage, email, audit log migrations                                                      | Phase 1      |
+| 3     | Business Logic    | Registry service, KYC flows, project/listing/order/certificate mutations + Prisma removal | Phase 2      |
+| 4     | Jobs & Scheduling | Cron infrastructure, audit export job (not migrated — built), jobs/ directory removal     | Phase 3      |
+| 5     | Cutover & Cleanup | Payment webhook creation, old code removal, E2E test rewrite                              | Phase 4      |
 
 **Estimated total: 4–5 weeks** (Phase 4 is 1–2 days, not the full week originally estimated)
 
@@ -159,6 +164,7 @@ Skills are installed into `.agents/skills/` and auto-picked up by Cursor, Claude
 Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/server`. Map all Prisma models:
 
 **Enums (14 — same as Prisma):**
+
 - `UserRole` → `v.union(v.literal("BUYER"), v.literal("SELLER"), v.literal("AUDITOR"), v.literal("ADMIN"))`
 - `UserStatus` → `v.union(v.literal("ACTIVE"), v.literal("SUSPENDED"), v.literal("BANNED"), v.literal("PENDING_VERIFICATION"))`
 - `KycStatus` → `v.union(v.literal("NOT_STARTED"), v.literal("PENDING"), v.literal("APPROVED"), v.literal("REJECTED"), v.literal("EXPIRED"))`
@@ -166,29 +172,29 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 
 **Models (21 — all of them):**
 
-| # | Model | Indexes | Notes |
-|---|-------|---------|-------|
-| 1 | `User` | `tokenIdentifier` (email, unique) | Add `mfaSecret` field (v.optional(v.string())) — does not exist in Prisma |
-| 2 | `SellerProfile` | `by_userId` → `userId` (unique) | |
-| 3 | `BuyerProfile` | `by_userId` → `userId` (unique) | |
-| 4 | `KycDocument` | `by_subjectUserId` → `subjectUserId`, `by_uploadedById` → `uploadedById` | Two named relations: `subjectUser`, `uploadedBy` |
-| 5 | `BankAccount` | `by_userId` → `userId` | |
-| 6 | `EmailVerificationToken` | `by_userId` → `userId` | |
-| 7 | `PasswordResetToken` | `by_userId` → `userId` | |
-| 8 | `Project` | none | Phase 2 adds fields |
-| 9 | `ProjectRegistration` | none | Phase 2 adds fields |
-| 10 | `Listing` | none | Phase 3 adds fields |
-| 11 | `Order` | none | Phase 3 adds fields |
-| 12 | `Payment` | none | Phase 6 adds fields |
-| 13 | `Certificate` | none | Phase 7 adds fields |
-| 14 | `AuditDecision` | none | Phase 4 skeleton |
-| 15 | `Dispute` | none | Phase 8 skeleton |
-| 16 | `RegistryEntry` | `by_cvcSerial` → `cvcSerial` (unique), `by_state` → `state` | `cvcSerial` is unique; Prisma uses `@unique` not `@index` |
-| 17 | `CvcBatch` | none | |
-| 18 | `AuditLog` | `by_actorId` → `actorId`, `by_action` → `action`, `by_timestamp` → `timestamp` | Append-only; no `updatedAt` |
-| 19 | `Payout` | none | Phase 9 skeleton |
-| 20 | `PlatformConfig` | `key` is the `@id` | Singleton pattern |
-| 21 | `FailedJob` | `by_failedAt` → `failedAt` | Removed in Phase 4 |
+| #   | Model                    | Indexes                                                                        | Notes                                                                     |
+| --- | ------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| 1   | `User`                   | `tokenIdentifier` (email, unique)                                              | Add `mfaSecret` field (v.optional(v.string())) — does not exist in Prisma |
+| 2   | `SellerProfile`          | `by_userId` → `userId` (unique)                                                |                                                                           |
+| 3   | `BuyerProfile`           | `by_userId` → `userId` (unique)                                                |                                                                           |
+| 4   | `KycDocument`            | `by_subjectUserId` → `subjectUserId`, `by_uploadedById` → `uploadedById`       | Two named relations: `subjectUser`, `uploadedBy`                          |
+| 5   | `BankAccount`            | `by_userId` → `userId`                                                         |                                                                           |
+| 6   | `EmailVerificationToken` | `by_userId` → `userId`                                                         |                                                                           |
+| 7   | `PasswordResetToken`     | `by_userId` → `userId`                                                         |                                                                           |
+| 8   | `Project`                | none                                                                           | Phase 2 adds fields                                                       |
+| 9   | `ProjectRegistration`    | none                                                                           | Phase 2 adds fields                                                       |
+| 10  | `Listing`                | none                                                                           | Phase 3 adds fields                                                       |
+| 11  | `Order`                  | none                                                                           | Phase 3 adds fields                                                       |
+| 12  | `Payment`                | none                                                                           | Phase 6 adds fields                                                       |
+| 13  | `Certificate`            | none                                                                           | Phase 7 adds fields                                                       |
+| 14  | `AuditDecision`          | none                                                                           | Phase 4 skeleton                                                          |
+| 15  | `Dispute`                | none                                                                           | Phase 8 skeleton                                                          |
+| 16  | `RegistryEntry`          | `by_cvcSerial` → `cvcSerial` (unique), `by_state` → `state`                    | `cvcSerial` is unique; Prisma uses `@unique` not `@index`                 |
+| 17  | `CvcBatch`               | none                                                                           |                                                                           |
+| 18  | `AuditLog`               | `by_actorId` → `actorId`, `by_action` → `action`, `by_timestamp` → `timestamp` | Append-only; no `updatedAt`                                               |
+| 19  | `Payout`                 | none                                                                           | Phase 9 skeleton                                                          |
+| 20  | `PlatformConfig`         | `key` is the `@id`                                                             | Singleton pattern                                                         |
+| 21  | `FailedJob`              | `by_failedAt` → `failedAt`                                                     | Removed in Phase 4                                                        |
 
 **Special handling for `User.email`:** Prisma uses `@unique @db.Citext` (PostgreSQL `citext` extension for case-insensitive uniqueness). Convex does not have a `citext` equivalent. Recommended approach: store email as lowercase in Convex; enforce uniqueness with a validator that lowercases before insert. Alternatively, use a unique index definition if Convex supports expression indexes.
 
@@ -216,7 +222,10 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 
 - [ ] Create `convex/lib/rbac.ts` helper:
   ```ts
-  export async function requireRole(ctx: QueryCtx | MutationCtx, allowed: Role[]): Promise<Id<"users">>
+  export async function requireRole(
+    ctx: QueryCtx | MutationCtx,
+    allowed: Role[],
+  ): Promise<Id<'users'>>;
   ```
   - Reads `ctx.auth.getUserIdentity()` → throws `Error("Unauthorized")` if null
   - Fetches user from `users` table → throws `Error("Forbidden")` if role not in allowed list
@@ -270,15 +279,15 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P1-1 Convex project setup | ⬜ | | | |
-| P1-2 Schema migration (21 tables) | ⬜ | | | **v2 correction: 21 tables, not 17** |
-| P1-3 Convex Auth setup | ⬜ | | | Risk: Convex Auth Next.js beta |
-| P1-4 RBAC in Convex | ⬜ | | | |
-| P1-5 TOTP MFA | ⬜ | | | **v2 correction: `mfaSecret` must be added — doesn't exist in Prisma** |
-| P1-6 Env vars | ⬜ | | | |
-| P1-7 CI update | ⬜ | | | |
+| Task                              | Status | Owner | PR  | Notes                                                                  |
+| --------------------------------- | ------ | ----- | --- | ---------------------------------------------------------------------- |
+| P1-1 Convex project setup         | ⬜     |       |     |                                                                        |
+| P1-2 Schema migration (21 tables) | ⬜     |       |     | **v2 correction: 21 tables, not 17**                                   |
+| P1-3 Convex Auth setup            | ⬜     |       |     | Risk: Convex Auth Next.js beta                                         |
+| P1-4 RBAC in Convex               | ⬜     |       |     |                                                                        |
+| P1-5 TOTP MFA                     | ⬜     |       |     | **v2 correction: `mfaSecret` must be added — doesn't exist in Prisma** |
+| P1-6 Env vars                     | ⬜     |       |     |                                                                        |
+| P1-7 CI update                    | ⬜     |       |     |                                                                        |
 
 ---
 
@@ -299,11 +308,13 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 **Decision required:** Choose Option A or B for each bucket before starting:
 
 **Option A — Convex built-in file storage (recommended for KYC, certificates):**
+
 - [ ] Use `ctx.storage.store()` in mutations for uploads
 - [ ] Use `ctx.storage.generateUploadUrl()` for client-side presigned uploads (Convex-managed URLs)
 - [ ] Delete `lib/storage/` directory after migration
 
 **Option B — Keep existing S3 buckets via Node action (for certificates with custom S3 lifecycle):**
+
 - [ ] Create `convex/storage/actions.ts` with `"use node";` directive
 - [ ] Implement `putObject`, `getObject`, `deleteObject` using `@aws-sdk/client-s3` (already in package.json)
 - [ ] For presigned URLs: use `getSignedUrl` from `@aws-sdk/s3-request-presigner` with `PutObjectCommand` / `GetObjectCommand`
@@ -325,8 +336,8 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 
 - [ ] Create `convex/email/actions.ts` with `"use node";` directive:
   ```ts
-  "use node";
-  import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
+  'use node';
+  import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
   ```
 - [ ] Port `SesDriver.send()` logic: reads `SES_SENDER_DOMAIN`, `SES_CONFIGURATION_SET` from Convex env vars
 - [ ] Dev mode: if `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY` are empty, return mock `dev-{timestamp}-mock` message ID (preserve existing dev-mode behavior)
@@ -351,7 +362,7 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
       payload: v.optional(v.any()),
     },
     handler: async (ctx, args) => {
-      await ctx.db.insert("auditLogs", { ...args, timestamp: Date.now() });
+      await ctx.db.insert('auditLogs', { ...args, timestamp: Date.now() });
     },
   });
   ```
@@ -385,12 +396,12 @@ Create `convex/schema.ts` using `defineSchema` + `defineTable` from `convex/serv
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P2-1 File storage | ⬜ | | | **v2 correction: Decision A/B required per bucket; use presignPut/presignGet not generateUploadUrl** |
-| P2-2 Email (SES) | ⬜ | | | Dev mock behavior must be preserved |
-| P2-3 Audit log | ⬜ | | | |
-| P2-4 Remove Prisma | ⬜ | | | **v2 correction: DEFERRED to Phase 3** |
+| Task               | Status | Owner | PR  | Notes                                                                                                |
+| ------------------ | ------ | ----- | --- | ---------------------------------------------------------------------------------------------------- |
+| P2-1 File storage  | ⬜     |       |     | **v2 correction: Decision A/B required per bucket; use presignPut/presignGet not generateUploadUrl** |
+| P2-2 Email (SES)   | ⬜     |       |     | Dev mock behavior must be preserved                                                                  |
+| P2-3 Audit log     | ⬜     |       |     |                                                                                                      |
+| P2-4 Remove Prisma | ⬜     |       |     | **v2 correction: DEFERRED to Phase 3**                                                               |
 
 ---
 
@@ -496,15 +507,15 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P3-1 Auth routes → Convex | ⬜ | | | |
-| P3-2 Seller KYC → Convex | ⬜ | | | **v2 correction: projects/route.ts is Phase 2 stub, not migration** |
-| P3-3 Admin KYC → Convex | ⬜ | | | |
-| P3-4 Registry service | ⬜ | | | **Critical: OCC verification. lib/registry/ doesn't exist — building fresh** |
-| P3-5 SES webhook handling | ⬜ | | | May be removable |
-| P3-6 Prisma removal (DEFERRED from Phase 2) | ⬜ | | | **v2 correction: moved from Phase 2 — only safe after all routes migrated** |
-| P3-7 Cleanup old routes | ⬜ | | | |
+| Task                                        | Status | Owner | PR  | Notes                                                                        |
+| ------------------------------------------- | ------ | ----- | --- | ---------------------------------------------------------------------------- |
+| P3-1 Auth routes → Convex                   | ⬜     |       |     |                                                                              |
+| P3-2 Seller KYC → Convex                    | ⬜     |       |     | **v2 correction: projects/route.ts is Phase 2 stub, not migration**          |
+| P3-3 Admin KYC → Convex                     | ⬜     |       |     |                                                                              |
+| P3-4 Registry service                       | ⬜     |       |     | **Critical: OCC verification. lib/registry/ doesn't exist — building fresh** |
+| P3-5 SES webhook handling                   | ⬜     |       |     | May be removable                                                             |
+| P3-6 Prisma removal (DEFERRED from Phase 2) | ⬜     |       |     | **v2 correction: moved from Phase 2 — only safe after all routes migrated**  |
+| P3-7 Cleanup old routes                     | ⬜     |       |     |                                                                              |
 
 ---
 
@@ -531,9 +542,9 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 - [ ] Create `convex/crons.ts` using `cronJobs()` from `convex/server`:
   ```ts
-  crons.daily("audit-export", { hourUTC: 2, minuteUTC: 0 }, internal.audit.export, {});
-  crons.daily("payout-process", { hourUTC: 3, minuteUTC: 0 }, internal.payouts.processBatch, {});
-  crons.monthly("kyc-expiry-check", { day: 1, hourUTC: 1 }, internal.kyc.checkExpiry, {});
+  crons.daily('audit-export', { hourUTC: 2, minuteUTC: 0 }, internal.audit.export, {});
+  crons.daily('payout-process', { hourUTC: 3, minuteUTC: 0 }, internal.payouts.processBatch, {});
+  crons.monthly('kyc-expiry-check', { day: 1, hourUTC: 1 }, internal.kyc.checkExpiry, {});
   ```
 - [ ] **Build** `internal.audit.export` handler:
   - Reads all `auditLogs` rows since last export (track last export timestamp in `PlatformConfig`)
@@ -572,12 +583,12 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P4-1 Delete jobs/ directory | ⬜ | | | **v2 correction: No handlers to migrate — pure deletion** |
-| P4-2 Cron jobs + audit.export | ⬜ | | | **v2 correction: audit.export must be BUILT, not migrated** |
-| P4-3 One-time scheduled actions | ⬜ | | | No enqueue sites to migrate |
-| P4-4 Remove FailedJob table | ⬜ | | | |
+| Task                            | Status | Owner | PR  | Notes                                                       |
+| ------------------------------- | ------ | ----- | --- | ----------------------------------------------------------- |
+| P4-1 Delete jobs/ directory     | ⬜     |       |     | **v2 correction: No handlers to migrate — pure deletion**   |
+| P4-2 Cron jobs + audit.export   | ⬜     |       |     | **v2 correction: audit.export must be BUILT, not migrated** |
+| P4-3 One-time scheduled actions | ⬜     |       |     | No enqueue sites to migrate                                 |
+| P4-4 Remove FailedJob table     | ⬜     |       |     |                                                             |
 
 ---
 
@@ -596,12 +607,15 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 - [ ] **Create** `app/api/webhooks/razorpay/route.ts` (does not exist):
   ```ts
   // Verifies Razorpay signature, then calls Convex mutation
-  import { internal } from "convex/_generated/api";
-  const result = await fetch(`https://${process.env.CONVEX_DEPLOYMENT}.convex.site/api/mutations/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: "internal.payments.handleRazorpayWebhook", args: { event } }),
-  });
+  import { internal } from 'convex/_generated/api';
+  const result = await fetch(
+    `https://${process.env.CONVEX_DEPLOYMENT}.convex.site/api/mutations/`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'internal.payments.handleRazorpayWebhook', args: { event } }),
+    },
+  );
   ```
 - [ ] **Create** `app/api/webhooks/stripe/route.ts` (does not exist) — same pattern
 - [ ] Create `convex/payments/webhookHandlers.ts`:
@@ -662,13 +676,13 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 ### Tracker
 
-| Task | Status | Owner | PR | Notes |
-|------|--------|-------|----|-------|
-| P5-1 Payment webhooks | ⬜ | | | **v2 correction: CREATE these routes — they don't exist** |
-| P5-2 Final old-code removal | ⬜ | | | **v2 correction: added lib/auth/failed-login.ts and lib/rbac/seller.ts explicitly** |
-| P5-3 Env var cleanup | ⬜ | | | |
-| P5-4 E2E test rewrite | ⬜ | | | Full rewrite |
-| P5-5 Production verification | ⬜ | | | |
+| Task                         | Status | Owner | PR  | Notes                                                                               |
+| ---------------------------- | ------ | ----- | --- | ----------------------------------------------------------------------------------- |
+| P5-1 Payment webhooks        | ⬜     |       |     | **v2 correction: CREATE these routes — they don't exist**                           |
+| P5-2 Final old-code removal  | ⬜     |       |     | **v2 correction: added lib/auth/failed-login.ts and lib/rbac/seller.ts explicitly** |
+| P5-3 Env var cleanup         | ⬜     |       |     |                                                                                     |
+| P5-4 E2E test rewrite        | ⬜     |       |     | Full rewrite                                                                        |
+| P5-5 Production verification | ⬜     |       |     |                                                                                     |
 
 ---
 
@@ -676,57 +690,59 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 ### Summary
 
-| Phase | Name | Tasks | Done | In Progress | Pending |
-|-------|------|-------|------|-------------|---------|
-| 1 | Foundation | 7 | 0 | 0 | 7 |
-| 2 | Data Layer | 3 (+ 1 deferred) | 0 | 0 | 4 |
-| 3 | Business Logic | 7 | 0 | 0 | 7 |
-| 4 | Jobs & Scheduling | 4 | 0 | 0 | 4 |
-| 5 | Cutover & Cleanup | 5 | 0 | 0 | 5 |
-| **Total** | | **26** | **0** | **0** | **26** |
+| Phase     | Name              | Tasks            | Done  | In Progress | Pending |
+| --------- | ----------------- | ---------------- | ----- | ----------- | ------- |
+| 1         | Foundation        | 7                | 0     | 0           | 7       |
+| 2         | Data Layer        | 3 (+ 1 deferred) | 0     | 0           | 4       |
+| 3         | Business Logic    | 7                | 0     | 0           | 7       |
+| 4         | Jobs & Scheduling | 4                | 0     | 0           | 4       |
+| 5         | Cutover & Cleanup | 5                | 0     | 0           | 5       |
+| **Total** |                   | **26**           | **0** | **0**       | **26**  |
 
 ### All Tasks
 
-| ID | Task | Phase | Status | Notes |
-|----|------|-------|--------|-------|
-| P1-1 | Convex project setup | 1 | ⬜ | |
-| P1-2 | Schema migration (21 tables) | 1 | ⬜ | v2: 21 tables, not 17 |
-| P1-3 | Convex Auth setup | 1 | ⬜ | Risk: Convex Auth Next.js beta |
-| P1-4 | RBAC in Convex | 1 | ⬜ | |
-| P1-5 | TOTP MFA | 1 | ⬜ | v2: mfaSecret must be added |
-| P1-6 | Env vars | 1 | ⬜ | |
-| P1-7 | CI update | 1 | ⬜ | |
-| P2-1 | File storage | 2 | ⬜ | v2: Option A/B decision required; presignPut/presignGet |
-| P2-2 | Email (SES) | 2 | ⬜ | |
-| P2-3 | Audit log | 2 | ⬜ | |
-| P2-4 | Remove Prisma | 2→3 | ⬜ | v2: DEFERRED to Phase 3 |
-| P3-1 | Auth routes → Convex | 3 | ⬜ | |
-| P3-2 | Seller KYC → Convex | 3 | ⬜ | v2: projects/route.ts is Phase 2 stub |
-| P3-3 | Admin KYC → Convex | 3 | ⬜ | |
-| P3-4 | Registry service | 3 | ⬜ | Critical: OCC verification; lib/registry/ doesn't exist |
-| P3-5 | SES webhook handling | 3 | ⬜ | |
-| P3-6 | Prisma removal (execute) | 3 | ⬜ | v2: moved from Phase 2 |
-| P3-7 | Cleanup old routes | 3 | ⬜ | |
-| P4-1 | Delete jobs/ directory | 4 | ⬜ | v2: no handlers to migrate |
-| P4-2 | Cron jobs + audit.export | 4 | ⬜ | v2: audit.export must be built |
-| P4-3 | One-time scheduled actions | 4 | ⬜ | No enqueue sites to migrate |
-| P4-4 | Remove FailedJob table | 4 | ⬜ | |
-| P5-1 | Payment webhooks | 5 | ⬜ | v2: CREATE (don't exist) |
-| P5-2 | Final old-code removal | 5 | ⬜ | v2: added failed-login.ts, seller.ts |
-| P5-3 | Env var cleanup | 5 | ⬜ | |
-| P5-4 | E2E test rewrite | 5 | ⬜ | Full rewrite |
-| P5-5 | Production verification | 5 | ⬜ | |
+| ID   | Task                         | Phase | Status | Notes                                                   |
+| ---- | ---------------------------- | ----- | ------ | ------------------------------------------------------- |
+| P1-1 | Convex project setup         | 1     | ⬜     |                                                         |
+| P1-2 | Schema migration (21 tables) | 1     | ⬜     | v2: 21 tables, not 17                                   |
+| P1-3 | Convex Auth setup            | 1     | ⬜     | Risk: Convex Auth Next.js beta                          |
+| P1-4 | RBAC in Convex               | 1     | ⬜     |                                                         |
+| P1-5 | TOTP MFA                     | 1     | ⬜     | v2: mfaSecret must be added                             |
+| P1-6 | Env vars                     | 1     | ⬜     |                                                         |
+| P1-7 | CI update                    | 1     | ⬜     |                                                         |
+| P2-1 | File storage                 | 2     | ⬜     | v2: Option A/B decision required; presignPut/presignGet |
+| P2-2 | Email (SES)                  | 2     | ⬜     |                                                         |
+| P2-3 | Audit log                    | 2     | ⬜     |                                                         |
+| P2-4 | Remove Prisma                | 2→3   | ⬜     | v2: DEFERRED to Phase 3                                 |
+| P3-1 | Auth routes → Convex         | 3     | ⬜     |                                                         |
+| P3-2 | Seller KYC → Convex          | 3     | ⬜     | v2: projects/route.ts is Phase 2 stub                   |
+| P3-3 | Admin KYC → Convex           | 3     | ⬜     |                                                         |
+| P3-4 | Registry service             | 3     | ⬜     | Critical: OCC verification; lib/registry/ doesn't exist |
+| P3-5 | SES webhook handling         | 3     | ⬜     |                                                         |
+| P3-6 | Prisma removal (execute)     | 3     | ⬜     | v2: moved from Phase 2                                  |
+| P3-7 | Cleanup old routes           | 3     | ⬜     |                                                         |
+| P4-1 | Delete jobs/ directory       | 4     | ⬜     | v2: no handlers to migrate                              |
+| P4-2 | Cron jobs + audit.export     | 4     | ⬜     | v2: audit.export must be built                          |
+| P4-3 | One-time scheduled actions   | 4     | ⬜     | No enqueue sites to migrate                             |
+| P4-4 | Remove FailedJob table       | 4     | ⬜     |                                                         |
+| P5-1 | Payment webhooks             | 5     | ⬜     | v2: CREATE (don't exist)                                |
+| P5-2 | Final old-code removal       | 5     | ⬜     | v2: added failed-login.ts, seller.ts                    |
+| P5-3 | Env var cleanup              | 5     | ⬜     |                                                         |
+| P5-4 | E2E test rewrite             | 5     | ⬜     | Full rewrite                                            |
+| P5-5 | Production verification      | 5     | ⬜     |                                                         |
 
 ---
 
 ## Files to Delete (by phase)
 
 ### Phase 1
+
 - `lib/session/index.ts`
 - `lib/rbac/index.ts`
 - `lib/rbac/seller.ts` ← **v2: unconditionally (exists)**
 
 ### Phase 2
+
 - `lib/storage/index.ts`
 - `lib/storage/s3.ts`
 - `lib/storage/driver.ts`
@@ -737,6 +753,7 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 - `lib/audit/index.ts`
 
 ### Phase 3
+
 - `app/api/auth/` (all routes)
 - `app/api/seller/kyc/` (all routes)
 - `app/api/admin/kyc/` (all routes)
@@ -749,6 +766,7 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 - `lib/db/index.ts`
 
 ### Phase 4
+
 - `jobs/enqueue.ts`
 - `jobs/runner.ts`
 - `jobs/index.ts`
@@ -759,6 +777,7 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 - `jobs/logger.ts`
 
 ### Phase 5
+
 - `lib/auth/failed-login.ts` ← **v2: added (exists)**
 - `lib/auth/totp.ts`
 - `lib/auth/hashing.ts`
@@ -768,35 +787,35 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 
 ## Risk Register
 
-| Risk | Phase | Likelihood | Impact | Mitigation |
-|------|-------|------------|--------|------------|
-| Convex Auth Next.js support not stable by migration time | 1 | Medium | High | Fall back to custom JWT in httpOnly cookie — same security properties |
-| TOTP MFA: `mfaSecret` must be added (doesn't exist in User model) | 1 | High (if not planned) | Medium | Already in v2 plan — add field, encrypt at rest |
-| Prisma removed before all routes migrated | 2→3 | Medium | Critical | v2: Prisma removal moved to Phase 3 gate |
-| OCC retry storms under high concurrency on registry | 3 | Low | High | Convex caps mutation runtime at 1s; test with 10 concurrent `allocateToSeller` calls |
-| Convex file storage insufficient for certificate S3 lifecycle | 2 | Low | Low | Use Option B (Node action → S3) for certificates; decide per bucket |
-| Self-hosting needed for data residency | 1 | Low | Medium | Open-source Convex backend supports PostgreSQL backend — can self-host |
-| `audit.export` job needs to be built (not migrated) | 4 | High | Medium | v2: explicitly listed as "build" not "migrate" |
-| Payment webhook routes don't exist (razorpay/stripe) | 5 | High | Medium | v2: explicitly listed as "create" not "keep" |
-| Agent uses non-official methods (ad-hoc scripts, manual CLI instead of MCP/skills) | All | Medium | Medium | v3: §0 enforces official tooling; MCP + skills must be used throughout |
+| Risk                                                                               | Phase | Likelihood            | Impact   | Mitigation                                                                           |
+| ---------------------------------------------------------------------------------- | ----- | --------------------- | -------- | ------------------------------------------------------------------------------------ |
+| Convex Auth Next.js support not stable by migration time                           | 1     | Medium                | High     | Fall back to custom JWT in httpOnly cookie — same security properties                |
+| TOTP MFA: `mfaSecret` must be added (doesn't exist in User model)                  | 1     | High (if not planned) | Medium   | Already in v2 plan — add field, encrypt at rest                                      |
+| Prisma removed before all routes migrated                                          | 2→3   | Medium                | Critical | v2: Prisma removal moved to Phase 3 gate                                             |
+| OCC retry storms under high concurrency on registry                                | 3     | Low                   | High     | Convex caps mutation runtime at 1s; test with 10 concurrent `allocateToSeller` calls |
+| Convex file storage insufficient for certificate S3 lifecycle                      | 2     | Low                   | Low      | Use Option B (Node action → S3) for certificates; decide per bucket                  |
+| Self-hosting needed for data residency                                             | 1     | Low                   | Medium   | Open-source Convex backend supports PostgreSQL backend — can self-host               |
+| `audit.export` job needs to be built (not migrated)                                | 4     | High                  | Medium   | v2: explicitly listed as "build" not "migrate"                                       |
+| Payment webhook routes don't exist (razorpay/stripe)                               | 5     | High                  | Medium   | v2: explicitly listed as "create" not "keep"                                         |
+| Agent uses non-official methods (ad-hoc scripts, manual CLI instead of MCP/skills) | All   | Medium                | Medium   | v3: §0 enforces official tooling; MCP + skills must be used throughout               |
 
 ---
 
 ## v1 → v2 Delta Log (all changes from rigorous codebase audit)
 
-| # | Issue | Severity | v1 Location | v1 Said | v2 Fix |
-|---|-------|----------|-------------|---------|--------|
-| 1 | Phase ordering | 🔴 Critical | P2-4 | Remove Prisma in Phase 2 | Moved to Phase 3 — Prisma removal is a gate after all routes migrated |
-| 2 | Table count | 🔴 Critical | P1-2 | "17 tables" | Corrected to 21 tables with full list |
-| 3 | Storage API name | 🔴 Critical | P2-1 | `ctx.storage.generateUploadUrl()` | Removed; use `presignPut`/`presignGet` or Convex's actual API |
-| 4 | Phase 4 scope | 🔴 Critical | P4 overview | "Migrate job handlers" | Rewritten: no production handlers exist; pure deletion + build audit.export |
-| 5 | audit.export job | 🟡 Moderate | P4-2 | Assumed job exists | Explicitly noted must be built (doesn't exist) |
-| 6 | Webhook routes | 🟡 Moderate | P5-1 | "Keep razorpay/stripe routes" | Changed to "Create" — routes don't exist |
-| 7 | mfaSecret field | 🟡 Moderate | P1-5 | Assumed field exists | Added note: field must be added; must be encrypted at rest |
-| 8 | seller/projects stub | 🟡 Moderate | P3-2 | Treated as real route to migrate | Clarified: Phase 2 stub (501), implement in Phase 2 |
-| 9 | Deletion list gaps | 🟡 Moderate | Files to Delete | `lib/rbac/seller.ts (if exists)`, missing `lib/auth/failed-login.ts` | Listed unconditionally; added `lib/auth/failed-login.ts` |
-| 10 | email citext handling | 🟢 Minor | P1-2 | Unclear | Added note about `citext` → Convex lowercase validator |
-| 11 | Agent tooling missing | 🟡 Moderate | N/A (new) | N/A | v3: Added §0 — Convex MCP server + agent skills; all agents must use official methods |
+| #   | Issue                 | Severity    | v1 Location     | v1 Said                                                              | v2 Fix                                                                                |
+| --- | --------------------- | ----------- | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1   | Phase ordering        | 🔴 Critical | P2-4            | Remove Prisma in Phase 2                                             | Moved to Phase 3 — Prisma removal is a gate after all routes migrated                 |
+| 2   | Table count           | 🔴 Critical | P1-2            | "17 tables"                                                          | Corrected to 21 tables with full list                                                 |
+| 3   | Storage API name      | 🔴 Critical | P2-1            | `ctx.storage.generateUploadUrl()`                                    | Removed; use `presignPut`/`presignGet` or Convex's actual API                         |
+| 4   | Phase 4 scope         | 🔴 Critical | P4 overview     | "Migrate job handlers"                                               | Rewritten: no production handlers exist; pure deletion + build audit.export           |
+| 5   | audit.export job      | 🟡 Moderate | P4-2            | Assumed job exists                                                   | Explicitly noted must be built (doesn't exist)                                        |
+| 6   | Webhook routes        | 🟡 Moderate | P5-1            | "Keep razorpay/stripe routes"                                        | Changed to "Create" — routes don't exist                                              |
+| 7   | mfaSecret field       | 🟡 Moderate | P1-5            | Assumed field exists                                                 | Added note: field must be added; must be encrypted at rest                            |
+| 8   | seller/projects stub  | 🟡 Moderate | P3-2            | Treated as real route to migrate                                     | Clarified: Phase 2 stub (501), implement in Phase 2                                   |
+| 9   | Deletion list gaps    | 🟡 Moderate | Files to Delete | `lib/rbac/seller.ts (if exists)`, missing `lib/auth/failed-login.ts` | Listed unconditionally; added `lib/auth/failed-login.ts`                              |
+| 10  | email citext handling | 🟢 Minor    | P1-2            | Unclear                                                              | Added note about `citext` → Convex lowercase validator                                |
+| 11  | Agent tooling missing | 🟡 Moderate | N/A (new)       | N/A                                                                  | v3: Added §0 — Convex MCP server + agent skills; all agents must use official methods |
 
 ---
 
@@ -812,8 +831,8 @@ Migrate each `app/api/auth/` route to a Convex mutation:
 ✅ FailedJob table for removal — correct  
 ✅ Docker Compose Postgres removal — correct  
 ✅ CI update to `npx convex deploy` — correct  
-✅ All agents use official Convex MCP server + agent skills (§0) — official methods only, no ad-hoc scripts  
+✅ All agents use official Convex MCP server + agent skills (§0) — official methods only, no ad-hoc scripts
 
 ---
 
-*End of plan — 580 lines → v2 expands to ~900 lines with corrections applied*
+_End of plan — 580 lines → v2 expands to ~900 lines with corrections applied_

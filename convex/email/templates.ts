@@ -11,10 +11,10 @@
 // Shared design tokens (INVERSA dark-theme brand palette)
 // ---------------------------------------------------------------------------
 
-const brandColor = "#caf825";
-const surface = "#0c0c0c";
-const textPrimary = "#f5f5f5";
-const textMuted = "#a3a3a3";
+const brandColor = '#caf825';
+const surface = '#0c0c0c';
+const textPrimary = '#f5f5f5';
+const textMuted = '#a3a3a3';
 const fontFamily = "'Geist', 'Helvetica Neue', Arial, sans-serif";
 
 // ---------------------------------------------------------------------------
@@ -28,7 +28,7 @@ export interface KycSubmittedProps {
 
 export function renderKycSubmittedHtml(props: KycSubmittedProps): string {
   const { email, legalName } = props;
-  const displayName = legalName ?? "Seller";
+  const displayName = legalName ?? 'Seller';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -92,7 +92,7 @@ export function renderKycSubmittedHtml(props: KycSubmittedProps): string {
 
 export function renderKycSubmittedText(props: KycSubmittedProps): string {
   const { email, legalName } = props;
-  const displayName = legalName ?? "Seller";
+  const displayName = legalName ?? 'Seller';
 
   return `KYC application received — CC Verse
 

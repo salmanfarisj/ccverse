@@ -99,7 +99,7 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
       const res = await fetch(`/api/admin/kyc/${params.userId}/approve`, { method: 'POST' });
       if (!res.ok) throw new Error((await res.json()).error);
       setActionSuccess('KYC approved. The seller has been notified.');
-      setProfile((p) => p ? { ...p, kycStatus: 'APPROVED' } : p);
+      setProfile((p) => (p ? { ...p, kycStatus: 'APPROVED' } : p));
     } catch (err) {
       setRejectError((err as Error).message);
     }
@@ -122,7 +122,7 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
       });
       if (!res.ok) throw new Error((await res.json()).error);
       setActionSuccess('KYC rejected. The seller has been notified.');
-      setProfile((p) => p ? { ...p, kycStatus: 'REJECTED' } : p);
+      setProfile((p) => (p ? { ...p, kycStatus: 'REJECTED' } : p));
       setRejectReason('');
     } catch (err) {
       setRejectError((err as Error).message);
@@ -175,13 +175,14 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
               Admin
             </Link>
             <span>/</span>
-            <Link href="/admin/kyc" className="!text-lime-surveyor !no-underline hover:text-lime/80">
+            <Link
+              href="/admin/kyc"
+              className="!text-lime-surveyor !no-underline hover:text-lime/80"
+            >
               KYC Queue
             </Link>
             <span>/</span>
-            <span className="text-bone-vellum">
-              {profile.legalName ?? profile.user.email}
-            </span>
+            <span className="text-bone-vellum">{profile.legalName ?? profile.user.email}</span>
           </div>
 
           <div className="flex items-start justify-between">
@@ -189,7 +190,9 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
               <h1 className="font-mono text-3xl font-bold tracking-tight !text-lime-surveyor">
                 {profile.legalName ?? profile.user.email}
               </h1>
-              <p className={`mt-1 font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] ${kycStatusColor[profile.kycStatus]}`}>
+              <p
+                className={`mt-1 font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] ${kycStatusColor[profile.kycStatus]}`}
+              >
                 KYC Status: {profile.kycStatus.replace('_', ' ')}
               </p>
             </div>
@@ -214,7 +217,10 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
                 }
               />
               <DetailRow label="Email" value={profile.user.email} />
-              <DetailRow label="Member since" value={new Date(profile.user.createdAt).toLocaleString()} />
+              <DetailRow
+                label="Member since"
+                value={new Date(profile.user.createdAt).toLocaleString()}
+              />
 
               {profile.bankAccount && (
                 <>
@@ -226,10 +232,7 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
                   <DetailRow label="Bank" value={profile.bankAccount.bankName} />
                   <DetailRow label="A/C last 4" value={profile.bankAccount.accountNoLast4} />
                   <DetailRow label="Routing/IFSC" value={profile.bankAccount.routingOrIfsc} />
-                  <DetailRow
-                    label="Verified"
-                    value={profile.bankAccount.verified ? 'Yes' : 'No'}
-                  />
+                  <DetailRow label="Verified" value={profile.bankAccount.verified ? 'Yes' : 'No'} />
                 </>
               )}
             </div>
@@ -326,7 +329,10 @@ export default function KycReviewPage({ params }: { params: { userId: string } }
                       />
                     </div>
                     {rejectError && (
-                      <p className="font-jetbrains-mono text-[13px] text-lime-surveyor" role="alert">
+                      <p
+                        className="font-jetbrains-mono text-[13px] text-lime-surveyor"
+                        role="alert"
+                      >
                         {rejectError}
                       </p>
                     )}

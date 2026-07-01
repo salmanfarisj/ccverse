@@ -4,48 +4,25 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import type { Id } from '@/convex/_generated/dataModel';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
+import { api } from '@/convex/_generated/api';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { userId: string } },
-) {
+export async function GET(_req: NextRequest, { params }: { params: { userId: string } }) {
   try {
     await requireRole(['ADMIN']);
-    const { userId } = params;
+    const convex = getConvexClient();
 
-    const profile = await prisma.sellerProfile.findUnique({
-      where: { userId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            createdAt: true,
-            lastLoginAt: true,
-            kycDocuments: {
-              orderBy: { uploadedAt: 'asc' },
-            },
-          },
-        },
-        bankAccount: true,
-      },
+    const result = await convex.query(api.admin.kyc.getKycDetail, {
+      userId: params.userId as Id<'users'>,
     });
 
-    if (!profile) {
+    if (!result.found) {
       return NextResponse.json({ error: 'Seller profile not found' }, { status: 404 });
     }
 
-    // Shape the response — move kycDocuments up one level for convenience
-    const { kycDocuments, ...user } = profile.user;
-    return NextResponse.json({
-      profile: {
-        ...profile,
-        kycDocuments,
-        user,
-      },
-    });
+    return NextResponse.json({ profile: result.profile });
   } catch (err) {
     if (err instanceof NextResponse) throw err;
     console.error('GET /api/admin/kyc/:userId error', err);

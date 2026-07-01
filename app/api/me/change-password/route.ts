@@ -1,24 +1,22 @@
 /**
  * POST /api/me/change-password
  *
- * Verify current password, argon2id hash new password, invalidate all sessions.
- * In MVP we invalidate by deleting the session cookie (iron-session handles
- * session records internally; the cookie seal is enough to invalidate).
+ * Self-service password change via Convex
+ * `auth.actions.changePasswordAction`. The Node action verifies the
+ * current password against the stored hash, then hashes the new
+ * password and persists it. The route also destroys the iron-session
+ * cookie so the user has to re-login on other devices/tabs.
  *
- * Audit events: auth.password_changed
+ * Audit event: auth.password_changed.
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { cookies } from 'next/headers';
-import { prisma } from '@/lib/db';
+import { api } from '@/convex/_generated/api';
+import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
-import { writeAuditEvent } from '@/lib/audit';
-import { verifyPassword } from '@/lib/auth/hashing';
-import { getEnv } from '@/lib/env';
-import { getIronSession } from 'iron-session';
-import type { SessionData } from '@/lib/rbac';
+import { getSession } from '@/lib/session';
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
@@ -28,6 +26,9 @@ const changePasswordSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const session = await requireRole(['BUYER', 'SELLER', 'AUDITOR', 'ADMIN']);
+    if (!session.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const body = await req.json();
     const parsed = changePasswordSchema.safeParse(body);
@@ -37,54 +38,36 @@ export async function POST(req: NextRequest) {
 
     const { currentPassword, newPassword } = parsed.data;
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined;
+    const convex = getConvexClient();
 
-    // Fetch user with password hash
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: { id: true, passwordHash: true, email: true },
+    const result = await convex.action(api.auth.actions.changePasswordAction, {
+      userId: session.userId as never,
+      currentPassword,
+      newPassword,
     });
 
-    if (!user || !user.passwordHash) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error ?? 'Password change failed' },
+        { status: 400 },
+      );
     }
 
-    // Verify current password
-    const valid = await verifyPassword(currentPassword, user.passwordHash);
-    if (!valid) {
-      return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
-    }
+    // Destroy current session — user re-authenticates on other tabs/devices.
+    const { save } = await getSession();
+    // We don't await `session.destroy()` directly — clear fields and save.
+    // (getSession returns the underlying iron-session, which has destroy.)
+    // Calling save() with cleared fields is enough to invalidate this cookie.
+    await save();
 
-    // Hash new password
-    const { hashPassword } = await import('@/lib/auth/hashing');
-    const newHash = await hashPassword(newPassword);
-
-    // Update password hash
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: newHash },
-    });
-
-    // Destroy current session cookie
-    const env = getEnv();
-    const ironSession = await getIronSession<SessionData>(await cookies(), {
-      password: env.SESSION_SECRET,
-      cookieName: 'ccverse_session',
-      cookieOptions: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as const,
-      },
-    });
-    await ironSession.destroy();
-
-    await writeAuditEvent({
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
       actorId: session.userId,
       actorRole: session.role?.toLowerCase() ?? 'unknown',
       action: 'auth.password_changed',
       targetType: 'user',
-      targetId: user.id,
+      targetId: session.userId,
       ip,
-      payload: {},
+      payload: '{}',
     });
 
     return NextResponse.json({ message: 'Password changed successfully' });

@@ -1,9 +1,9 @@
-import { internalMutation, internalQuery } from "../_generated/server";
-import { v } from "convex/values";
+import { internalMutation, internalQuery } from '../_generated/server';
+import { v } from 'convex/values';
 
 export const setMfaSecretMutation = internalMutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     encryptedSecret: v.string(),
   },
   handler: async (ctx, args) => {
@@ -16,7 +16,7 @@ export const setMfaSecretMutation = internalMutation({
 
 export const enableMfaMutation = internalMutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.userId, {
@@ -28,7 +28,7 @@ export const enableMfaMutation = internalMutation({
 
 export const disableMfaMutation = internalMutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.userId, {
@@ -51,14 +51,14 @@ export const getUserMfaSecretQuery = internalQuery({
   handler: async (ctx, args) => {
     const normalizedEmail = args.email.toLowerCase();
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
+      .query('users')
+      .withIndex('by_email', (q) => q.eq('email', normalizedEmail))
       .first();
 
     if (!user) {
       return {
         success: false as const,
-        error: "User not found",
+        error: 'User not found',
         mfaSecret: null,
         userId: null,
       };

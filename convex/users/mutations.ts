@@ -7,8 +7,8 @@
  * seller invalidates their KYC).
  */
 
-import { mutation } from "../_generated/server";
-import { v } from "convex/values";
+import { mutation } from '../_generated/server';
+import { v } from 'convex/values';
 
 /**
  * updateMyProfileMutation — patches the caller's profile row.
@@ -23,26 +23,26 @@ import { v } from "convex/values";
  */
 export const updateMyProfileMutation = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     legalName: v.optional(v.string()),
     country: v.optional(v.string()),
-    defaultCurrency: v.optional(v.union(v.literal("INR"), v.literal("USD"))),
+    defaultCurrency: v.optional(v.union(v.literal('INR'), v.literal('USD'))),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) {
-      return { success: false as const, error: "User not found" };
+      return { success: false as const, error: 'User not found' };
     }
 
     const now = Date.now();
 
-    if (user.role === "BUYER") {
+    if (user.role === 'BUYER') {
       const profile = await ctx.db
-        .query("buyerProfiles")
-        .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+        .query('buyerProfiles')
+        .withIndex('by_userId', (q) => q.eq('userId', args.userId))
         .first();
       if (!profile) {
-        return { success: false as const, error: "Buyer profile not found" };
+        return { success: false as const, error: 'Buyer profile not found' };
       }
       await ctx.db.patch(profile._id, {
         ...(args.legalName !== undefined && { legalName: args.legalName }),
@@ -53,22 +53,22 @@ export const updateMyProfileMutation = mutation({
       return { success: true as const };
     }
 
-    if (user.role === "SELLER") {
+    if (user.role === 'SELLER') {
       const profile = await ctx.db
-        .query("sellerProfiles")
-        .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+        .query('sellerProfiles')
+        .withIndex('by_userId', (q) => q.eq('userId', args.userId))
         .first();
       if (!profile) {
-        return { success: false as const, error: "Seller profile not found" };
+        return { success: false as const, error: 'Seller profile not found' };
       }
       const patch: Record<string, unknown> = { updatedAt: now };
       if (args.legalName !== undefined) {
-        patch["legalName"] = args.legalName;
+        patch['legalName'] = args.legalName;
         // Per FRD: changing legalName invalidates KYC (re-verification required)
-        patch["kycStatus"] = "EXPIRED";
+        patch['kycStatus'] = 'EXPIRED';
       }
       if (args.country !== undefined) {
-        patch["country"] = args.country;
+        patch['country'] = args.country;
       }
       await ctx.db.patch(profile._id, patch);
       return { success: true as const };

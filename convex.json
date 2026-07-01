@@ -1,0 +1,6 @@
+{
+  "node": {
+    "externalPackages": ["argon2"]
+  },
+  "functions": "convex/"
+}

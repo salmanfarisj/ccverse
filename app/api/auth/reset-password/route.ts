@@ -1,18 +1,19 @@
 /**
  * POST /api/auth/reset-password
  *
- * Validates a PasswordResetToken, updates the user's password, consumes the
- * token, and invalidates all existing sessions.
+ * Consumes a PasswordResetToken via Convex `auth.actions.resetPasswordAction`
+ * (Node action: hashes the new password, then atomically consumes the
+ * token + updates the user). On success, destroys the current
+ * iron-session cookie so the user has to re-login.
  *
- * Audit events: auth.password_reset_completed
+ * Audit events: auth.password_reset_completed, auth.session_invalidated.
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/db';
-import { hashPassword } from '@/lib/auth/hashing';
-import { writeAuditEvent } from '@/lib/audit';
+import { api } from '@/convex/_generated/api';
+import { getConvexClient } from '@/lib/convex/client';
 import { getSession } from '@/lib/session';
 
 const resetSchema = z.object({
@@ -30,52 +31,33 @@ export async function POST(req: NextRequest) {
 
     const { token, password } = parsed.data;
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined;
+    const convex = getConvexClient();
 
-    const record = await prisma.passwordResetToken.findUnique({
-      where: { token },
-      include: { user: true },
+    const result = await convex.action(api.auth.actions.resetPasswordAction, {
+      token,
+      password,
     });
 
-    if (!record) {
-      return NextResponse.json({ error: 'Invalid or expired reset token' }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error ?? 'Invalid or expired reset token' },
+        { status: 400 },
+      );
     }
 
-    if (record.consumedAt) {
-      return NextResponse.json({ error: 'Token has already been used' }, { status: 400 });
-    }
-
-    if (record.expiresAt < new Date()) {
-      return NextResponse.json({ error: 'Token has expired. Please request a new one.' }, { status: 400 });
-    }
-
-    const passwordHash = await hashPassword(password);
-
-    // Update password and consume token in a transaction
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: record.userId },
-        data: { passwordHash },
-      });
-
-      await tx.passwordResetToken.update({
-        where: { token },
-        data: { consumedAt: new Date() },
-      });
-    });
-
-    // Invalidate the current session (the user is already on the reset page,
-    // but we destroy their current cookie so they need to re-login with the new password)
+    // Destroy the current session (the user is already on the reset page,
+    // but we destroy their cookie so they need to re-login).
     try {
       const { session, save } = await getSession();
-      if (session.userId) {
-        await writeAuditEvent({
+      if (session.userId && session.role) {
+        await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
           actorId: session.userId,
-          actorRole: session.role?.toLowerCase(),
+          actorRole: session.role.toLowerCase(),
           action: 'auth.session_invalidated',
           targetType: 'user',
           targetId: session.userId,
           ip,
-          payload: { reason: 'password_reset' },
+          payload: JSON.stringify({ reason: 'password_reset' }),
         });
       }
       session.userId = undefined;
@@ -88,17 +70,18 @@ export async function POST(req: NextRequest) {
       // Non-fatal — session might not exist
     }
 
-    await writeAuditEvent({
-      actorId: record.userId,
-      actorRole: record.user.role.toLowerCase(),
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
+      actorId: result.userId,
       action: 'auth.password_reset_completed',
       targetType: 'user',
-      targetId: record.userId,
+      targetId: result.userId,
       ip,
-      payload: {},
+      payload: '{}',
     });
 
-    return NextResponse.json({ message: 'Password updated. You can now log in with your new password.' });
+    return NextResponse.json({
+      message: 'Password updated. You can now log in with your new password.',
+    });
   } catch (err) {
     console.error('reset-password error', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

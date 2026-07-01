@@ -1,5 +1,5 @@
-import { internalMutation, internalQuery } from "../_generated/server";
-import { v } from "convex/values";
+import { internalMutation, internalQuery } from '../_generated/server';
+import { v } from 'convex/values';
 
 /**
  * loginQuery — read-only lookup used by the loginAction.
@@ -18,20 +18,20 @@ export const loginQuery = internalQuery({
     const normalizedEmail = email.toLowerCase();
 
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
+      .query('users')
+      .withIndex('by_email', (q) => q.eq('email', normalizedEmail))
       .first();
 
     if (!user) {
-      return { success: false, error: "Invalid credentials", user: null };
+      return { success: false, error: 'Invalid credentials', user: null };
     }
 
     if (user.lockedUntil && user.lockedUntil > Date.now()) {
-      return { success: false, error: "Account locked", user: null };
+      return { success: false, error: 'Account locked', user: null };
     }
 
     if (!user.passwordHash) {
-      return { success: false, error: "Invalid credentials", user: null };
+      return { success: false, error: 'Invalid credentials', user: null };
     }
 
     return {
@@ -53,7 +53,7 @@ export const loginQuery = internalQuery({
 
 export const loginUpdateMutation = internalMutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     failedLoginCount: v.number(),
     lockUntil: v.optional(v.number()),
   },
@@ -71,7 +71,7 @@ export const loginUpdateMutation = internalMutation({
 
 export const loginSuccessMutation = internalMutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
   },
   handler: async (ctx, args) => {
     const { userId } = args;
@@ -98,25 +98,26 @@ export const createBuyerMutation = internalMutation({
     const normalizedEmail = email.toLowerCase();
     const now = Date.now();
 
-    const userId = await ctx.db.insert("users", {
+    const userId = await ctx.db.insert('users', {
       tokenIdentifier: normalizedEmail,
       email: normalizedEmail,
       passwordHash,
-      role: "BUYER",
-      status: "PENDING_VERIFICATION",
+      role: 'BUYER',
+      status: 'ACTIVE',
       mfaEnabled: false,
-      emailVerified: false,
+      emailVerified: true,
+      emailVerifiedAt: now,
       failedLoginCount: 0,
       createdAt: now,
     });
 
-    await ctx.db.insert("buyerProfiles", {
+    await ctx.db.insert('buyerProfiles', {
       userId,
       legalName,
       country,
-      kycStatus: "NOT_REQUIRED",
-      kycMethod: "NONE",
-      defaultCurrency: "USD",
+      kycStatus: 'NOT_REQUIRED',
+      kycMethod: 'NONE',
+      defaultCurrency: 'USD',
       createdAt: now,
       updatedAt: now,
     });
@@ -140,24 +141,25 @@ export const createSellerMutation = internalMutation({
     const normalizedEmail = email.toLowerCase();
     const now = Date.now();
 
-    const userId = await ctx.db.insert("users", {
+    const userId = await ctx.db.insert('users', {
       tokenIdentifier: normalizedEmail,
       email: normalizedEmail,
       passwordHash,
-      role: "SELLER",
-      status: "PENDING_VERIFICATION",
+      role: 'SELLER',
+      status: 'ACTIVE',
       mfaEnabled: false,
-      emailVerified: false,
+      emailVerified: true,
+      emailVerifiedAt: now,
       failedLoginCount: 0,
       createdAt: now,
     });
 
-    await ctx.db.insert("sellerProfiles", {
+    await ctx.db.insert('sellerProfiles', {
       userId,
       legalName,
       country,
-      kycStatus: "NOT_STARTED",
-      kycMethod: "manual",
+      kycStatus: 'NOT_STARTED',
+      kycMethod: 'manual',
       createdAt: now,
       updatedAt: now,
     });

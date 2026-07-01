@@ -1,50 +1,19 @@
 # Local development infrastructure (Phase 0).
 #
-# This file is the *only* docker-compose source for CC Verse. Later
-# tasks add MinIO (T0-5-3) and Caddy (T0-11-1) as additional services
-# to this same file. There is no `infra/prod/` or `infra/staging/`
-# compose file — production runs on the host (single Next.js process,
-# single managed Postgres) without Compose.
-#
 # Usage:
-#   docker compose -f infra/docker-compose.yml up -d db,minio
-#   docker compose -f infra/docker-compose.yml down           # stop
-#   docker compose -f infra/docker-compose.yml down -v        # nuke the volume
-#   docker compose -f infra/docker-compose.yml logs -f db
+#   docker compose -f infra/docker-compose.yml up -d minio
+#   docker compose -f infra/docker-compose.yml down
+#   docker compose -f infra/docker-compose.yml down -v
 #   docker compose -f infra/docker-compose.yml logs -f minio
 #
 # Connection details match the root `.env.example`:
-#   DATABASE_URL=postgresql://ccverse:ccverse@localhost:5432/ccverse?schema=public
 #   S3_ENDPOINT=http://localhost:9000
 #   S3_FORCE_PATH_STYLE=true
+#
+# MinIO is optional — Convex storage actions have a dev fallback when
+# S3_ENDPOINT is not configured.
 
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: ccverse-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ccverse
-      POSTGRES_PASSWORD: ccverse
-      POSTGRES_DB: ccverse
-    ports:
-      # Bind to localhost only — the proxy and the app both reach
-      # the DB through this port in local dev. In production the
-      # Next.js process reaches a managed Postgres over the private
-      # network instead.
-      - '127.0.0.1:5432:5432'
-    volumes:
-      - ccverse-postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      # `pg_isready` is the canonical Postgres liveness check.
-      test:
-        - CMD-SHELL
-        - pg_isready -U ccverse -d ccverse
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
-
   minio:
     image: minio/minio:latest
     container_name: ccverse-minio
@@ -73,8 +42,6 @@ services:
       minio:
         condition: service_healthy
     entrypoint: /bin/sh
-    # Bootstrap script creates the four CC Verse buckets and applies CORS.
-    # CORS: allow GET + PUT from APP_ORIGIN only. Expose ETag header.
     command: |
       -c "
       mc alias set local http://minio:9000 minioadmin minioadmin;
@@ -93,7 +60,5 @@ services:
       - ./minio-cors.json:/cors.json:ro
 
 volumes:
-  ccverse-postgres-data:
-    name: ccverse-postgres-data
   ccverse-minio-data:
     name: ccverse-minio-data

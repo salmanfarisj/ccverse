@@ -1,4 +1,4 @@
-"use node";
+'use node';
 
 /**
  * convex/storage/actions.ts — S3 storage operations as Convex Node actions.
@@ -36,8 +36,7 @@ export const BUCKETS = {
 export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 function buildClient(): S3Client {
-  const isDev =
-    !process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY;
+  const isDev = !process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY;
 
   const clientConfig: ConstructorParameters<typeof S3Client>[0] = {
     region: process.env.S3_REGION ?? 'us-east-1',
@@ -65,8 +64,7 @@ function buildClient(): S3Client {
 
 function isDevWithoutEndpoint(): boolean {
   return (
-    (!process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY) &&
-    !process.env.S3_ENDPOINT
+    (!process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY) && !process.env.S3_ENDPOINT
   );
 }
 
@@ -147,10 +145,10 @@ export const putObjectAction = action({
   handler: async (_ctx, args): Promise<{ etag: string }> => {
     // Dev mode without S3_ENDPOINT: log and return fake etag so the app works.
     if (isDevWithoutEndpoint()) {
-      console.warn(
-        `[storage] Dev mode — upload skipped (no S3_ENDPOINT configured)`,
-        { bucket: args.bucket, key: args.key },
-      );
+      console.warn(`[storage] Dev mode — upload skipped (no S3_ENDPOINT configured)`, {
+        bucket: args.bucket,
+        key: args.key,
+      });
       return { etag: `dev-fake-${Date.now()}` };
     }
 
@@ -233,9 +231,7 @@ export const getObjectAction = action({
           metadata: response.Metadata,
           etag: response.ETag,
           size: response.ContentLength,
-          lastModified: response.LastModified
-            ? response.LastModified.getTime()
-            : undefined,
+          lastModified: response.LastModified ? response.LastModified.getTime() : undefined,
         },
       };
     } catch (err: unknown) {
@@ -311,9 +307,7 @@ export const headObjectAction = action({
         metadata: response.Metadata,
         etag: response.ETag,
         size: response.ContentLength,
-        lastModified: response.LastModified
-          ? response.LastModified.getTime()
-          : undefined,
+        lastModified: response.LastModified ? response.LastModified.getTime() : undefined,
       };
     } catch (err: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

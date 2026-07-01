@@ -51,7 +51,8 @@ export default function AdminKycPage() {
             KYC Queue
           </h1>
           <p className="mt-2 font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">
-            {applications.length} pending {applications.length === 1 ? 'application' : 'applications'}
+            {applications.length} pending{' '}
+            {applications.length === 1 ? 'application' : 'applications'}
           </p>
 
           <div className="mt-8 overflow-x-auto">

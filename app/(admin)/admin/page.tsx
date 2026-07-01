@@ -12,15 +12,10 @@ export default async function AdminPage() {
         <div className="mx-auto max-w-[1200px] px-[var(--spacing-18)] py-[var(--spacing-18)]">
           <h1 className="font-mono text-4xl font-bold tracking-tight !text-lime-surveyor">Admin</h1>
           <p className="mt-2 font-jetbrains-mono text-[13px] uppercase tracking-[0.06em] text-drift-ash">
-            User management and KYC review
+            KYC review and compliance
           </p>
 
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <AdminCard
-              href="/admin/users"
-              title="Users"
-              description="List, create, ban, and suspend user accounts"
-            />
             <AdminCard
               href="/admin/kyc"
               title="KYC Queue"

@@ -75,9 +75,7 @@ export async function requireRole(allowed: Role[]): Promise<SessionData> {
  * read userId and role for middleware path gating. The full signature
  * verification is done by getIronSession in requireRole (Node runtime).
  */
-export async function getSessionFromRequest(
-  request: NextRequest,
-): Promise<SessionData> {
+export async function getSessionFromRequest(request: NextRequest): Promise<SessionData> {
   const cookie = request.cookies.get(COOKIE_NAME);
   if (!cookie?.value) return {};
 

@@ -18,8 +18,8 @@
  * which performs the password verification in Node code before invoking it.
  */
 
-import { mutation } from "../_generated/server";
-import { v } from "convex/values";
+import { mutation } from '../_generated/server';
+import { v } from 'convex/values';
 
 const DEFAULT_EMAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const DEFAULT_PASSWORD_RESET_TTL_MS = 30 * 60 * 1000; // 30 minutes
@@ -31,7 +31,7 @@ const DEFAULT_PASSWORD_RESET_TTL_MS = 30 * 60 * 1000; // 30 minutes
  */
 export const createEmailVerificationTokenMutation = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     ttlMs: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -39,7 +39,7 @@ export const createEmailVerificationTokenMutation = mutation({
     const token = crypto.randomUUID();
     const expiresAt = Date.now() + ttl;
 
-    await ctx.db.insert("emailVerificationTokens", {
+    await ctx.db.insert('emailVerificationTokens', {
       token,
       userId: args.userId,
       expiresAt,
@@ -60,19 +60,19 @@ export const consumeEmailVerificationTokenMutation = mutation({
   },
   handler: async (ctx, args) => {
     const record = await ctx.db
-      .query("emailVerificationTokens")
-      .withIndex("by_userId")
-      .filter((q) => q.eq(q.field("token"), args.token))
+      .query('emailVerificationTokens')
+      .withIndex('by_userId')
+      .filter((q) => q.eq(q.field('token'), args.token))
       .first();
 
     if (!record) {
-      return { success: false as const, error: "Invalid or expired token", userId: null };
+      return { success: false as const, error: 'Invalid or expired token', userId: null };
     }
     if (record.consumedAt) {
-      return { success: false as const, error: "Token has already been used", userId: null };
+      return { success: false as const, error: 'Token has already been used', userId: null };
     }
     if (record.expiresAt < Date.now()) {
-      return { success: false as const, error: "Token has expired", userId: null };
+      return { success: false as const, error: 'Token has expired', userId: null };
     }
 
     const now = Date.now();
@@ -80,7 +80,7 @@ export const consumeEmailVerificationTokenMutation = mutation({
     await ctx.db.patch(record.userId, {
       emailVerified: true,
       emailVerifiedAt: now,
-      status: "ACTIVE",
+      status: 'ACTIVE',
     });
 
     return { success: true as const, error: null, userId: record.userId };
@@ -94,7 +94,7 @@ export const consumeEmailVerificationTokenMutation = mutation({
  */
 export const createPasswordResetTokenMutation = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     ip: v.optional(v.string()),
     ttlMs: v.optional(v.number()),
   },
@@ -103,7 +103,7 @@ export const createPasswordResetTokenMutation = mutation({
     const token = crypto.randomUUID();
     const expiresAt = Date.now() + ttl;
 
-    await ctx.db.insert("passwordResetTokens", {
+    await ctx.db.insert('passwordResetTokens', {
       token,
       userId: args.userId,
       expiresAt,
@@ -126,19 +126,23 @@ export const consumePasswordResetTokenMutation = mutation({
   },
   handler: async (ctx, args) => {
     const record = await ctx.db
-      .query("passwordResetTokens")
-      .withIndex("by_userId")
-      .filter((q) => q.eq(q.field("token"), args.token))
+      .query('passwordResetTokens')
+      .withIndex('by_userId')
+      .filter((q) => q.eq(q.field('token'), args.token))
       .first();
 
     if (!record) {
-      return { success: false as const, error: "Invalid or expired reset token", userId: null };
+      return { success: false as const, error: 'Invalid or expired reset token', userId: null };
     }
     if (record.consumedAt) {
-      return { success: false as const, error: "Token has already been used", userId: null };
+      return { success: false as const, error: 'Token has already been used', userId: null };
     }
     if (record.expiresAt < Date.now()) {
-      return { success: false as const, error: "Token has expired. Please request a new one.", userId: null };
+      return {
+        success: false as const,
+        error: 'Token has expired. Please request a new one.',
+        userId: null,
+      };
     }
 
     await ctx.db.patch(record._id, { consumedAt: Date.now() });
@@ -163,7 +167,7 @@ export const consumePasswordResetTokenMutation = mutation({
  */
 export const changePasswordMutation = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     newPasswordHash: v.string(),
   },
   handler: async (ctx, args) => {

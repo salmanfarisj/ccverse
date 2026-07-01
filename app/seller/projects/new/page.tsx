@@ -26,9 +26,7 @@ export default async function NewProjectPage() {
           <h1 className="font-mono text-4xl font-bold tracking-tight !text-lime-surveyor">
             New Project
           </h1>
-          <p className="text-lime/70">
-            Full project registration flows land in Phase 2.
-          </p>
+          <p className="text-lime/70">Full project registration flows land in Phase 2.</p>
         </div>
       </main>
     </>

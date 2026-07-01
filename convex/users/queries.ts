@@ -6,10 +6,10 @@
  * shape based on the user's role (buyer/seller/auditor/admin).
  */
 
-import { query, internalQuery } from "../_generated/server";
-import { v } from "convex/values";
+import { query, internalQuery } from '../_generated/server';
+import { v } from 'convex/values';
 
-type Role = "BUYER" | "SELLER" | "AUDITOR" | "ADMIN";
+type Role = 'BUYER' | 'SELLER' | 'AUDITOR' | 'ADMIN';
 
 type BankAccountSummary = {
   bankName: string;
@@ -26,7 +26,7 @@ type BankAccountSummary = {
  */
 export const getMeQuery = query({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
@@ -45,10 +45,10 @@ export const getMeQuery = query({
       bankAccount: BankAccountSummary;
     } | null = null;
 
-    if (user.role === "BUYER") {
+    if (user.role === 'BUYER') {
       const profile = await ctx.db
-        .query("buyerProfiles")
-        .withIndex("by_userId", (q) => q.eq("userId", user._id))
+        .query('buyerProfiles')
+        .withIndex('by_userId', (q) => q.eq('userId', user._id))
         .first();
       if (profile) {
         buyerProfile = {
@@ -58,10 +58,10 @@ export const getMeQuery = query({
           defaultCurrency: profile.defaultCurrency,
         };
       }
-    } else if (user.role === "SELLER") {
+    } else if (user.role === 'SELLER') {
       const profile = await ctx.db
-        .query("sellerProfiles")
-        .withIndex("by_userId", (q) => q.eq("userId", user._id))
+        .query('sellerProfiles')
+        .withIndex('by_userId', (q) => q.eq('userId', user._id))
         .first();
       if (profile) {
         let bankAccount: BankAccountSummary = null;
@@ -118,8 +118,8 @@ export const findUserByEmailQuery = query({
   handler: async (ctx, args) => {
     const normalizedEmail = args.email.toLowerCase();
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
+      .query('users')
+      .withIndex('by_email', (q) => q.eq('email', normalizedEmail))
       .first();
     if (!user) return { userId: null };
     return { userId: user._id };
@@ -137,7 +137,7 @@ export const findUserByEmailQuery = query({
  */
 export const findUserAuthDataByIdQuery = query({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
@@ -159,22 +159,22 @@ export const findUserAuthDataByIdQuery = query({
  * Exposed as `internal.users.queries.getUserByIdQuery`.
  */
 export const getUserByIdQuery = internalQuery({
-  args: { userId: v.id("users") },
+  args: { userId: v.id('users') },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return { email: null, legalName: null };
 
     let legalName: string | null = null;
-    if (user.role === "SELLER") {
+    if (user.role === 'SELLER') {
       const profile = await ctx.db
-        .query("sellerProfiles")
-        .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+        .query('sellerProfiles')
+        .withIndex('by_userId', (q) => q.eq('userId', args.userId))
         .first();
       legalName = profile?.legalName ?? null;
-    } else if (user.role === "BUYER") {
+    } else if (user.role === 'BUYER') {
       const profile = await ctx.db
-        .query("buyerProfiles")
-        .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+        .query('buyerProfiles')
+        .withIndex('by_userId', (q) => q.eq('userId', args.userId))
         .first();
       legalName = profile?.legalName ?? null;
     }

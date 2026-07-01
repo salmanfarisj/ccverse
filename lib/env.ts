@@ -27,7 +27,16 @@ const appSchema = z.object({
 });
 
 const databaseSchema = z.object({
-  DATABASE_URL: z.string().url('DATABASE_URL must be a valid postgres URL'),
+  CONVEX_DEPLOYMENT: z.string().optional().default(''),
+  CONVEX_DEPLOY_KEY: z.string().optional().default(''),
+  // Server-only URL used by lib/convex/client.ts when NEXT_PUBLIC_CONVEX_URL
+  // is not set. Optional — Phase 5 (payment webhooks) is the primary
+  // consumer that needs a server-side-only URL.
+  CONVEX_DEPLOYMENT_URL: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
 });
 
 const s3Schema = z.object({

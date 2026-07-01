@@ -1,31 +1,38 @@
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { Id } from '@/convex/_generated/dataModel';
 import { getConvexClient } from '@/lib/convex/client';
 import { requireRole } from '@/lib/rbac';
 import { api } from '@/convex/_generated/api';
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: { userId: string; docId: string } },
 ) {
   try {
     await requireRole(['ADMIN']);
     const { userId, docId } = params;
 
-    const doc = await prisma.kycDocument.findUnique({
-      where: { id: docId, subjectUserId: userId },
-      select: { id: true, s3Key: true },
+    const convex = getConvexClient();
+    const docRef = await convex.query(api.kyc.queries.getKycDocumentRef, {
+      userId: userId as Id<'users'>,
+      docId: docId as Id<'kycDocuments'>,
     });
 
-    if (!doc || !doc.s3Key) {
+    if (!docRef.found || !docRef.s3Key) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
 
-    const convex = getConvexClient();
     const result = await convex.action(api.storage.actions.presignGetAction, {
       bucket: 'ccverse-kyc',
-      key: doc.s3Key,
+      key: docRef.s3Key,
       ttlSeconds: 300,
     });
 
     return NextResponse.json({ url: result.url });
+  } catch (err) {
+    if (err instanceof NextResponse) throw err;
+    console.error('GET /api/admin/kyc/:userId/documents/:docId/url error', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

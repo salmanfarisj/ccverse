@@ -14,32 +14,18 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:install": "playwright install --with-deps chromium",
-    "postinstall": "prisma generate",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:reset": "prisma migrate reset",
-    "db:seed": "prisma db seed",
-    "db:studio": "prisma studio",
-    "db:format": "prisma format",
-    "db:format:check": "prisma format --check"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "convex:codegen": "convex codegen"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1070.0",
     "@aws-sdk/client-sesv2": "^3.1070.0",
     "@aws-sdk/client-sns": "^3.1070.0",
     "@aws-sdk/s3-request-presigner": "^3.1070.0",
-    "@prisma/client": "^5.22.0",
     "@react-email/components": "^1.0.12",
     "argon2": "^0.41.1",
+    "convex": "^1.41.0",
     "iron-session": "^8.0.4",
     "next": "14.2.18",
     "otplib": "^13.4.1",
@@ -48,20 +34,15 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.0",
     "@tailwindcss/postcss": "^4.3.1",
     "@types/node": "^20.16.10",
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
-    "@vitest/coverage-v8": "^2.1.4",
-    "aws-sdk-client-mock": "^4.1.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.18",
     "prettier": "^3.3.3",
-    "prisma": "^5.22.0",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.22.4",
-    "typescript": "5.6.3",
-    "vitest": "^2.1.4"
+    "typescript": "5.6.3"
   }
 }

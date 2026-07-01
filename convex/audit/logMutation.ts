@@ -13,8 +13,8 @@
  * code review: only files in `convex/audit/` write to this table.
  */
 
-import { mutation } from "../_generated/server";
-import { v } from "convex/values";
+import { mutation } from '../_generated/server';
+import { v } from 'convex/values';
 
 /**
  * writeAuditLogMutation — public mutation so Next.js API routes
@@ -36,7 +36,7 @@ export const writeAuditLogMutation = mutation({
     payload: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const id = await ctx.db.insert("auditLogs", {
+    const id = await ctx.db.insert('auditLogs', {
       actorId: args.actorId,
       actorRole: args.actorRole,
       action: args.action,
@@ -44,7 +44,7 @@ export const writeAuditLogMutation = mutation({
       targetId: args.targetId,
       ip: args.ip,
       timestamp: Date.now(),
-      payload: args.payload ?? "{}",
+      payload: args.payload ?? '{}',
     });
     return { id };
   },

@@ -1,26 +1,29 @@
 /**
  * POST /api/auth/login
  *
- * Verifies email + password, enforces account lockout, and establishes a session.
+ * Verifies email + password via Convex `auth.actions.loginAction`.
+ * Enforces account lockout (managed server-side by Convex), then
+ * establishes an iron-session cookie on success.
+ *
+ * Session model note: the iron-session cookie is the transport layer
+ * only — user data lives in Convex. See `convex/auth/session.ts` for
+ * the full Phase 1 auth model decision.
  *
  * Audit events: auth.login, auth.login_failed, auth.locked
+ * (written via `api.audit.logMutation.writeAuditLogMutation`).
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/db';
-import { verifyPassword } from '@/lib/auth/hashing';
-import { writeAuditEvent } from '@/lib/audit';
+import { api } from '@/convex/_generated/api';
+import { getConvexClient } from '@/lib/convex/client';
 import { getSession } from '@/lib/session';
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
-
-const LOCKOUT_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,118 +36,53 @@ export async function POST(req: NextRequest) {
     const { email, password } = parsed.data;
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? undefined;
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const convex = getConvexClient();
+    const result = await convex.action(api.auth.actions.loginAction, { email, password });
 
-    // User not found — generic message to avoid enumeration
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
-    }
-
-    // Check if account is locked
-    if (user.lockedUntil && user.lockedUntil > new Date()) {
-      const retryAfter = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 1000);
+    if (!result.success) {
+      const isLocked = result.error === 'Account locked';
+      await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
+        action: isLocked ? 'auth.locked' : 'auth.login_failed',
+        ip,
+        payload: JSON.stringify({ email, error: result.error }),
+      });
       return NextResponse.json(
-        { error: 'Account is temporarily locked. Try again later.', retryAfter },
-        {
-          status: 423,
-          headers: { 'Retry-After': String(retryAfter) },
-        },
+        { error: result.error ?? 'Invalid email or password' },
+        { status: isLocked ? 423 : 401 },
       );
     }
 
-    // Check status
-    if (user.status !== 'ACTIVE') {
-      return NextResponse.json({ error: 'Account is not active. Contact support.' }, { status: 403 });
+    if (!result.user) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    // Check email verified
-    if (!user.emailVerified) {
+    const u = result.user;
+    if (u.status !== 'ACTIVE') {
       return NextResponse.json(
-        { error: 'Verify your email first. Check your inbox for a verification link.' },
+        { error: 'Account is not active. Contact support.' },
         { status: 403 },
       );
     }
 
-    // Verify password
-    if (!user.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
-      const newFailedCount = (user.failedLoginCount ?? 0) + 1;
-
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { failedLoginCount: newFailedCount },
-      });
-
-      await writeAuditEvent({
-        actorId: user.id,
-        actorRole: user.role.toLowerCase(),
-        action: 'auth.login_failed',
-        targetType: 'user',
-        targetId: user.id,
-        ip,
-        payload: { reason: 'invalid_password', failedCount: newFailedCount },
-      });
-
-      // Trigger lockout
-      if (newFailedCount >= LOCKOUT_ATTEMPTS) {
-        const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lockedUntil },
-        });
-
-        await writeAuditEvent({
-          actorId: user.id,
-          actorRole: user.role.toLowerCase(),
-          action: 'auth.locked',
-          targetType: 'user',
-          targetId: user.id,
-          ip,
-          payload: { lockedUntil: lockedUntil.toISOString() },
-        });
-
-        return NextResponse.json(
-          { error: 'Too many failed attempts. Account is temporarily locked.', retryAfter: 1800 },
-          {
-            status: 423,
-            headers: { 'Retry-After': '1800' },
-          },
-        );
-      }
-
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
-    }
-
-    // Success — reset lockout counters and update last login
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        failedLoginCount: 0,
-        lockedUntil: null,
-        lastLoginAt: new Date(),
-        lastLoginIp: ip ?? null,
-      },
-    });
-
-    // Establish session
     const { session, save } = await getSession();
-    session.userId = user.id;
-    session.role = user.role;
-    session.mfaPassed = true;
+    session.userId = u.id;
+    session.role = u.role;
+    session.mfaPassed = !u.mfaEnabled;
     session.ip = ip;
     session.userAgent = req.headers.get('user-agent') ?? undefined;
     await save();
 
-    await writeAuditEvent({
-      actorId: user.id,
-      actorRole: user.role.toLowerCase(),
+    await convex.mutation(api.audit.logMutation.writeAuditLogMutation, {
+      actorId: u.id,
+      actorRole: u.role.toLowerCase(),
       action: 'auth.login',
       targetType: 'user',
-      targetId: user.id,
+      targetId: u.id,
       ip,
-      payload: {},
+      payload: '{}',
     });
 
-    return NextResponse.json({ message: 'Login successful', role: user.role });
+    return NextResponse.json({ message: 'Login successful', role: u.role });
   } catch (err) {
     console.error('login error', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

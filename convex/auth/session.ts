@@ -24,7 +24,7 @@
  * Next.js reads the iron-session cookie via `lib/session/index.ts`.
  */
 
-import { query } from "../_generated/server";
+import { query } from '../_generated/server';
 
 export const getSession = query({
   args: {},
@@ -35,10 +35,8 @@ export const getSession = query({
     }
 
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_tokenIdentifier", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
       .first();
 
     if (!user) {
